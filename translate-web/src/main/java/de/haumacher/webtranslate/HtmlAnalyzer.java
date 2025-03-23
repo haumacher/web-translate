@@ -6,10 +6,10 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.nodes.Node;
-import org.jsoup.nodes.TextNode;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.Text;
 
 public class HtmlAnalyzer {
 	
@@ -21,19 +21,19 @@ public class HtmlAnalyzer {
 	private DecimalFormat idFormat = new DecimalFormat("t0000");
 
 
-	public HtmlAnalyzer(org.jsoup.nodes.Document document2) {
-		this.document = document2;
+	public HtmlAnalyzer(Document document) {
+		this.document = document;
 	}
 	
 	public void analyze() {
-		scanIds(document.root());
-		scanText(document.root());
+		scanIds(document.getDocumentElement());
+		scanText(document.getDocumentElement());
 	}
 	
 	// <p id="t0040">Some text<b><i>what</i> a great</b> nonsense.</p>
 
 	private void scanIds(Element element) {
-		String id = element.attr("id");
+		String id = element.getAttribute("id");
 		if (id != null && !id.isEmpty()) {
 			elementById.put(id, element);
 			Matcher matcher = textIdPattern.matcher(id);
@@ -42,20 +42,22 @@ public class HtmlAnalyzer {
 			}
 		}
 		
-		for (Element child : element.children()) {
-			scanIds(child);
+		for (Node child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
+			if (child instanceof Element sub) {
+				scanIds(sub);
+			}
 		}
 	}
 
 	private void scanText(Element element) {
-		for (Node child : element.childNodes()) {
-			if (child instanceof TextNode text) {
-				String txt = text.text();
+		for (Node child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
+			if (child instanceof Text text) {
+				String txt = text.getTextContent();
 				if (txt != null && !txt.isBlank()) {
-					Element textParent = (Element) child.parent();
-					String id = textParent.attr("id");
+					Element textParent = (Element) child.getParentNode();
+					String id = textParent.getAttribute("id");
 					if (id == null || !id.isBlank()) {
-						textParent.attr("id", idFormat.format(nextId ++));
+						textParent.setAttribute("id", idFormat.format(nextId ++));
 					}
 				}
 			}
