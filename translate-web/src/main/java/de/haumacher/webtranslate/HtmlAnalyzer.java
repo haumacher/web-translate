@@ -84,6 +84,8 @@ public class HtmlAnalyzer {
 	private Map<String, Element> elementById = new HashMap<>();
 	private int nextId = 1;
 	private DecimalFormat idFormat = new DecimalFormat("t0000");
+	
+	private Map<String, String> textById = new HashMap<>();
 
 	public HtmlAnalyzer(Document document) {
 		this.document = document;
@@ -94,6 +96,24 @@ public class HtmlAnalyzer {
 		scanText(document.getDocumentElement());
 		assignIds();
 		cleanIds(document.getDocumentElement());
+		extractText(document.getDocumentElement());
+	}
+	
+	public Map<String, String> getTextById() {
+		return textById;
+	}
+
+	private void extractText(Element element) {
+		String id = element.getAttribute(ID_ATTR);
+		if (id != null && !id.isEmpty()) {
+			textById.put(id, new TextExtractor(element).extract());
+		} else {
+			for (Node child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
+				if (child instanceof Element sub) {
+					extractText(sub);
+				}
+			}
+		}
 	}
 
 	private void cleanIds(Element element) {
@@ -157,8 +177,7 @@ public class HtmlAnalyzer {
 		}
 		for (Node child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
 			if (child instanceof Text text) {
-				String txt = text.getTextContent();
-				if (isText(txt)) {
+				if (hasText(text)) {
 					Element textParent = (Element) child.getParentNode();
 					textParents.add(textParent);
 				}
@@ -168,16 +187,18 @@ public class HtmlAnalyzer {
 		}
 	}
 
-	private boolean isText(String txt) {
-		if (txt == null) {
+	public static boolean hasText(Text text) {
+		String s = text.getTextContent();
+
+		if (s == null) {
 			return false;
 		}
-		if (txt.isBlank()) {
+		if (s.isBlank()) {
 			return false;
 		}
 
-		for (int n = 0, len = txt.length(); n < len; n++) {
-			char ch = txt.charAt(n);
+		for (int n = 0, len = s.length(); n < len; n++) {
+			char ch = s.charAt(n);
 			if (Character.isLetter(ch)) {
 				return true;
 			}

@@ -3,6 +3,7 @@ package de.haumacher.webtranslate;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -32,7 +33,14 @@ public class Main {
 		builder.setEntityResolver(resolver);
 		Document document = builder.parse(new File(fileName));
 
-		new HtmlAnalyzer(document).analyze();
+		HtmlAnalyzer analyzer = new HtmlAnalyzer(document);
+		analyzer.analyze();
+		
+		Map<String, String> textById = analyzer.getTextById();
+		for (String id : textById.keySet().stream().sorted().toList()) {
+			System.out.println(id + "=" + textById.get(id));
+		}
+		System.out.println();
 		
 	    final DOMImplementationLS domImplementation = (DOMImplementationLS) document.getImplementation();
 	    final LSSerializer lsSerializer = domImplementation.createLSSerializer();
