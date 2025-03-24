@@ -1,4 +1,4 @@
-package de.haumacher.webtranslate;
+package de.haumacher.webtranslate.extract;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -22,12 +22,12 @@ import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-public class Processor {
+public class PropertiesExtractor {
 
 	private File outputDir;
 	private File input;
 
-	public Processor(File outputDir, File input) {
+	public PropertiesExtractor(File outputDir, File input) {
 		this.outputDir = outputDir;
 		this.input = input;
 	}
@@ -94,6 +94,11 @@ public class Processor {
 		}
 	}
 	
-	
+	public static void main(String[] args) throws SAXException, IOException, ParserConfigurationException {
+		File input = new File(args[0]);
+		File output = new File(args[1]);
+		
+		new PropertiesExtractor(output, input).process();
+	}
 
 }

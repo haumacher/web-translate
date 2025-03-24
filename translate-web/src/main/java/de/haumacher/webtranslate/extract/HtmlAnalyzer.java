@@ -1,4 +1,4 @@
-package de.haumacher.webtranslate;
+package de.haumacher.webtranslate.extract;
 
 import java.text.DecimalFormat;
 import java.util.Arrays;
