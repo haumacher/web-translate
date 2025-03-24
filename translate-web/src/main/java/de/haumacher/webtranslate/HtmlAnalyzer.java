@@ -4,6 +4,7 @@ import java.text.DecimalFormat;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -80,7 +81,7 @@ public class HtmlAnalyzer {
 	
 	private Document document;
 
-	private Set<Element> textParents = new HashSet<>();
+	private Set<Element> textParents = new LinkedHashSet<>();
 	private Map<String, Element> elementById = new HashMap<>();
 	private int nextId = 1;
 	private DecimalFormat idFormat = new DecimalFormat("t0000");
