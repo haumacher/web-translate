@@ -103,6 +103,30 @@ public class HtmlAnalyzer {
 	public Map<String, String> getTextById() {
 		return textById;
 	}
+	
+	public void setTextById(Map<String, String> textById) {
+		this.textById = textById;
+	}
+
+	public void inject() {
+		injectText(document.getDocumentElement());
+	}
+	
+	private void injectText(Element element) {
+		String id = element.getAttribute(ID_ATTR);
+		if (id != null && !id.isEmpty()) {
+			String text = textById.get(id);
+			if (text != null) {
+				new TextInjector(element).inject(text);
+			}
+		} else {
+			for (Node child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
+				if (child instanceof Element sub) {
+					injectText(sub);
+				}
+			}
+		}
+	}
 
 	private void extractText(Element element) {
 		String id = element.getAttribute(ID_ATTR);

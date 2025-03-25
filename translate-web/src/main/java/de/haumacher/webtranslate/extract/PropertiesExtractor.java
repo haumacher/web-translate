@@ -4,17 +4,22 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.nio.charset.StandardCharsets;
+import java.io.OutputStream;
 import java.nio.file.Path;
 import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.stream.XMLOutputFactory;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamWriter;
 
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
+import org.w3c.dom.Text;
 import org.w3c.dom.ls.DOMImplementationLS;
 import org.w3c.dom.ls.LSOutput;
 import org.w3c.dom.ls.LSSerializer;
@@ -50,6 +55,21 @@ public class PropertiesExtractor {
 			throws ParserConfigurationException, SAXException, IOException, FileNotFoundException {
 		System.out.println("Processing " + file.getPath());
 		
+		Document document = parseHtml(file);
+
+		HtmlAnalyzer analyzer = new HtmlAnalyzer(document);
+		analyzer.analyze();
+		
+		Map<String, String> textById = analyzer.getTextById();
+		writeProperties(file, textById);
+		
+	    // Overwrite with normalized contents.
+		try (FileOutputStream out = new FileOutputStream(file)) {
+		    serializeDocument(out, document);
+	    }
+	}
+
+	public static Document parseHtml(File file) throws ParserConfigurationException, SAXException, IOException {
 		DocumentBuilderFactory factory = DocumentBuilderFactory.newDefaultInstance();
 		DocumentBuilder builder = factory.newDocumentBuilder();
 		EntityResolver resolver = new EntityResolver() {
@@ -60,40 +80,62 @@ public class PropertiesExtractor {
 		};
 		builder.setEntityResolver(resolver);
 		Document document = builder.parse(file);
+		return document;
+	}
 
-		HtmlAnalyzer analyzer = new HtmlAnalyzer(document);
-		analyzer.analyze();
+	public static void serializeDocument(OutputStream out, Document document) {
+//		final DOMImplementationLS domImplementation = (DOMImplementationLS) document.getImplementation();
+//		final LSSerializer lsSerializer = domImplementation.createLSSerializer();
+//		LSOutput output = domImplementation.createLSOutput();
+//		output.setEncoding("utf-8");
+//
+//		output.setByteStream(out);
+//		lsSerializer.write(document, output);
 		
-		Map<String, String> textById = analyzer.getTextById();
-		writeProperties(file, textById);
-		
-	    final DOMImplementationLS domImplementation = (DOMImplementationLS) document.getImplementation();
-	    final LSSerializer lsSerializer = domImplementation.createLSSerializer();
-	    LSOutput output = domImplementation.createLSOutput();
-	    
-	    // Overwrite with normalized contents.
-		try (FileOutputStream out = new FileOutputStream(file)) {
-	    	output.setByteStream(out);
-	    	lsSerializer.write(document, output);
-	    }
+		try {
+			XMLOutputFactory factory = XMLOutputFactory.newDefaultFactory();
+			XMLStreamWriter xml = factory.createXMLStreamWriter(out, "utf-8");
+			write(xml, document.getDocumentElement());
+		} catch (XMLStreamException e) {
+			e.printStackTrace();
+		}
+	}
+
+	private static void write(XMLStreamWriter xml, Element element) throws XMLStreamException {
+		xml.writeStartElement(element.getTagName());
+		NamedNodeMap attributes = element.getAttributes();
+		for (int n = 0, cnt = attributes.getLength(); n < cnt; n++) {
+			Node attribute = attributes.item(n);
+			xml.writeAttribute(attribute.getNodeName(), attribute.getNodeValue());
+		}
+		for (Node child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
+			if (child instanceof Text text) {
+				xml.writeCharacters(text.getTextContent());
+			} else if (child instanceof Element sub) {
+				write(xml, sub);
+			}
+		}
+		xml.writeEndElement();
 	}
 
 	private void writeProperties(File file, Map<String, String> textById) throws IOException {
-	    String fileName = file.getName();
-	    int index = fileName.lastIndexOf(".");
-		String baseName = index >= 0 ? fileName.substring(0, index) : fileName;
+	    String baseName = baseName(file);
 		
 		Path path = input.toPath().relativize(file.getParentFile().toPath()).resolve(baseName + ".properties");
 		File output = outputDir.toPath().resolve(path).toFile();
 		output.getParentFile().mkdirs();
-		try (PrintWriter w = new PrintWriter(new OutputStreamWriter(new FileOutputStream(output), StandardCharsets.ISO_8859_1))) {
-			for (String id : textById.keySet().stream().sorted().toList()) {
-				w.println(id + "=" + textById.get(id));
-			}
-			w.println();
+		try (FileOutputStream out = new FileOutputStream(output)) {
+			new PropertiesWriter(out).write(textById);
 		}
 	}
-	
+
+	public static String baseName(File file) {
+		String fileName = file.getName();
+	    int index = fileName.lastIndexOf(".");
+		String baseName = index >= 0 ? fileName.substring(0, index) : fileName;
+		return baseName;
+	}
+
 	public static void main(String[] args) throws SAXException, IOException, ParserConfigurationException {
 		File input = new File(args[0]);
 		File output = new File(args[1]);

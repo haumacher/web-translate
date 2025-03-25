@@ -47,7 +47,7 @@ public class TextExtractor {
 		}
 	}
 
-	private boolean containsText(Element element) {
+	public static boolean containsText(Element element) {
 		for (Node child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
 			if (child instanceof Text text) {
 				if (HtmlAnalyzer.hasText(text)) {
