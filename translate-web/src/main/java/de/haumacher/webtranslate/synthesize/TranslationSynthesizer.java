@@ -62,6 +62,7 @@ public class TranslationSynthesizer {
 		analyzer.setTextById(toMap(properties));
 		analyzer.inject();
 		
+		outputFile.getParentFile().mkdirs();
 		try (FileOutputStream out = new FileOutputStream(outputFile)) {
 			PropertiesExtractor.serializeDocument(out, document);
 		}
