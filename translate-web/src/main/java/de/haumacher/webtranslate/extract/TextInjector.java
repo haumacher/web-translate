@@ -105,11 +105,14 @@ public class TextInjector {
 				} else if (ids.contains(index)) {
 					// Missing end tags, pop them all.
 					while (!ids.top().equals(index)) {
+						System.err.println("WARN: Missing end tag for start tag '<x" + ids.top() + ">' in: " + text);
 						elements.pop();
 						ids.pop();
 					}
 					elements.pop();
 					ids.pop();
+				} else {
+					System.err.println("WARN: Missing start tag for end tag '" + matcher.group() + "' in: " + text);
 				}
 			}
 			
