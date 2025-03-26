@@ -58,43 +58,65 @@ public class TextInjector {
 	}
 
 	public void inject(String text) {
+		try {
+			doInject(text);
+		} catch (Exception ex) {
+			throw new IllegalArgumentException("Failed to inject: " + text, ex);
+		}
+	}
+	
+	private void doInject(String text) {
 		analyze(element, true);
 		clear(element);
 		Document doc = element.getOwnerDocument();
 		
 		Matcher matcher = MARKUP_PATTERN.matcher(text);
 		int pos = 0;
-		List<Element> stack = new ArrayList<>();
-		stack.add(element);
+		Stack<Element> elements = new Stack<>();
+		Stack<Integer> ids = new Stack<>();
+		elements.push(element);
 		while (matcher.find()) {
 			int start = matcher.start();
 			if (start > pos) {
-				stack.get(stack.size() - 1).appendChild(doc.createTextNode(text.substring(pos, start)));
+				elements.top().appendChild(doc.createTextNode(text.substring(pos, start)));
 			}
 			
 			boolean startTag = matcher.group(1) == null;
+			int index = Integer.parseInt(matcher.group(2));
+			
 			if (startTag) {
-				int index = Integer.parseInt(matcher.group(2));
 				Element child = children.get(index - 1);
 				if (child != null) {
 					// Never use twice.
 					children.set(index - 1, null);
 
-					Element top = stack.get(stack.size() - 1);
+					Element top = elements.top();
 					if (contentElements.contains(top)) {
 						top.appendChild(child);
 					}
-					stack.add(child);
+					ids.push(index);
+					elements.push(child);
 				}
 			} else {
-				// Pop.
-				stack.remove(stack.size() - 1);
+				if (ids.hasTop() && ids.top().equals(index)) {
+					// Pop.
+					elements.pop();
+					ids.pop();
+				} else if (ids.contains(index)) {
+					// Missing end tags, pop them all.
+					while (!ids.top().equals(index)) {
+						elements.pop();
+						ids.pop();
+					}
+					elements.pop();
+					ids.pop();
+				}
 			}
 			
 			pos = matcher.end();
 		}
 		if (text.length() > pos) {
-			stack.get(stack.size() - 1).appendChild(doc.createTextNode(text.substring(pos)));
+			elements.top().appendChild(doc.createTextNode(text.substring(pos)));
 		}
 	}
 
