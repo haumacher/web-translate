@@ -3,8 +3,11 @@ package de.haumacher.webtranslate.extract;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOError;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 
@@ -20,9 +23,6 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.Text;
-import org.w3c.dom.ls.DOMImplementationLS;
-import org.w3c.dom.ls.LSOutput;
-import org.w3c.dom.ls.LSSerializer;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -72,32 +72,19 @@ public class PropertiesExtractor {
 	public static Document parseHtml(File file) throws ParserConfigurationException, SAXException, IOException {
 		DocumentBuilderFactory factory = DocumentBuilderFactory.newDefaultInstance();
 		DocumentBuilder builder = factory.newDocumentBuilder();
-		EntityResolver resolver = new EntityResolver() {
-			@Override
-			public InputSource resolveEntity(String publicId, String systemId) throws SAXException, IOException {
-				return null;
-			}
-		};
-		builder.setEntityResolver(resolver);
+		
 		Document document = builder.parse(file);
 		return document;
 	}
 
 	public static void serializeDocument(OutputStream out, Document document) {
-//		final DOMImplementationLS domImplementation = (DOMImplementationLS) document.getImplementation();
-//		final LSSerializer lsSerializer = domImplementation.createLSSerializer();
-//		LSOutput output = domImplementation.createLSOutput();
-//		output.setEncoding("utf-8");
-//
-//		output.setByteStream(out);
-//		lsSerializer.write(document, output);
-		
 		try {
+			out.write("<!DOCTYPE html>\n".getBytes(StandardCharsets.UTF_8));
 			XMLOutputFactory factory = XMLOutputFactory.newDefaultFactory();
 			XMLStreamWriter xml = factory.createXMLStreamWriter(out, "utf-8");
 			write(xml, document.getDocumentElement());
-		} catch (XMLStreamException e) {
-			e.printStackTrace();
+		} catch (XMLStreamException | IOException ex) {
+			throw new IOError(ex);
 		}
 	}
 
