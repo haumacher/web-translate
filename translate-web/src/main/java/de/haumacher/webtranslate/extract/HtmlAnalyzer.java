@@ -12,6 +12,7 @@ import java.util.regex.Pattern;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.Text;
 
@@ -78,6 +79,8 @@ public class HtmlAnalyzer {
 	private static final Pattern textIdPattern = Pattern.compile("t0*([1-9]\\d+)");
 
 	private static final Set<String> CODE_TAGS = new HashSet<>(Arrays.asList("code", "pre", "script", "xmp", "style"));
+
+	private static final Set<String> TEXT_ATTRS = new HashSet<>(Arrays.asList("alt", "label", "placeholder", "summary", "title"));
 	
 	private Document document;
 
@@ -93,7 +96,7 @@ public class HtmlAnalyzer {
 	}
 
 	public void analyze() {
-		scanIds(document.getDocumentElement());
+		scanExistingIds(document.getDocumentElement());
 		scanText(document.getDocumentElement());
 		assignIds();
 		cleanIds(document.getDocumentElement());
@@ -115,9 +118,22 @@ public class HtmlAnalyzer {
 	private void injectText(Element element) {
 		String id = element.getAttribute(ID_ATTR);
 		if (id != null && !id.isEmpty()) {
-			String text = textById.get(id);
-			if (text != null) {
-				new TextInjector(element).inject(text);
+			NamedNodeMap attributes = element.getAttributes();
+			for (int n = 0, cnt = attributes.getLength(); n < cnt; n ++) {
+				Node attr = attributes.item(n);
+				if (TEXT_ATTRS.contains(attr.getNodeName())) {
+					String text = textById.get(id + "." + attr.getNodeName());
+					if (text != null) {
+						attr.setNodeValue(text);
+					}
+				}
+			}
+			
+			if (!CODE_TAGS.contains(element.getTagName())) {
+				String text = textById.get(id);
+				if (text != null) {
+					new TextInjector(element).inject(text);
+				}
 			}
 		} else {
 			for (Node child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
@@ -131,7 +147,23 @@ public class HtmlAnalyzer {
 	private void extractText(Element element) {
 		String id = element.getAttribute(ID_ATTR);
 		if (id != null && !id.isEmpty()) {
-			textById.put(id, new TextExtractor(element).extract());
+			NamedNodeMap attributes = element.getAttributes();
+			for (int n = 0, cnt = attributes.getLength(); n < cnt; n ++) {
+				Node attr = attributes.item(n);
+				if (TEXT_ATTRS.contains(attr.getNodeName())) {
+					String attrText = attr.getTextContent();
+					if (!attrText.isBlank()) {
+						textById.put(id + "." + attr.getNodeName(), attrText);
+					}
+				}
+			}
+			
+			if (!CODE_TAGS.contains(element.getTagName())) {
+				// Note: The element could have an ID assigned, because it only contains text attributes. 
+				if (containsText(element)) {
+					textById.put(id, new TextExtractor(element).extract());
+				}
+			}
 		} else {
 			for (Node child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
 				if (child instanceof Element sub) {
@@ -154,7 +186,7 @@ public class HtmlAnalyzer {
 
 	private void assignIds() {
 		for (Element textParent : textParents) {
-			if (hasTextParent(textParent)) {
+			if (!hasTextAttribute(textParent) && hasTextParent(textParent)) {
 				continue;
 			}
 			
@@ -179,7 +211,10 @@ public class HtmlAnalyzer {
 	
 	// <p id="t0040">Some text<b><i>what</i> a great</b> nonsense.</p>
 
-	private void scanIds(Element element) {
+	/**
+	 * Scans all existing text node IDs in the given document and computes the next free ID to assign.
+	 */
+	private void scanExistingIds(Element element) {
 		String id = element.getAttribute(ID_ATTR);
 		if (id != null && !id.isEmpty()) {
 			Matcher matcher = textIdPattern.matcher(id);
@@ -190,16 +225,24 @@ public class HtmlAnalyzer {
 
 		for (Node child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
 			if (child instanceof Element sub) {
-				scanIds(sub);
+				scanExistingIds(sub);
 			}
 		}
 	}
 
+	/**
+	 * Scans the given document for elements that contain text (either in user-facing text attributes, or text content).
+	 */
 	private void scanText(Element element) {
+		if (hasTextAttribute(element)) {
+			textParents.add(element);
+		}
+		
 		if (CODE_TAGS.contains(element.getTagName())) {
 			// No translation here.
 			return;
 		}
+		
 		for (Node child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
 			if (child instanceof Text text) {
 				if (hasText(text)) {
@@ -210,6 +253,32 @@ public class HtmlAnalyzer {
 				scanText(sub);
 			}
 		}
+	}
+
+	private boolean containsText(Element element) {
+		for (Node child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
+			if (child instanceof Text text) {
+				if (hasText(text)) {
+					return true;
+				}
+			} else if (child instanceof Element sub) {
+				if (containsText(sub)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+	
+	private boolean hasTextAttribute(Element element) {
+		NamedNodeMap attributes = element.getAttributes();
+		for (int n = 0, cnt = attributes.getLength(); n < cnt; n ++) {
+			Node attr = attributes.item(n);
+			if (TEXT_ATTRS.contains(attr.getNodeName())) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public static boolean hasText(Text text) {

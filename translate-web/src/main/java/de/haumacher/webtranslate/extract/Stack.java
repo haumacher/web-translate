@@ -31,6 +31,4 @@ public class Stack<T> {
 		return elements.contains(element);
 	}
 	
-	
-
 }

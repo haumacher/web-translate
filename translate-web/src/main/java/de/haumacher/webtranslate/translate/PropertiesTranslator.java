@@ -4,18 +4,23 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import com.deepl.api.DeepLClient;
 import com.deepl.api.DeepLException;
 import com.deepl.api.TextResult;
+
+import de.haumacher.webtranslate.extract.PropertiesWriter;
 
 public class PropertiesTranslator {
 
@@ -24,6 +29,8 @@ public class PropertiesTranslator {
 	private String srcLang;
 	private String destLang;
 	private DeepLClient client;
+	
+	private int  totalChars;
 
 	public PropertiesTranslator(String apikey, String srcLang, String destLang, File input, File outputDir) {
 		this.srcLang = srcLang;
@@ -36,6 +43,8 @@ public class PropertiesTranslator {
 
 	private void translate() throws IOException, DeepLException, InterruptedException {
 		translate(input);
+		
+		System.err.println("Total billed chars: " + totalChars);
 	}
 
 	private void translate(File file) throws IOException, DeepLException, InterruptedException {
@@ -81,25 +90,29 @@ public class PropertiesTranslator {
 			
 			output.getParentFile().mkdirs();
 			
+			Map<String, String> updated = new HashMap<>();
 			int chars = 0;
-			try (PrintWriter w = new PrintWriter(new OutputStreamWriter(new FileOutputStream(output), StandardCharsets.ISO_8859_1))) {
-				Iterator<TextResult> resultIt = results.iterator();
-				for (String key : keys) {
-					w.print(key);
-					w.print("=");
-					String value;
-					if (destProperties.contains(key)) {
-						value = destProperties.getProperty(key);
-					} else {
-						TextResult result = resultIt.next();
-						value = result.getText();
-						chars += result.getBilledCharacters();
-					}
-					w.print(value);
-					w.println();
+			Iterator<TextResult> resultIt = results.iterator();
+			for (String key : keys) {
+				String value;
+				if (destProperties.containsKey(key)) {
+					value = destProperties.getProperty(key);
+				} else {
+					TextResult result = resultIt.next();
+					value = result.getText();
+					chars += result.getBilledCharacters();
 				}
+				
+				updated.put(key, value);
 			}
+			
+			try (OutputStream out = new FileOutputStream(output)) {
+				new PropertiesWriter(out).write(updated);
+			}
+			
 			System.err.println("Translated " + cnt + " messages, billed chars: " + chars);
+			
+			totalChars += chars;
 		} else {
 			System.err.println("No change.");
 		}
