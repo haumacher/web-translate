@@ -26,16 +26,16 @@ import org.xml.sax.SAXException;
 
 public class PropertiesExtractor {
 
-	private File outputDir;
-	private File input;
+	private File propertiesDir;
+	private File templateDir;
 
-	public PropertiesExtractor(File outputDir, File input) {
-		this.outputDir = outputDir;
-		this.input = input;
+	public PropertiesExtractor(File propertiesDir, File templateDir) {
+		this.propertiesDir = propertiesDir;
+		this.templateDir = templateDir;
 	}
 	
 	public void process() throws ParserConfigurationException, SAXException, IOException {
-		process(input);
+		process(templateDir);
 	}
 	
 	private void process(File file) throws ParserConfigurationException, SAXException, IOException {
@@ -105,8 +105,8 @@ public class PropertiesExtractor {
 	private void writeProperties(File file, Map<String, String> textById) throws IOException {
 	    String baseName = baseName(file);
 		
-		Path path = input.toPath().relativize(file.getParentFile().toPath()).resolve(baseName + ".properties");
-		File output = outputDir.toPath().resolve(path).toFile();
+		Path path = templateDir.toPath().relativize(file.getParentFile().toPath()).resolve(baseName + ".properties");
+		File output = propertiesDir.toPath().resolve(path).toFile();
 		output.getParentFile().mkdirs();
 		try (FileOutputStream out = new FileOutputStream(output)) {
 			new PropertiesWriter(out).write(textById);

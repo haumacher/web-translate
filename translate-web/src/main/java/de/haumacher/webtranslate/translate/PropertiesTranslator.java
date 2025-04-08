@@ -48,7 +48,7 @@ public class PropertiesTranslator {
         client = new DeepLClient(apikey);		
 	}
 
-	private void translate() throws IOException, DeepLException, InterruptedException {
+	public void translate() throws IOException, DeepLException, InterruptedException {
 		for (String destLang : destLangs) {
 			File destDir = new File(propertiesDir, destLang);
 			
