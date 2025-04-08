@@ -5,11 +5,9 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -24,44 +22,59 @@ import de.haumacher.webtranslate.extract.PropertiesWriter;
 
 public class PropertiesTranslator {
 
-	private File input;
-	private File outputDir;
+	/**
+	 * Top-level properties directory.
+	 * 
+	 * <p>
+	 * The code expects that there is a sub-directory for each language. This
+	 * language directory then contains property files to translate.
+	 * </p>
+	 */
+	private File propertiesDir;
 	private String srcLang;
-	private String destLang;
+	private List<String> destLangs;
 	private DeepLClient client;
 	
 	private int  totalChars;
+	private File srcDir;
 
-	public PropertiesTranslator(String apikey, String srcLang, String destLang, File input, File outputDir) {
+	public PropertiesTranslator(String apikey, String srcLang, List<String> destLangs, File dir) {
 		this.srcLang = srcLang;
-		this.destLang = destLang;
-		this.input = input;
-		this.outputDir = outputDir;
+		this.destLangs = destLangs;
+		this.srcDir = new File(dir, srcLang);
+		this.propertiesDir = dir;
 		
         client = new DeepLClient(apikey);		
 	}
 
 	private void translate() throws IOException, DeepLException, InterruptedException {
-		translate(input);
+		for (String destLang : destLangs) {
+			File destDir = new File(propertiesDir, destLang);
+			
+			System.err.println();
+			System.err.println("# Translating to: " + destDir);
+			System.err.println();
+			translate(srcDir, destLang, destDir);
+		}
 		
 		System.err.println("Total billed chars: " + totalChars);
 	}
 
-	private void translate(File file) throws IOException, DeepLException, InterruptedException {
+	private void translate(File file, String destLang, File destDir) throws IOException, DeepLException, InterruptedException {
 		if (file.isDirectory()) {
 			for (File sub : file.listFiles()) {
-				translate(sub);
+				translate(sub, destLang, destDir);
 			}
 		} else if (file.getName().endsWith(".properties")) {
-			translateProperties(file);
+			translateProperties(file, destLang, destDir);
 		}
 	}
 
-	private void translateProperties(File file) throws IOException, DeepLException, InterruptedException {
+	private void translateProperties(File file, String destLang, File destDir) throws IOException, DeepLException, InterruptedException {
 		System.err.println("Processing: " + file.getPath());
 		
-		Path path = input.toPath().relativize(file.toPath());
-		File output = outputDir.toPath().resolve(path).toFile();
+		Path path = srcDir.toPath().relativize(file.toPath());
+		File output = destDir.toPath().resolve(path).toFile();
 
 		Properties srcProperties = new Properties();
 		srcProperties.load(new FileInputStream(file));
@@ -119,6 +132,6 @@ public class PropertiesTranslator {
 	}
 
 	public static void main(String[] args) throws IOException, DeepLException, InterruptedException {
-		new PropertiesTranslator(args[0], args[1], args[2], new File(args[3]), new File(args[4])).translate();
+		new PropertiesTranslator(args[0], args[1], Arrays.stream(args[2].split(",")).map(String::strip).toList(), new File(args[3])).translate();
 	}
 }
