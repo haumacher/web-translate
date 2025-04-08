@@ -5,7 +5,9 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
@@ -22,42 +24,47 @@ public class TranslationSynthesizer {
 
 	private File propertiesDir;
 	private File templateDir;
-	private File outputDir;
+	private List<String> destLangs;
+	private String srcLang;
 	
-	public TranslationSynthesizer(File templateDir, File propertiesDir, File outputDir) {
+	public TranslationSynthesizer(File templateDir, File propertiesDir, String srcLang, List<String> destLangs) {
 		this.templateDir = templateDir;
 		this.propertiesDir = propertiesDir;
-		this.outputDir = outputDir;
+		this.srcLang = srcLang;
+		this.destLangs = destLangs;
 	}
 
 	public void synthesize() throws IOException, ParserConfigurationException, SAXException {
-		synthesize(templateDir);
-	}
-
-	private void synthesize(File file) throws IOException, ParserConfigurationException, SAXException {
-		if (file.isDirectory()) {
-			for (File sub : file.listFiles()) {
-				synthesize(sub);
-			}
-		} else if (file.getName().endsWith(".html")) {
-			synthesizeHtml(file);
+		for (String destLang : destLangs) {
+			synthesize(new File(templateDir, srcLang), destLang);
 		}
 	}
 
-	private void synthesizeHtml(File htmlFile) throws IOException, ParserConfigurationException, SAXException {
-		System.err.println("Synthesizing: " + htmlFile.getPath());
-		String propertiesName = PropertiesExtractor.baseName(htmlFile) + ".properties";
+	private void synthesize(File srcFile, String destLang) throws IOException, ParserConfigurationException, SAXException {
+		if (srcFile.isDirectory()) {
+			for (File sub : srcFile.listFiles()) {
+				synthesize(sub, destLang);
+			}
+		} else if (srcFile.getName().endsWith(".html")) {
+			synthesizeHtml(srcFile, destLang);
+		}
+	}
+
+	private void synthesizeHtml(File srcFile, String destLang) throws IOException, ParserConfigurationException, SAXException {
+		String propertiesName = PropertiesExtractor.baseName(srcFile) + ".properties";
 		
-		Path path = templateDir.toPath().relativize(htmlFile.toPath());
-		File propertiesFile = propertiesDir.toPath().resolve(path).getParent().resolve(propertiesName).toFile();
-		File outputFile = outputDir.toPath().resolve(path).toFile();
-		
+		Path path = templateDir.toPath().resolve(srcLang).relativize(srcFile.toPath());
+		File propertiesFile = propertiesDir.toPath().resolve(destLang).resolve(path).getParent().resolve(propertiesName).toFile();
+		File outputFile = templateDir.toPath().resolve(destLang).resolve(path).toFile();
+
+		System.err.println("Synthesizing: " + outputFile.getPath());
+
 		Properties properties = new Properties();
 		try (FileInputStream in = new FileInputStream(propertiesFile)) {
 			properties.load(in);
 		}
 		
-		Document document = PropertiesExtractor.parseHtml(htmlFile);
+		Document document = PropertiesExtractor.parseHtml(srcFile);
 		HtmlAnalyzer analyzer = new HtmlAnalyzer(document);
 		analyzer.setTextById(toMap(properties));
 		analyzer.inject();
@@ -77,6 +84,6 @@ public class TranslationSynthesizer {
 	}
 	
 	public static void main(String[] args) throws IOException, ParserConfigurationException, SAXException {
-		new TranslationSynthesizer(new File(args[0]), new File(args[1]), new File(args[2])).synthesize();
+		new TranslationSynthesizer(new File(args[0]), new File(args[1]), args[2], Arrays.stream(args[3].split(",")).map(String::strip).toList()).synthesize();
 	}
 }
