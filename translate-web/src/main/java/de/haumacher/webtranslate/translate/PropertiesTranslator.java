@@ -8,6 +8,7 @@ import java.io.OutputStream;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -67,6 +68,8 @@ public class PropertiesTranslator {
 			}
 		} else if (file.getName().endsWith(".properties")) {
 			translateProperties(file, destLang, destDir);
+		} else {
+			System.err.println("WARN: Ignoring unexpected file: " + file.getPath());
 		}
 	}
 
@@ -87,19 +90,17 @@ public class PropertiesTranslator {
 		List<String> keys = srcProperties.keySet().stream().map(x -> ((String) x)).sorted().toList();
 		List<String> inputs = new ArrayList<>();
 		StringBuilder context = new StringBuilder();
-		int cnt = 0;
 		for (String key : keys) {
 			if (destProperties.containsKey(key)) {
 				context.append(srcProperties.getProperty(key));
 				context.append("\n");
 			} else {
 				inputs.add(srcProperties.getProperty(key));
-				cnt++;
 			}
 		}
 		
-		if (cnt > 0) {
-			List<TextResult> results = client.translateText(inputs, srcLang, destLang);
+		{
+			List<TextResult> results = inputs.isEmpty() ? Collections.emptyList() : client.translateText(inputs, srcLang, destLang);
 			
 			output.getParentFile().mkdirs();
 			
@@ -118,16 +119,19 @@ public class PropertiesTranslator {
 				
 				updated.put(key, value);
 			}
-			
+
 			try (OutputStream out = new FileOutputStream(output)) {
 				new PropertiesWriter(out).write(updated);
 			}
-			
-			System.err.println("Translated " + cnt + " messages, billed chars: " + chars);
+		
+			if (inputs.isEmpty()) {
+				// Note: The output file must be written, even if there is not a single property defined in the source file.
+				System.err.println("No change.");
+			} else {
+				System.err.println("Translated " + inputs.size() + " messages, billed chars: " + chars);
+			}
 			
 			totalChars += chars;
-		} else {
-			System.err.println("No change.");
 		}
 	}
 
