@@ -37,25 +37,27 @@ public class PropertiesTranslator {
 	private DeepLClient client;
 	
 	private int  totalChars;
-	private File srcDir;
-
-	public PropertiesTranslator(String apikey, String srcLang, List<String> destLangs, File dir) {
+	private File src;
+	private NameStrategy nameStrategy;
+	
+	public PropertiesTranslator(String apikey, String srcLang, List<String> destLangs, File propertiesDir, File src, NameStrategy nameStrategy) {
 		this.srcLang = srcLang;
 		this.destLangs = destLangs;
-		this.srcDir = new File(dir, srcLang);
-		this.propertiesDir = dir;
+		this.nameStrategy = nameStrategy;
+		this.src = src != null ? src : new File(propertiesDir, srcLang);
+		this.propertiesDir = propertiesDir;
 		
         client = new DeepLClient(apikey);		
 	}
 
 	public void translate() throws IOException, DeepLException, InterruptedException {
 		for (String destLang : destLangs) {
-			File destDir = new File(propertiesDir, destLang);
+			File destDir = nameStrategy.destDir(propertiesDir, destLang);
 			
 			System.err.println();
-			System.err.println("# Translating to: " + destDir);
+			System.err.println("# Translating to '" + destLang + "': " + destDir);
 			System.err.println();
-			translate(srcDir, destLang, destDir);
+			translate(src, destLang, destDir);
 		}
 		
 		System.err.println("Total billed chars: " + totalChars);
@@ -76,8 +78,13 @@ public class PropertiesTranslator {
 	private void translateProperties(File file, String destLang, File destDir) throws IOException, DeepLException, InterruptedException {
 		System.err.println("Processing: " + file.getPath());
 		
-		Path path = srcDir.toPath().relativize(file.toPath());
-		File output = destDir.toPath().resolve(path).toFile();
+		Path path;
+		if (src.equals(file)) {
+			path = src.toPath().getParent().relativize(file.toPath());
+		} else {
+			path = src.toPath().relativize(file.toPath());
+		}
+		File output = destDir.toPath().resolve(nameStrategy.destPath(path, destLang)).toFile();
 
 		Properties srcProperties = new Properties();
 		srcProperties.load(new FileInputStream(file));
@@ -136,6 +143,13 @@ public class PropertiesTranslator {
 	}
 
 	public static void main(String[] args) throws IOException, DeepLException, InterruptedException {
-		new PropertiesTranslator(args[0], args[1], Arrays.stream(args[2].split(",")).map(String::strip).toList(), new File(args[3])).translate();
+		String apikey = args[0];
+		String srcLang = args[1];
+		List<String> destLangs = Arrays.stream(args[2].split(",")).map(String::strip).toList();
+		File propertiesDir = new File(args[3]);
+		File srcFile = args.length > 4 ? new File(args[4]) : null;
+		NameStrategy nameStrategy = args.length > 5 ? NameStrategy.valueOf(args[5]) : NameStrategy.LANG_TAG_DIR;
+		
+		new PropertiesTranslator(apikey, srcLang, destLangs, propertiesDir, srcFile, nameStrategy).translate();
 	}
 }

@@ -13,6 +13,7 @@ import com.deepl.api.DeepLException;
 
 import de.haumacher.webtranslate.extract.PropertiesExtractor;
 import de.haumacher.webtranslate.synthesize.TranslationSynthesizer;
+import de.haumacher.webtranslate.translate.NameStrategy;
 import de.haumacher.webtranslate.translate.PropertiesTranslator;
 
 public class Translator {
@@ -33,12 +34,18 @@ public class Translator {
 
 	private void run() throws ParserConfigurationException, SAXException, IOException, DeepLException, InterruptedException {
 		new PropertiesExtractor(new File(propertiesDir, srcLang), new File(templateDir, srcLang)).process();
-		new PropertiesTranslator(apikey, srcLang, destLangs, propertiesDir).translate();
+		new PropertiesTranslator(apikey, srcLang, destLangs, propertiesDir, null, NameStrategy.LANG_TAG_DIR).translate();
 		new TranslationSynthesizer(templateDir, propertiesDir, srcLang, destLangs).synthesize();
 	}
 	
 	public static void main(String[] args) throws ParserConfigurationException, SAXException, IOException, DeepLException, InterruptedException {
-		new Translator(args[0], args[1], Arrays.stream(args[2].split(",")).map(String::strip).toList(), new File(args[3]), new File(args[4])).run();
+		String apikey = args[0];
+		String srcLang = args[1];
+		List<String> destLangs = Arrays.stream(args[2].split(",")).map(String::strip).toList();
+		File propertiesDir = new File(args[3]);
+		File templateDir = new File(args[4]);
+		
+		new Translator(apikey, srcLang, destLangs, propertiesDir, templateDir).run();
 	}
 	
 }

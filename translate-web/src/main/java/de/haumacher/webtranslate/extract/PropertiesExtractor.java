@@ -115,7 +115,11 @@ public class PropertiesExtractor {
 
 	public static String baseName(File file) {
 		String fileName = file.getName();
-	    int index = fileName.lastIndexOf(".");
+	    return baseName(fileName);
+	}
+
+	public static String baseName(String fileName) {
+		int index = fileName.lastIndexOf(".");
 		String baseName = index >= 0 ? fileName.substring(0, index) : fileName;
 		return baseName;
 	}
