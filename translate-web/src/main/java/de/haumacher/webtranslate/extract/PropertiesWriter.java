@@ -18,7 +18,7 @@ public class PropertiesWriter {
 	}
 
 	public void write(Map<String, String> properties) {
-		Charset charset = StandardCharsets.UTF_8;
+		Charset charset = StandardCharsets.ISO_8859_1;
 		CharsetEncoder encoder = charset.newEncoder();
 		try (PrintWriter w = new PrintWriter(new OutputStreamWriter(out, charset))) {
 			List<String> keysSorted = properties.keySet().stream().sorted().toList();
