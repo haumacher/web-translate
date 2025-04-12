@@ -35,6 +35,7 @@ public class TestHtmlAnalyzer {
 			""", properties(analyzer));
 		
 		assertEquals("""
+			<!DOCTYPE html>
 			<html><body data-tx="t0001">Some <a>funny <b><c>new</c><d>ly</d></b> generated <e>awesome</e></a> text</body></html>""", 
 			html(document));
 		
@@ -43,6 +44,7 @@ public class TestHtmlAnalyzer {
 		analyzer.inject();
 		
 		assertEquals("""
+			<!DOCTYPE html>
 			<html><body data-tx="t0001"><a>Lustiger <b><c>neu</c><d></d></b> generierter Text, der <e>wunderbar</e></a> ist</body></html>""", 
 			html(document));
 	}
@@ -56,6 +58,6 @@ public class TestHtmlAnalyzer {
 	private String properties(HtmlAnalyzer analyzer) {
 		ByteArrayOutputStream buffer = new ByteArrayOutputStream();
 		new PropertiesWriter(buffer).write(analyzer.getTextById());
-		return new String(buffer.toByteArray(), StandardCharsets.UTF_8);
+		return new String(buffer.toByteArray(), StandardCharsets.ISO_8859_1);
 	}
 }
