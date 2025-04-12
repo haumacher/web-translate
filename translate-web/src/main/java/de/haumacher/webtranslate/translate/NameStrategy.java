@@ -29,7 +29,12 @@ public enum NameStrategy {
 		@Override
 		protected Path destPath(Path path, String destLang) {
 			String fileName = path.getFileName().toString();
-			String destName = PropertiesExtractor.baseName(fileName) + "_" + destLang.replace('-', '_') + ".properties";
+			String baseName = PropertiesExtractor.baseName(fileName);
+			int sep = baseName.indexOf('_');
+			if (sep >= 0) {
+				baseName = baseName.substring(0, sep);
+			}
+			String destName = baseName + "_" + destLang.replace('-', '_') + ".properties";
 			if (path.getParent() == null) {
 				return Paths.get(destName);
 			} else {
