@@ -4,6 +4,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -26,12 +29,14 @@ public class TranslationSynthesizer {
 	private File templateDir;
 	private List<String> destLangs;
 	private String srcLang;
+	private Charset propertiesCharset;
 	
-	public TranslationSynthesizer(File templateDir, File propertiesDir, String srcLang, List<String> destLangs) {
+	public TranslationSynthesizer(File templateDir, File propertiesDir, String srcLang, List<String> destLangs, Charset propertiesCharset) {
 		this.templateDir = templateDir;
 		this.propertiesDir = propertiesDir;
 		this.srcLang = srcLang;
 		this.destLangs = destLangs;
+		this.propertiesCharset = propertiesCharset;
 	}
 
 	public void synthesize() throws IOException, ParserConfigurationException, SAXException {
@@ -61,7 +66,7 @@ public class TranslationSynthesizer {
 
 		Properties properties = new Properties();
 		try (FileInputStream in = new FileInputStream(propertiesFile)) {
-			properties.load(in);
+			properties.load(new InputStreamReader(in, propertiesCharset));
 		}
 		
 		Document document = PropertiesExtractor.parseHtml(srcFile);
@@ -84,6 +89,11 @@ public class TranslationSynthesizer {
 	}
 	
 	public static void main(String[] args) throws IOException, ParserConfigurationException, SAXException {
-		new TranslationSynthesizer(new File(args[0]), new File(args[1]), args[2], Arrays.stream(args[3].split(",")).map(String::strip).toList()).synthesize();
+		File templateDir = new File(args[0]);
+		File propertiesDir = new File(args[1]);
+		String srcLang = args[2];
+		List<String> destLangs = Arrays.stream(args[3].split(",")).map(String::strip).toList();
+		Charset propertiesCharset = args.length > 4 ? Charset.forName(args[4]) : StandardCharsets.ISO_8859_1;
+		new TranslationSynthesizer(templateDir, propertiesDir, srcLang, destLangs, propertiesCharset).synthesize();
 	}
 }

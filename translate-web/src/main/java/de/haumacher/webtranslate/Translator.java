@@ -37,9 +37,9 @@ public class Translator {
 	}
 
 	private void run() throws ParserConfigurationException, SAXException, IOException, DeepLException, InterruptedException {
-		new PropertiesExtractor(new File(propertiesDir, srcLang), new File(templateDir, srcLang), StandardCharsets.ISO_8859_1).process();
+		new PropertiesExtractor(new File(propertiesDir, srcLang), new File(templateDir, srcLang), propertiesCharset).process();
 		new PropertiesTranslator(apikey, srcLang, destLangs, propertiesDir, null, NameStrategy.LANG_TAG_DIR, propertiesCharset).translate();
-		new TranslationSynthesizer(templateDir, propertiesDir, srcLang, destLangs).synthesize();
+		new TranslationSynthesizer(templateDir, propertiesDir, srcLang, destLangs, propertiesCharset).synthesize();
 	}
 	
 	public static void main(String[] args) throws ParserConfigurationException, SAXException, IOException, DeepLException, InterruptedException {

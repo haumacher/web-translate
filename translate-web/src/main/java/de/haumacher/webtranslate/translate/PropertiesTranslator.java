@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -91,11 +92,11 @@ public class PropertiesTranslator {
 		File output = destDir.toPath().resolve(nameStrategy.destPath(path, destLang)).toFile();
 
 		Properties srcProperties = new Properties();
-		srcProperties.load(new FileInputStream(file));
+		srcProperties.load(new InputStreamReader(new FileInputStream(file), propertiesCharset));
 		
 		Properties destProperties = new Properties();
 		if (output.exists()) {
-			destProperties.load(new FileInputStream(output));
+			destProperties.load(new InputStreamReader(new FileInputStream(output), propertiesCharset));
 		}
 
 		List<String> keys = srcProperties.keySet().stream().map(x -> ((String) x)).sorted().toList();
