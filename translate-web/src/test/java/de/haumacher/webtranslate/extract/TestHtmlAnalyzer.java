@@ -57,7 +57,7 @@ public class TestHtmlAnalyzer {
 
 	private String properties(HtmlAnalyzer analyzer) {
 		ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-		new PropertiesWriter(buffer).write(analyzer.getTextById());
+		new PropertiesWriter(buffer, StandardCharsets.ISO_8859_1).write(analyzer.getTextById());
 		return new String(buffer.toByteArray(), StandardCharsets.ISO_8859_1);
 	}
 }

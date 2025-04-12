@@ -5,20 +5,20 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
 public class PropertiesWriter {
 
 	private OutputStream out;
+	private Charset charset;
 
-	public PropertiesWriter(OutputStream out) {
+	public PropertiesWriter(OutputStream out, Charset charset) {
 		this.out = out;
+		this.charset = charset;
 	}
 
 	public void write(Map<String, String> properties) {
-		Charset charset = StandardCharsets.ISO_8859_1;
 		CharsetEncoder encoder = charset.newEncoder();
 		try (PrintWriter w = new PrintWriter(new OutputStreamWriter(out, charset))) {
 			List<String> keysSorted = properties.keySet().stream().sorted().toList();

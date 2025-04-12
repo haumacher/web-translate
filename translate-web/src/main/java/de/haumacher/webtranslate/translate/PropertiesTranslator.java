@@ -5,6 +5,8 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -39,13 +41,15 @@ public class PropertiesTranslator {
 	private int  totalChars;
 	private File src;
 	private NameStrategy nameStrategy;
+	private Charset propertiesCharset;
 	
-	public PropertiesTranslator(String apikey, String srcLang, List<String> destLangs, File propertiesDir, File src, NameStrategy nameStrategy) {
+	public PropertiesTranslator(String apikey, String srcLang, List<String> destLangs, File propertiesDir, File src, NameStrategy nameStrategy, Charset propertiesCharset) {
 		this.srcLang = srcLang;
 		this.destLangs = destLangs;
 		this.nameStrategy = nameStrategy;
 		this.src = src != null ? src : new File(propertiesDir, srcLang);
 		this.propertiesDir = propertiesDir;
+		this.propertiesCharset = propertiesCharset;
 		
         client = new DeepLClient(apikey);		
 	}
@@ -128,7 +132,7 @@ public class PropertiesTranslator {
 			}
 
 			try (OutputStream out = new FileOutputStream(output)) {
-				new PropertiesWriter(out).write(updated);
+				new PropertiesWriter(out, propertiesCharset).write(updated);
 			}
 		
 			if (inputs.isEmpty()) {
@@ -149,7 +153,9 @@ public class PropertiesTranslator {
 		File propertiesDir = new File(args[3]);
 		File srcFile = args.length > 4 ? new File(args[4]) : null;
 		NameStrategy nameStrategy = args.length > 5 ? NameStrategy.valueOf(args[5]) : NameStrategy.LANG_TAG_DIR;
+		Charset propertiesCharset = args.length > 6 ? Charset.forName(args[6]) : StandardCharsets.ISO_8859_1;
 		
-		new PropertiesTranslator(apikey, srcLang, destLangs, propertiesDir, srcFile, nameStrategy).translate();
+		
+		new PropertiesTranslator(apikey, srcLang, destLangs, propertiesDir, srcFile, nameStrategy, propertiesCharset).translate();
 	}
 }

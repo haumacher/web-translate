@@ -6,6 +6,7 @@ import java.io.FileOutputStream;
 import java.io.IOError;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Map;
@@ -28,10 +29,12 @@ public class PropertiesExtractor {
 
 	private File propertiesDir;
 	private File templateDir;
+	private Charset propertiesCharset;
 
-	public PropertiesExtractor(File propertiesDir, File templateDir) {
+	public PropertiesExtractor(File propertiesDir, File templateDir, Charset propertiesCharset) {
 		this.propertiesDir = propertiesDir;
 		this.templateDir = templateDir;
+		this.propertiesCharset = propertiesCharset;
 	}
 	
 	public void process() throws ParserConfigurationException, SAXException, IOException {
@@ -109,7 +112,7 @@ public class PropertiesExtractor {
 		File output = propertiesDir.toPath().resolve(path).toFile();
 		output.getParentFile().mkdirs();
 		try (FileOutputStream out = new FileOutputStream(output)) {
-			new PropertiesWriter(out).write(textById);
+			new PropertiesWriter(out, propertiesCharset).write(textById);
 		}
 	}
 
@@ -127,8 +130,9 @@ public class PropertiesExtractor {
 	public static void main(String[] args) throws SAXException, IOException, ParserConfigurationException {
 		File input = new File(args[0]);
 		File output = new File(args[1]);
+		Charset propertiesCharset = args.length > 2 ? Charset.forName(args[2]) : StandardCharsets.ISO_8859_1;
 		
-		new PropertiesExtractor(output, input).process();
+		new PropertiesExtractor(output, input, propertiesCharset).process();
 	}
 
 }
