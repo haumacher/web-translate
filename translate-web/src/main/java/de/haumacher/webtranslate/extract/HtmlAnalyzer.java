@@ -76,7 +76,7 @@ public class HtmlAnalyzer {
 
 	private static final String ID_ATTR = "data-tx";
 
-	private static final Pattern textIdPattern = Pattern.compile("t0*([1-9]\\d+)");
+	private static final Pattern TEXT_ID_PATTERN = Pattern.compile("t0*([1-9]\\d*)");
 
 	private static final Set<String> CODE_TAGS = new HashSet<>(Arrays.asList("code", "pre", "script", "xmp", "style"));
 
@@ -217,7 +217,7 @@ public class HtmlAnalyzer {
 	private void scanExistingIds(Element element) {
 		String id = element.getAttribute(ID_ATTR);
 		if (id != null && !id.isEmpty()) {
-			Matcher matcher = textIdPattern.matcher(id);
+			Matcher matcher = TEXT_ID_PATTERN.matcher(id);
 			if (matcher.matches()) {
 				nextId = Math.max(nextId, Integer.parseInt(matcher.group(1)) + 1);
 			}
