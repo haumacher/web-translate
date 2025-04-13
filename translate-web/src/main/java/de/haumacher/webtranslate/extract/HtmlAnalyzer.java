@@ -187,10 +187,18 @@ public class HtmlAnalyzer {
 	private void assignIds() {
 		for (Element textParent : textParents) {
 			if (!hasTextAttribute(textParent) && hasTextParent(textParent)) {
+				textParent.removeAttribute(ID_ATTR);
 				continue;
 			}
 			
 			String id = textParent.getAttribute(ID_ATTR);
+			if (id != null && !id.isBlank()) {
+				if (elementById.containsKey(id)) {
+					// Duplicate assignment, remove.
+					textParent.removeAttribute(ID_ATTR);
+					id = null;
+				}
+			}
 			if (id == null || id.isBlank()) {
 				id = idFormat.format(nextId++);
 				textParent.setAttribute(ID_ATTR, id);
