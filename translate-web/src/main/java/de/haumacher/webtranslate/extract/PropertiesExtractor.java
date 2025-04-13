@@ -9,7 +9,10 @@ import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -27,6 +30,23 @@ import org.xml.sax.SAXException;
 
 public class PropertiesExtractor {
 
+	// See https://developer.mozilla.org/en-US/docs/Glossary/Void_element
+	private static final Set<String> VOID_ELEMENTS = new HashSet<>(Arrays.asList(
+	    "area", 
+	    "base", 
+	    "br", 
+	    "col", 
+	    "embed", 
+	    "hr", 
+	    "img", 
+	    "input", 
+	    "link", 
+	    "meta", 
+	    "param",
+	    "source", 
+	    "track", 
+	    "wbr")); 
+	
 	private File propertiesDir;
 	private File templateDir;
 	private Charset propertiesCharset;
@@ -89,7 +109,13 @@ public class PropertiesExtractor {
 	}
 
 	private static void write(XMLStreamWriter xml, Element element) throws XMLStreamException {
-		xml.writeStartElement(element.getTagName());
+		String tagName = element.getTagName();
+		boolean isVoid = isVoidElement(tagName);
+		if (isVoid) {
+			xml.writeEmptyElement(tagName);
+		} else {
+			xml.writeStartElement(tagName);
+		}
 		NamedNodeMap attributes = element.getAttributes();
 		for (int n = 0, cnt = attributes.getLength(); n < cnt; n++) {
 			Node attribute = attributes.item(n);
@@ -102,7 +128,13 @@ public class PropertiesExtractor {
 				write(xml, sub);
 			}
 		}
-		xml.writeEndElement();
+		if (!isVoid) {
+			xml.writeEndElement();
+		}
+	}
+
+	private static boolean isVoidElement(String tagName) {
+		return VOID_ELEMENTS.contains(tagName);
 	}
 
 	private void writeProperties(File file, Map<String, String> textById) throws IOException {
