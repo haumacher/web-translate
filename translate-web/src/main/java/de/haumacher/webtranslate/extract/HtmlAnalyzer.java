@@ -164,11 +164,11 @@ public class HtmlAnalyzer {
 					textById.put(id, new TextExtractor(element).extract());
 				}
 			}
-		} else {
-			for (Node child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
-				if (child instanceof Element sub) {
-					extractText(sub);
-				}
+		}
+
+		for (Node child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
+			if (child instanceof Element sub) {
+				extractText(sub);
 			}
 		}
 	}
