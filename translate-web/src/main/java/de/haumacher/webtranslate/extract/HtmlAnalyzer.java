@@ -4,7 +4,7 @@ import java.text.DecimalFormat;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -80,11 +80,14 @@ public class HtmlAnalyzer {
 
 	private static final Set<String> CODE_TAGS = new HashSet<>(Arrays.asList("code", "pre", "script", "xmp", "style"));
 
-	private static final Set<String> TEXT_ATTRS = new HashSet<>(Arrays.asList("alt", "label", "placeholder", "summary", "title"));
+	private static final Set<String> TEXT_ATTRS = new HashSet<>(Arrays.asList("alt", "label", "placeholder", "summary", "title", "aria-label"));
 	
 	private Document document;
 
-	private Set<Element> textParents = new LinkedHashSet<>();
+	/**
+	 * Mapping of text element (that either has a text attribute or text content to a decision, whether the element contains text content).
+	 */
+	private Map<Element, Boolean> textParents = new LinkedHashMap<>();
 	private Map<String, Element> elementById = new HashMap<>();
 	private int nextId = 1;
 	private DecimalFormat idFormat = new DecimalFormat("t0000");
@@ -176,7 +179,7 @@ public class HtmlAnalyzer {
 	private void cleanIds(Element element) {
 		for (Node child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
 			if (child instanceof Element sub) {
-				if (!textParents.contains(child)) {
+				if (!textParents.containsKey(child)) {
 					((Element) child).removeAttribute(ID_ATTR);
 				}
 				cleanIds(sub);
@@ -185,7 +188,7 @@ public class HtmlAnalyzer {
 	}
 
 	private void assignIds() {
-		for (Element textParent : textParents) {
+		for (Element textParent : textParents.keySet()) {
 			if (!hasTextAttribute(textParent) && hasTextParent(textParent)) {
 				textParent.removeAttribute(ID_ATTR);
 				continue;
@@ -210,7 +213,8 @@ public class HtmlAnalyzer {
 
 	private boolean hasTextParent(Element textParent) {
 		for (Node parent = textParent.getParentNode(); parent != null; parent = parent.getParentNode()) {
-			if (textParents.contains(parent)) {
+			Boolean containsText = textParents.get(parent);
+			if (containsText != null && containsText.booleanValue()) {
 				return true;
 			}
 		}
@@ -243,7 +247,7 @@ public class HtmlAnalyzer {
 	 */
 	private void scanText(Element element) {
 		if (hasTextAttribute(element)) {
-			textParents.add(element);
+			textParents.put(element, Boolean.FALSE);
 		}
 		
 		if (CODE_TAGS.contains(element.getTagName())) {
@@ -255,7 +259,7 @@ public class HtmlAnalyzer {
 			if (child instanceof Text text) {
 				if (hasText(text)) {
 					Element textParent = (Element) child.getParentNode();
-					textParents.add(textParent);
+					textParents.put(textParent, Boolean.TRUE);
 				}
 			} else if (child instanceof Element sub) {
 				scanText(sub);
@@ -267,10 +271,6 @@ public class HtmlAnalyzer {
 		for (Node child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
 			if (child instanceof Text text) {
 				if (hasText(text)) {
-					return true;
-				}
-			} else if (child instanceof Element sub) {
-				if (containsText(sub)) {
 					return true;
 				}
 			}

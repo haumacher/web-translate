@@ -24,8 +24,7 @@ public class TestHtmlAnalyzer {
 	public void testAnalyze() throws SAXException, IOException, ParserConfigurationException {
 		String html = "<html><body>Some <a>funny <b><c>new</c><d>ly</d></b> generated <e>awesome</e></a> text</body></html>";
 		
-		Document document = DocumentBuilderFactory.newDefaultInstance().newDocumentBuilder().parse(new InputSource(new StringReader(html)));
-		
+		Document document = parse(html);
 		HtmlAnalyzer analyzer = new HtmlAnalyzer(document);
 		analyzer.analyze();
 		
@@ -49,6 +48,32 @@ public class TestHtmlAnalyzer {
 			html(document));
 	}
 
+	private Document parse(String html) throws SAXException, IOException, ParserConfigurationException {
+		return DocumentBuilderFactory.newDefaultInstance().newDocumentBuilder().parse(new InputSource(new StringReader(html)));
+	}
+
+	@Test
+	public void testTextAttributeParent() throws SAXException, IOException, ParserConfigurationException {
+		String html = """
+			<nav title="My title"><ul><li>My text</li></ul></nav>""";
+
+		Document document = parse(html);
+		HtmlAnalyzer analyzer = new HtmlAnalyzer(document);
+		analyzer.analyze();
+
+		assertEquals("""
+			<!DOCTYPE html>
+			<nav data-tx="t0001" title="My title"><ul><li data-tx="t0002">My text</li></ul></nav>""",
+			html(document));
+		
+		assertEquals("""
+			t0001.title=My title
+			t0002=My text
+			
+			""", properties(analyzer));
+		
+	}
+	
 	private String html(Document document) {
 		ByteArrayOutputStream buffer = new ByteArrayOutputStream();
 		PropertiesExtractor.serializeDocument(buffer, document);
