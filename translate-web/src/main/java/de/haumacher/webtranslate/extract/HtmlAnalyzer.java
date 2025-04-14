@@ -138,11 +138,11 @@ public class HtmlAnalyzer {
 					new TextInjector(element).inject(text);
 				}
 			}
-		} else {
-			for (Node child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
-				if (child instanceof Element sub) {
-					injectText(sub);
-				}
+		}
+
+		for (Node child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
+			if (child instanceof Element sub) {
+				injectText(sub);
 			}
 		}
 	}

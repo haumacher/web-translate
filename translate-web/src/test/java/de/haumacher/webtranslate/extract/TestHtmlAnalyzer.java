@@ -39,7 +39,6 @@ public class TestHtmlAnalyzer {
 			html(document));
 		
 		analyzer.getTextById().put("t0001", "<x1>Lustiger <x2><x3>neu</x3></x2> generierter Text, der <x5>wunderbar</x5></x1> ist");
-		
 		analyzer.inject();
 		
 		assertEquals("""
@@ -71,7 +70,15 @@ public class TestHtmlAnalyzer {
 			t0002=My text
 			
 			""", properties(analyzer));
+
+		analyzer.getTextById().put("t0001.title", "Mein Titel");
+		analyzer.getTextById().put("t0002", "Mein Text");
+		analyzer.inject();
 		
+		assertEquals("""
+			<!DOCTYPE html>
+			<nav data-tx="t0001" title="Mein Titel"><ul><li data-tx="t0002">Mein Text</li></ul></nav>""",
+			html(document));
 	}
 	
 	private String html(Document document) {
