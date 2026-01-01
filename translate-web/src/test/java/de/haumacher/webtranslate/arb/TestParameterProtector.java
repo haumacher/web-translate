@@ -187,7 +187,7 @@ public class TestParameterProtector {
 		String original = "Hello {username}!";
 
 		// Simulate a simple translation function
-		String result = ParameterProtector.translateWithParameterProtection(original, english -> 
+		String result = ParameterProtector.translate(original, english -> 
 		    english.replace("Hello", "Hallo"));
 
 		assertEquals("Hallo {username}!", result);
@@ -202,7 +202,7 @@ public class TestParameterProtector {
 				.replace("No messages", "Keine Nachrichten")
 				.replace("one message", "eine Nachricht")
 				.replace("messages", "Nachrichten");
-		String result = ParameterProtector.translateWithParameterProtection(original, translator);
+		String result = ParameterProtector.translate(original, translator);
 
 		assertEquals(translator.apply(original), result);
 	}
@@ -222,7 +222,7 @@ public class TestParameterProtector {
 				.replace("no messages", "keine Nachrichten")
 				.replace("one message", "eine Nachricht")
 				.replace("messages", "Nachrichten");
-		String result = ParameterProtector.translateWithParameterProtection(original, translator);
+		String result = ParameterProtector.translate(original, translator);
 
 		assertEquals(translator.apply(original), result);
 	}
@@ -249,7 +249,7 @@ public class TestParameterProtector {
 				.replace("one message", "eine Nachricht")
 				.replace("messages", "Nachrichten");
 			
-		String result = ParameterProtector.translateWithParameterProtection(original, translation);
+		String result = ParameterProtector.translate(original, translation);
 
 		// Result: Currently, when a complex format is present, the entire original is restored
 		// Translation of surrounding text is not yet supported for messages with complex formats
