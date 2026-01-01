@@ -2,6 +2,10 @@ package de.haumacher.webtranslate.arb;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 
 import org.junit.jupiter.api.Test;
@@ -207,8 +211,13 @@ public class TestParameterProtector {
 	public void testTranslatePluralFormatWithSurroundingText() {
 		String original = "You have {count, plural, =0{no messages} =1{one message} other{{count} messages}}";
 
+		Function<String, String> check = inputTester(
+			"You have <x1>count</x1>",
+			"no messages",
+			"<x1>count</x1> messages");
+		
 		// Translate using dummy function
-		Function<String, String> translator = english -> english
+		Function<String, String> translator = english -> check.apply(english)
 				.replace("You have", "Sie haben")
 				.replace("no messages", "keine Nachrichten")
 				.replace("one message", "eine Nachricht")
@@ -216,6 +225,15 @@ public class TestParameterProtector {
 		String result = ParameterProtector.translateWithParameterProtection(original, translator);
 
 		assertEquals(translator.apply(original), result);
+	}
+
+	private Function<String, String> inputTester(String... expectedInputs) {
+		Set<String> inputSet = new HashSet<>(Arrays.asList(expectedInputs));
+		
+		return input -> {
+			assertTrue(inputSet.contains(input), () -> "Input not expected: " + input);
+			return input;
+		};
 	}
 
 	@Test
