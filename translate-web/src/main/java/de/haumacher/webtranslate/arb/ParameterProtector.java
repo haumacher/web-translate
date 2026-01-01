@@ -73,17 +73,41 @@ public class ParameterProtector {
 	 * Protects parameters in the text by replacing them with numbered XML tags.
 	 *
 	 * <p>
-	 * Example:
-	 * <pre>
-	 * Input:  "Hello {username}, you have {count} messages"
-	 * Output: "Hello &lt;x1&gt;username&lt;/x1&gt;, you have &lt;x2&gt;count&lt;/x2&gt; messages"
-	 * </pre>
+	 * This method handles both simple parameters and complex ICU MessageFormat syntax:
+	 * <ul>
+	 *   <li>Simple: {@code "Hello {username}"} → {@code "Hello <x1>username</x1>"}</li>
+	 *   <li>Plural: {@code "{count, plural, =1{1 message} other{{count} messages}}"}</li>
+	 * </ul>
+	 * </p>
+	 *
+	 * <p>
+	 * For complex ICU formats (plural, select), only translatable text is exposed
+	 * while identifiers (parameter names, format types, selector keywords) are protected.
 	 * </p>
 	 *
 	 * @param text The original text with ARB parameters
 	 * @return ProtectedText containing the protected text and parameter list
 	 */
 	public static ProtectedText protect(String text) {
+		// Try to parse as ICU MessageFormat
+		try {
+			List<IcuMessageParser.MessagePart> parts = IcuMessageParser.parse(text);
+			String protectedText = IcuMessageParser.toProtectedText(parts);
+
+			// Extract all protected parameter names for restoration
+			List<String> parameters = extractParameterNames(protectedText);
+
+			return new ProtectedText(protectedText, parameters);
+		} catch (Exception e) {
+			// Fallback to simple regex-based protection
+			return protectSimple(text);
+		}
+	}
+
+	/**
+	 * Simple regex-based protection (fallback for non-ICU messages).
+	 */
+	private static ProtectedText protectSimple(String text) {
 		List<String> parameters = new ArrayList<>();
 		Matcher matcher = PARAMETER_PATTERN.matcher(text);
 		StringBuffer result = new StringBuffer();
@@ -102,6 +126,21 @@ public class ParameterProtector {
 		matcher.appendTail(result);
 
 		return new ProtectedText(result.toString(), parameters);
+	}
+
+	/**
+	 * Extracts parameter names from protected text (content inside XML tags).
+	 */
+	private static List<String> extractParameterNames(String protectedText) {
+		List<String> parameters = new ArrayList<>();
+		Pattern extractPattern = Pattern.compile("<x\\d+>([^<]+)</x\\d+>");
+		Matcher matcher = extractPattern.matcher(protectedText);
+
+		while (matcher.find()) {
+			parameters.add(matcher.group(1));
+		}
+
+		return parameters;
 	}
 
 	/**

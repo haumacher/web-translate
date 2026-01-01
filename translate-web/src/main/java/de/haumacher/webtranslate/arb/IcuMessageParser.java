@@ -1,0 +1,460 @@
+package de.haumacher.webtranslate.arb;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Parser for ICU MessageFormat syntax used in ARB files.
+ *
+ * <p>
+ * ICU MessageFormat supports complex parameter syntax including:
+ * <ul>
+ *   <li>Simple placeholders: {@code {name}}</li>
+ *   <li>Typed arguments: {@code {count, number}}</li>
+ *   <li>Plural forms: {@code {count, plural, =1{one item} other{# items}}}</li>
+ *   <li>Select forms: {@code {gender, select, male{his} female{her} other{their}}}</li>
+ *   <li>Nested formats: Complex combinations of the above</li>
+ * </ul>
+ * </p>
+ *
+ * <p>
+ * This parser identifies translatable text vs. non-translatable identifiers (keywords like
+ * "plural", "select", "one", "other", etc.) and protects them appropriately for translation.
+ * </p>
+ *
+ * <p>
+ * Example:
+ * <pre>
+ * Input:  "{count, plural, =1{1 message} other{{count} messages}}"
+ *
+ * Parts to protect from translation:
+ * - "count" (parameter name)
+ * - "plural" (format type)
+ * - "=1", "other" (selector keywords)
+ *
+ * Parts to translate:
+ * - "1 message"
+ * - "messages"
+ * </pre>
+ * </p>
+ */
+public class IcuMessageParser {
+
+	/**
+	 * Represents a parsed segment of ICU message text.
+	 */
+	public static abstract class MessagePart {
+		/**
+		 * Converts this part back to text for translation.
+		 *
+		 * @param nextParamIndex The next available parameter index for protection
+		 * @return The converted text and the next available index
+		 */
+		public abstract ConversionResult toProtectedText(int nextParamIndex);
+	}
+
+	/**
+	 * Plain text that should be translated.
+	 */
+	public static class TextPart extends MessagePart {
+		private final String text;
+
+		public TextPart(String text) {
+			this.text = text;
+		}
+
+		public String getText() {
+			return text;
+		}
+
+		@Override
+		public ConversionResult toProtectedText(int nextParamIndex) {
+			return new ConversionResult(text, nextParamIndex);
+		}
+
+		@Override
+		public String toString() {
+			return "Text{" + text + "}";
+		}
+	}
+
+	/**
+	 * A simple placeholder: {@code {name}} or {@code {0}}.
+	 */
+	public static class SimplePlaceholder extends MessagePart {
+		private final String name;
+
+		public SimplePlaceholder(String name) {
+			this.name = name;
+		}
+
+		public String getName() {
+			return name;
+		}
+
+		@Override
+		public ConversionResult toProtectedText(int nextParamIndex) {
+			String protected_ = "<x" + nextParamIndex + ">" + name + "</x" + nextParamIndex + ">";
+			return new ConversionResult(protected_, nextParamIndex + 1);
+		}
+
+		@Override
+		public String toString() {
+			return "Placeholder{" + name + "}";
+		}
+	}
+
+	/**
+	 * A complex format with type and style: {@code {count, plural, ...}}.
+	 */
+	public static class ComplexFormat extends MessagePart {
+		private final String argumentName;
+		private final String formatType;
+		private final List<SelectorCase> cases;
+
+		public ComplexFormat(String argumentName, String formatType, List<SelectorCase> cases) {
+			this.argumentName = argumentName;
+			this.formatType = formatType;
+			this.cases = cases;
+		}
+
+		public String getArgumentName() {
+			return argumentName;
+		}
+
+		public String getFormatType() {
+			return formatType;
+		}
+
+		public List<SelectorCase> getCases() {
+			return cases;
+		}
+
+		@Override
+		public ConversionResult toProtectedText(int nextParamIndex) {
+			StringBuilder result = new StringBuilder();
+
+			// Protect the argument structure: {argumentName, formatType,
+			result.append("<x").append(nextParamIndex).append(">");
+			result.append(argumentName).append(", ").append(formatType).append(",");
+			result.append("</x").append(nextParamIndex).append(">");
+
+			int currentIndex = nextParamIndex + 1;
+
+			// Process each case
+			for (SelectorCase case_ : cases) {
+				result.append(" ");
+
+				// Protect selector keyword (=1, one, other, etc.)
+				result.append("<x").append(currentIndex).append(">");
+				result.append(case_.selector);
+				result.append("</x").append(currentIndex).append(">");
+				currentIndex++;
+
+				result.append("{");
+
+				// Convert case content (may contain nested formats)
+				ConversionResult caseResult = convertParts(case_.parts, currentIndex);
+				result.append(caseResult.text);
+				currentIndex = caseResult.nextIndex;
+
+				result.append("}");
+			}
+
+			return new ConversionResult(result.toString(), currentIndex);
+		}
+
+		@Override
+		public String toString() {
+			return "ComplexFormat{" + argumentName + ", " + formatType + ", cases=" + cases.size() + "}";
+		}
+	}
+
+	/**
+	 * A single case in a select/plural format.
+	 */
+	public static class SelectorCase {
+		private final String selector;  // e.g., "=1", "one", "other", "male"
+		private final List<MessagePart> parts;
+
+		public SelectorCase(String selector, List<MessagePart> parts) {
+			this.selector = selector;
+			this.parts = parts;
+		}
+
+		public String getSelector() {
+			return selector;
+		}
+
+		public List<MessagePart> getParts() {
+			return parts;
+		}
+	}
+
+	/**
+	 * Result of converting message parts to protected text.
+	 */
+	public static class ConversionResult {
+		public final String text;
+		public final int nextIndex;
+
+		public ConversionResult(String text, int nextIndex) {
+			this.text = text;
+			this.nextIndex = nextIndex;
+		}
+	}
+
+	/**
+	 * Parses an ICU message string into structured parts.
+	 *
+	 * @param message The ICU message string
+	 * @return List of message parts
+	 */
+	public static List<MessagePart> parse(String message) {
+		Parser parser = new Parser(message);
+		return parser.parseMessage();
+	}
+
+	/**
+	 * Converts parsed message parts to protected text for translation.
+	 *
+	 * @param parts The parsed message parts
+	 * @return Protected text with identifiers replaced by XML tags
+	 */
+	public static String toProtectedText(List<MessagePart> parts) {
+		ConversionResult result = convertParts(parts, 1);
+		return result.text;
+	}
+
+	private static ConversionResult convertParts(List<MessagePart> parts, int startIndex) {
+		StringBuilder result = new StringBuilder();
+		int currentIndex = startIndex;
+
+		for (MessagePart part : parts) {
+			ConversionResult partResult = part.toProtectedText(currentIndex);
+			result.append(partResult.text);
+			currentIndex = partResult.nextIndex;
+		}
+
+		return new ConversionResult(result.toString(), currentIndex);
+	}
+
+	/**
+	 * Internal parser implementation.
+	 */
+	private static class Parser {
+		private final String input;
+		private int pos;
+
+		public Parser(String input) {
+			this.input = input;
+			this.pos = 0;
+		}
+
+		public List<MessagePart> parseMessage() {
+			List<MessagePart> parts = new ArrayList<>();
+			StringBuilder text = new StringBuilder();
+
+			while (pos < input.length()) {
+				char ch = input.charAt(pos);
+
+				if (ch == '{') {
+					// Save accumulated text
+					if (text.length() > 0) {
+						parts.add(new TextPart(text.toString()));
+						text.setLength(0);
+					}
+
+					// Parse placeholder or complex format
+					MessagePart part = parsePlaceholder();
+					if (part != null) {
+						parts.add(part);
+					}
+				} else if (ch == '\'') {
+					// Handle quoted text (escaping)
+					pos++;
+					if (pos < input.length() && input.charAt(pos) == '\'') {
+						// Two apostrophes = literal apostrophe
+						text.append('\'');
+						pos++;
+					} else {
+						// Quoted section - find closing apostrophe
+						while (pos < input.length() && input.charAt(pos) != '\'') {
+							text.append(input.charAt(pos));
+							pos++;
+						}
+						if (pos < input.length()) {
+							pos++; // skip closing '
+						}
+					}
+				} else {
+					text.append(ch);
+					pos++;
+				}
+			}
+
+			// Save remaining text
+			if (text.length() > 0) {
+				parts.add(new TextPart(text.toString()));
+			}
+
+			return parts;
+		}
+
+		private MessagePart parsePlaceholder() {
+			pos++; // skip opening {
+
+			// Read argument name
+			String argumentName = readUntil(',', '}');
+
+			if (pos >= input.length() || input.charAt(pos) == '}') {
+				// Simple placeholder: {name}
+				pos++; // skip closing }
+				return new SimplePlaceholder(argumentName.trim());
+			}
+
+			// Complex format: {name, type, ...}
+			pos++; // skip comma
+
+			String formatType = readUntil(',', '}').trim();
+
+			if (pos >= input.length() || input.charAt(pos) == '}') {
+				// Format with type but no style: {count, number}
+				// Treat as simple placeholder for now
+				pos++; // skip closing }
+				return new SimplePlaceholder(argumentName.trim());
+			}
+
+			pos++; // skip comma
+
+			// Check if this is a select/plural format
+			if (formatType.equals("plural") || formatType.equals("select") || formatType.equals("selectordinal")) {
+				List<SelectorCase> cases = parseSelectorCases();
+				return new ComplexFormat(argumentName.trim(), formatType, cases);
+			} else {
+				// Other format types (number, date, time with styles)
+				// Skip to end of placeholder for now
+				readUntil('}');
+				if (pos < input.length()) {
+					pos++; // skip closing }
+				}
+				return new SimplePlaceholder(argumentName.trim());
+			}
+		}
+
+		private List<SelectorCase> parseSelectorCases() {
+			List<SelectorCase> cases = new ArrayList<>();
+
+			// Skip whitespace
+			skipWhitespace();
+
+			while (pos < input.length() && input.charAt(pos) != '}') {
+				// Read selector keyword (=1, one, other, etc.)
+				String selector = readUntil('{').trim();
+
+				if (pos >= input.length()) {
+					break;
+				}
+
+				pos++; // skip opening {
+
+				// Parse case content (may contain nested placeholders)
+				List<MessagePart> caseParts = parseCaseContent();
+
+				cases.add(new SelectorCase(selector, caseParts));
+
+				skipWhitespace();
+			}
+
+			if (pos < input.length() && input.charAt(pos) == '}') {
+				pos++; // skip closing } of entire format
+			}
+
+			return cases;
+		}
+
+		private List<MessagePart> parseCaseContent() {
+			List<MessagePart> parts = new ArrayList<>();
+			StringBuilder text = new StringBuilder();
+			int depth = 1; // We're already inside one {
+
+			while (pos < input.length() && depth > 0) {
+				char ch = input.charAt(pos);
+
+				if (ch == '{') {
+					// Save accumulated text
+					if (text.length() > 0) {
+						parts.add(new TextPart(text.toString()));
+						text.setLength(0);
+					}
+
+					// Check if this is a nested placeholder or literal {
+					int savedPos = pos;
+					MessagePart part = parsePlaceholder();
+
+					if (part != null) {
+						parts.add(part);
+					} else {
+						// Failed to parse, treat as literal
+						pos = savedPos;
+						text.append(ch);
+						pos++;
+					}
+				} else if (ch == '}') {
+					depth--;
+					if (depth == 0) {
+						// End of this case
+						break;
+					} else {
+						text.append(ch);
+						pos++;
+					}
+				} else if (ch == '#') {
+					// # is a special symbol in plural forms representing the number
+					// Treat it as a placeholder
+					if (text.length() > 0) {
+						parts.add(new TextPart(text.toString()));
+						text.setLength(0);
+					}
+					parts.add(new SimplePlaceholder("#"));
+					pos++;
+				} else {
+					text.append(ch);
+					pos++;
+				}
+			}
+
+			// Save remaining text
+			if (text.length() > 0) {
+				parts.add(new TextPart(text.toString()));
+			}
+
+			return parts;
+		}
+
+		private String readUntil(char... terminators) {
+			StringBuilder result = new StringBuilder();
+
+			while (pos < input.length()) {
+				char ch = input.charAt(pos);
+
+				for (char terminator : terminators) {
+					if (ch == terminator) {
+						return result.toString();
+					}
+				}
+
+				result.append(ch);
+				pos++;
+			}
+
+			return result.toString();
+		}
+
+		private void skipWhitespace() {
+			while (pos < input.length() && Character.isWhitespace(input.charAt(pos))) {
+				pos++;
+			}
+		}
+	}
+}
