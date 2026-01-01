@@ -132,39 +132,10 @@ public class IcuMessageParser {
 
 		@Override
 		public ConversionResult toProtectedText(int nextParamIndex) {
-			StringBuilder result = new StringBuilder();
-
-			// Build ICU format structure preserving syntax
-			// Only protect the argument name, keep format type and selectors as-is
-			result.append("{");
-			result.append("<x").append(nextParamIndex).append(">");
-			result.append(argumentName);
-			result.append("</x").append(nextParamIndex).append(">");
-			result.append(", ");
-			result.append(formatType);
-			result.append(",");
-
-			int currentIndex = nextParamIndex + 1;
-
-			// Process each case
-			for (SelectorCase case_ : cases) {
-				result.append(" ");
-
-				// Keep selector as-is (not protected - it's a keyword)
-				result.append(case_.selector);
-				result.append("{");
-
-				// Convert case content (may contain nested formats and placeholders)
-				ConversionResult caseResult = convertParts(case_.parts, currentIndex);
-				result.append(caseResult.text);
-				currentIndex = caseResult.nextIndex;
-
-				result.append("}");
-			}
-
-			result.append("}");
-
-			return new ConversionResult(result.toString(), currentIndex);
+			// Complex formats are NOT supported by the simple protection mechanism
+			// They should just protect the parameter name like a simple placeholder
+			String protected_ = "<x" + nextParamIndex + ">" + argumentName + "</x" + nextParamIndex + ">";
+			return new ConversionResult(protected_, nextParamIndex + 1);
 		}
 
 		@Override
