@@ -168,12 +168,12 @@ public class ArbTranslator {
 			} else {
 				// Need to translate this resource
 				// Protect parameters before translation
-				ParameterProtector.ProtectedText protected_ =
+				ParameterProtector.ProtectedText protection =
 					ParameterProtector.protect(sourceResource.getValue());
 
-				textsToTranslate.add(protected_.getProtectedText());
+				textsToTranslate.add(protection.getProtectedText());
 				resourceIdsToTranslate.add(resourceId);
-				protectedTexts.add(protected_);
+				protectedTexts.add(protection);
 			}
 		}
 
@@ -193,12 +193,12 @@ public class ArbTranslator {
 			for (int i = 0; i < results.size(); i++) {
 				TextResult result = results.get(i);
 				String resourceId = resourceIdsToTranslate.get(i);
-				ParameterProtector.ProtectedText protected_ = protectedTexts.get(i);
+				ParameterProtector.ProtectedText protection = protectedTexts.get(i);
 
 				// Restore original parameters after translation
 				String translatedText = ParameterProtector.restore(
 					result.getText(),
-					protected_.getParameters()
+					protection.getParameters()
 				);
 
 				// Create target resource with translated value only (no metadata)

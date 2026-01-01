@@ -94,8 +94,8 @@ public class IcuMessageParser {
 
 		@Override
 		public ConversionResult toProtectedText(int nextParamIndex) {
-			String protected_ = "<x" + nextParamIndex + ">" + name + "</x" + nextParamIndex + ">";
-			return new ConversionResult(protected_, nextParamIndex + 1);
+			String protection = "<x" + nextParamIndex + ">" + name + "</x" + nextParamIndex + ">";
+			return new ConversionResult(protection, nextParamIndex + 1);
 		}
 
 		@Override
@@ -134,8 +134,8 @@ public class IcuMessageParser {
 		public ConversionResult toProtectedText(int nextParamIndex) {
 			// Complex format is treated as a single top-level parameter
 			// Only the parameter name is protected, everything else (including nested content) is hidden
-			String protected_ = "<x" + nextParamIndex + ">" + argumentName + "</x" + nextParamIndex + ">";
-			return new ConversionResult(protected_, nextParamIndex + 1);
+			String protection = "<x" + nextParamIndex + ">" + argumentName + "</x" + nextParamIndex + ">";
+			return new ConversionResult(protection, nextParamIndex + 1);
 		}
 
 		@Override

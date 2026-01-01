@@ -280,8 +280,8 @@ public class ParameterProtector {
 	 */
 	public static String protectAndTranslate(String text,
 			java.util.function.Function<String, String> translationFunction) {
-		ProtectedText protected_ = protect(text);
-		String translated = translationFunction.apply(protected_.getProtectedText());
-		return protected_.restore(translated);
+		ProtectedText protection = protect(text);
+		String translated = translationFunction.apply(protection.getProtectedText());
+		return protection.restore(translated);
 	}
 }

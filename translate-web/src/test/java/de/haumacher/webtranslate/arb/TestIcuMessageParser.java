@@ -107,18 +107,18 @@ public class TestIcuMessageParser {
 	public void testProtectPluralFormat() {
 		String message = "{count, plural, =1{1 Meldung} other{{count} Meldungen}}";
 
-		ProtectedText protected_ = ParameterProtector.protect(message);
+		ProtectedText protection = ParameterProtector.protect(message);
 
 		// Note: Complex ICU format protection is simplified - only parameter name is protected
 		// Full ICU format support with proper translatable text extraction is not yet implemented
-		String protectedText = protected_.getProtectedText();
+		String protectedText = protection.getProtectedText();
 
 		// Should contain protected parameter name (just the name, nothing else)
 		assertTrue(protectedText.contains("<x1>count</x1>"));
 
 		// Verify it's just the parameter name in the tag
-		assertEquals(1, protected_.getParameters().size());
-		assertEquals("count", protected_.getParameters().get(0));
+		assertEquals(1, protection.getParameters().size());
+		assertEquals("count", protection.getParameters().get(0));
 	}
 
 	@Test
@@ -126,10 +126,10 @@ public class TestIcuMessageParser {
 		String original = "{count, plural, =1{1 message} other{{count} messages}}";
 
 		// Protect
-		ProtectedText protected_ = ParameterProtector.protect(original);
+		ProtectedText protection = ParameterProtector.protect(original);
 
 		// Restore should return the original
-		String restored = protected_.restore(protected_.getProtectedText());
+		String restored = protection.restore(protection.getProtectedText());
 
 		// Protect + restore must yield the original input
 		assertEquals(original, restored);
@@ -139,15 +139,15 @@ public class TestIcuMessageParser {
 	public void testComplexRealWorldPlural() {
 		String original = "{reportsCount, plural, =0{Keine Meldungen} =1{1 Meldung} other{{reportsCount} Meldungen}}";
 
-		ProtectedText protected_ = ParameterProtector.protect(original);
+		ProtectedText protection = ParameterProtector.protect(original);
 
 		// Should just protect the parameter name
-		assertNotNull(protected_.getParameters());
-		assertEquals(1, protected_.getParameters().size());
-		assertEquals("reportsCount", protected_.getParameters().get(0));
+		assertNotNull(protection.getParameters());
+		assertEquals(1, protection.getParameters().size());
+		assertEquals("reportsCount", protection.getParameters().get(0));
 
 		// The protected text is just the parameter tag
-		String protectedText = protected_.getProtectedText();
+		String protectedText = protection.getProtectedText();
 		assertTrue(protectedText.contains("<x1>reportsCount</x1>"));
 	}
 
@@ -187,14 +187,14 @@ public class TestIcuMessageParser {
 		String original = "{reportsCount, plural, =1{1 Meldung} other{{reportsCount} Meldungen}}";
 
 		// Protect
-		ProtectedText protected_ = ParameterProtector.protect(original);
+		ProtectedText protection = ParameterProtector.protect(original);
 
 		// The protected text is just <x1>reportsCount</x1>
-		String protectedText = protected_.getProtectedText();
+		String protectedText = protection.getProtectedText();
 		assertTrue(protectedText.contains("<x1>reportsCount</x1>"));
 
 		// Restore should give back the original
-		String restored = protected_.restore(protectedText);
+		String restored = protection.restore(protectedText);
 		assertEquals(original, restored);
 	}
 }
