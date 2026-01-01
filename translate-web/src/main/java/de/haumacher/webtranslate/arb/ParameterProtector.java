@@ -80,6 +80,22 @@ public class ParameterProtector {
 		public List<IcuMessageParser.MessagePart> getOriginalParts() {
 			return originalParts;
 		}
+
+		/**
+		 * Restores original structure from translated text.
+		 *
+		 * @param translatedText The translated text with XML tags
+		 * @return The text with original structure restored
+		 */
+		public String restore(String translatedText) {
+			if (originalParts != null) {
+				// Use original parts to reconstruct with proper structure
+				return restoreWithStructure(translatedText, originalParts, parameters);
+			} else {
+				// Simple parameter restoration
+				return ParameterProtector.restore(translatedText, parameters);
+			}
+		}
 	}
 
 	/**
@@ -203,23 +219,6 @@ public class ParameterProtector {
 	}
 
 	/**
-	 * Restores original structure using the ProtectedText metadata.
-	 *
-	 * @param translatedText The translated text with XML tags
-	 * @param protectedText  The original ProtectedText containing structure info
-	 * @return The text with original structure restored
-	 */
-	public static String restore(String translatedText, ProtectedText protectedText) {
-		if (protectedText.getOriginalParts() != null) {
-			// Use original parts to reconstruct with proper structure
-			return restoreWithStructure(translatedText, protectedText.getOriginalParts(), protectedText.getParameters());
-		} else {
-			// Simple parameter restoration
-			return restore(translatedText, protectedText.getParameters());
-		}
-	}
-
-	/**
 	 * Reconstructs the original ICU message structure with translated text.
 	 */
 	private static String restoreWithStructure(String translatedText, List<IcuMessageParser.MessagePart> originalParts, List<String> parameters) {
@@ -283,6 +282,6 @@ public class ParameterProtector {
 			java.util.function.Function<String, String> translationFunction) {
 		ProtectedText protected_ = protect(text);
 		String translated = translationFunction.apply(protected_.getProtectedText());
-		return restore(translated, protected_);
+		return protected_.restore(translated);
 	}
 }

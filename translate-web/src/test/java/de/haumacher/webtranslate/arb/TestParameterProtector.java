@@ -68,6 +68,7 @@ public class TestParameterProtector {
 	@Test
 	public void testRestoreSimple() {
 		String translatedText = "Hallo <x1>benutzername</x1>!";
+		// Note: This test uses the static restore method which is still available for simple cases
 		String restored = ParameterProtector.restore(translatedText,
 			java.util.List.of("username"));
 
