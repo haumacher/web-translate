@@ -220,16 +220,25 @@ public class ParameterProtector {
 	}
 
 	/**
-	 * Reconstructs the original ICU message structure.
+	 * Reconstructs the original ICU message structure with translated text.
 	 */
 	private static String restoreWithStructure(String translatedText, List<IcuMessageParser.MessagePart> originalParts, List<String> parameters) {
-		// For now, just restore parameter names from original parts
-		// This reconstructs the full original structure
-		StringBuilder result = new StringBuilder();
-		for (IcuMessageParser.MessagePart part : originalParts) {
-			result.append(reconstructPart(part));
+		// Check if we have any ComplexFormat parts - if so, reconstruct from original structure
+		boolean hasComplexFormat = originalParts.stream()
+			.anyMatch(part -> part instanceof IcuMessageParser.ComplexFormat);
+
+		if (hasComplexFormat) {
+			// For complex formats, reconstruct the full original structure
+			// (Complex formats don't support translation of nested text yet)
+			StringBuilder result = new StringBuilder();
+			for (IcuMessageParser.MessagePart part : originalParts) {
+				result.append(reconstructPart(part));
+			}
+			return result.toString();
+		} else {
+			// For simple text with placeholders, use standard restore to apply translation
+			return restore(translatedText, parameters);
 		}
-		return result.toString();
 	}
 
 	/**
