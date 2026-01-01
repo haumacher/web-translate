@@ -152,6 +152,7 @@ public class ArbTranslator {
 		// Separate resources into: existing (reuse) and new (translate)
 		List<String> textsToTranslate = new ArrayList<>();
 		List<String> resourceIdsToTranslate = new ArrayList<>();
+		List<ParameterProtector.ProtectedText> protectedTexts = new ArrayList<>();
 		int reusedCount = 0;
 
 		for (var entry : sourceBundle.getResources().entrySet()) {
@@ -166,8 +167,13 @@ public class ArbTranslator {
 				reusedCount++;
 			} else {
 				// Need to translate this resource
-				textsToTranslate.add(sourceResource.getValue());
+				// Protect parameters before translation
+				ParameterProtector.ProtectedText protected_ =
+					ParameterProtector.protect(sourceResource.getValue());
+
+				textsToTranslate.add(protected_.getProtectedText());
 				resourceIdsToTranslate.add(resourceId);
+				protectedTexts.add(protected_);
 			}
 		}
 
@@ -187,9 +193,16 @@ public class ArbTranslator {
 			for (int i = 0; i < results.size(); i++) {
 				TextResult result = results.get(i);
 				String resourceId = resourceIdsToTranslate.get(i);
+				ParameterProtector.ProtectedText protected_ = protectedTexts.get(i);
+
+				// Restore original parameters after translation
+				String translatedText = ParameterProtector.restore(
+					result.getText(),
+					protected_.getParameters()
+				);
 
 				// Create target resource with translated value only (no metadata)
-				ArbResource targetResource = new ArbResource(resourceId, result.getText());
+				ArbResource targetResource = new ArbResource(resourceId, translatedText);
 
 				targetBundle.addResource(targetResource);
 				billedChars += result.getBilledCharacters();
