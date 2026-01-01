@@ -67,48 +67,81 @@ public class TestParameterProtector {
 
 	@Test
 	public void testRestoreSimple() {
+		String original = "Hello {username}!";
+
+		// Protect
+		ProtectedText protection = ParameterProtector.protect(original);
+
+		// Simulate translation
 		String translatedText = "Hallo <x1>benutzername</x1>!";
-		// Note: This test uses the static restore method which is still available for simple cases
-		String restored = ParameterProtector.restore(translatedText,
-			java.util.List.of("username"));
+
+		// Restore
+		String restored = protection.restore(translatedText);
 
 		assertEquals("Hallo {username}!", restored);
 	}
 
 	@Test
 	public void testRestoreMultiple() {
+		String original = "Hello {username}, you have {count} messages";
+
+		// Protect
+		ProtectedText protection = ParameterProtector.protect(original);
+
+		// Simulate translation
 		String translatedText = "Hallo <x1>benutzername</x1>, Sie haben <x2>anzahl</x2> Nachrichten";
-		String restored = ParameterProtector.restore(translatedText,
-			java.util.List.of("username", "count"));
+
+		// Restore
+		String restored = protection.restore(translatedText);
 
 		assertEquals("Hallo {username}, Sie haben {count} Nachrichten", restored);
 	}
 
 	@Test
 	public void testRestoreIgnoresTranslatedParameterNames() {
-		// The translator may change parameter names inside tags, but we ignore this
-		String translatedText = "Hallo <x1>nom-utilisateur</x1>, vous avez <x2>nombre</x2> messages";
-		String restored = ParameterProtector.restore(translatedText,
-			java.util.List.of("username", "count"));
+		String original = "Hello {username}, you have {count} messages";
 
-		// Original parameter names are restored, ignoring translated names
+		// Protect
+		ProtectedText protection = ParameterProtector.protect(original);
+
+		// Simulate translation where the translator changed parameter names inside tags
+		// (this should be ignored)
+		String translatedText = "Hallo <x1>nom-utilisateur</x1>, vous avez <x2>nombre</x2> messages";
+
+		// Restore - original parameter names are restored, ignoring translated names
+		String restored = protection.restore(translatedText);
+
 		assertEquals("Hallo {username}, vous avez {count} messages", restored);
 	}
 
 	@Test
 	public void testRestoreNoTags() {
-		String translatedText = "Hello World!";
-		String restored = ParameterProtector.restore(translatedText, java.util.List.of());
+		String original = "Hello World!";
 
-		assertEquals("Hello World!", restored);
+		// Protect
+		ProtectedText protection = ParameterProtector.protect(original);
+
+		// Simulate translation (no parameters to protect)
+		String translatedText = "Hallo Welt!";
+
+		// Restore
+		String restored = protection.restore(translatedText);
+
+		assertEquals("Hallo Welt!", restored);
 	}
 
 	@Test
 	public void testRestoreReorderedTags() {
-		// Translator may reorder parameters in some languages
+		String original = "{username} has {count} messages";
+
+		// Protect
+		ProtectedText protection = ParameterProtector.protect(original);
+
+		// Simulate translation where parameters are reordered
 		String translatedText = "Sie haben <x2>anzahl</x2> Nachrichten, <x1>benutzername</x1>";
-		String restored = ParameterProtector.restore(translatedText,
-			java.util.List.of("username", "count"));
+
+		// Restore
+		String restored = protection.restore(translatedText);
 
 		assertEquals("Sie haben {count} Nachrichten, {username}", restored);
 	}
