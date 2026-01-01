@@ -192,65 +192,66 @@ public class TestParameterProtector {
 	}
 
 	@Test
-	public void testProtectComplexPluralFormat() {
+	public void testTranslateComplexPluralFormat() {
 		String original = "{count, plural, =0{no messages} =1{one message} other{{count} messages}}";
 
-		// Protect
-		ProtectedText protection = ParameterProtector.protect(original);
+		// Translate using dummy function
+		String result = ParameterProtector.translateWithParameterProtection(original, protectedText -> {
+			// Verify: Complex format is protected as just the parameter name
+			assertEquals("<x1>count</x1>", protectedText);
 
-		// Complex format: only the parameter name is protected
-		String protectedText = protection.getProtectedText();
-		assertEquals("<x1>count</x1>", protectedText);
+			// Simulate translation (translator doesn't change the protected tag)
+			// In reality, there's nothing to translate here since the format structure is hidden
+			return "<x1>anzahl</x1>";
+		});
 
-		// Only one parameter at top level
-		assertEquals(1, protection.getParameters().size());
-		assertEquals("count", protection.getParameters().get(0));
-
-		// Restore should return the original structure unchanged
-		String restored = protection.restore(protectedText);
-		assertEquals(original, restored);
+		// Result: The original complex format is preserved unchanged
+		// (Translation of nested text inside complex formats is not yet supported)
+		assertEquals(original, result);
 	}
 
 	@Test
-	public void testProtectAndRestorePluralFormat() {
+	public void testTranslatePluralFormatWithSurroundingText() {
 		String original = "You have {count, plural, =0{no messages} =1{one message} other{{count} messages}}";
 
-		// Protect
-		ProtectedText protection = ParameterProtector.protect(original);
+		// Translate using dummy function
+		String result = ParameterProtector.translateWithParameterProtection(original, protectedText -> {
+			// Verify: The protected text contains text parts and the protected format
+			assertTrue(protectedText.startsWith("You have "));
+			assertTrue(protectedText.contains("<x1>count</x1>"));
 
-		// The protected text contains the text parts and the protected complex format
-		String protectedText = protection.getProtectedText();
-		assertTrue(protectedText.startsWith("You have "));
-		assertTrue(protectedText.contains("<x1>count</x1>"));
+			// Simulate translation of the surrounding text only
+			return "Sie haben <x1>anzahl</x1>";
+		});
 
-		// Restore should give back the original
-		String restored = protection.restore(protectedText);
-		assertEquals(original, restored);
+		// Result: When a complex format is present, the entire original is preserved
+		// (Translation of messages with complex formats is not yet fully supported)
+		assertEquals(original, result);
 	}
 
 	@Test
-	public void testTranslateMessageWithPluralFormat() {
+	public void testTranslateMessageWithPluralFormatAndSurroundingText() {
 		String original = "You have {count, plural, =0{no messages} =1{one message} other{{count} messages}} in your inbox";
 
-		// Protect
-		ProtectedText protection = ParameterProtector.protect(original);
+		// Translate using dummy function
+		String result = ParameterProtector.translateWithParameterProtection(original, protectedText -> {
+			// Verify: The protected text contains text parts before, in place of, and after the complex format
+			assertTrue(protectedText.contains("You have "));
+			assertTrue(protectedText.contains("<x1>count</x1>"));
+			assertTrue(protectedText.contains(" in your inbox"));
 
-		// When a message contains a complex format, the protected text contains the text parts
-		// and a tag for the complex format
-		String protectedText = protection.getProtectedText();
-		assertTrue(protectedText.contains("You have "));
-		assertTrue(protectedText.contains("<x1>count</x1>"));
-		assertTrue(protectedText.contains(" in your inbox"));
+			// Simulate translation of all text parts
+			String translated = protectedText
+				.replace("You have ", "Sie haben ")
+				.replace(" in your inbox", " in Ihrem Posteingang");
 
-		// Simulate translation attempt
-		String translatedText = protectedText
-			.replace("You have ", "Sie haben ")
-			.replace(" in your inbox", " in Ihrem Posteingang");
+			return translated;
+		});
 
-		// Restore - Currently, when a complex format is present, the entire original is restored
+		// Result: Currently, when a complex format is present, the entire original is restored
 		// Translation of surrounding text is not yet supported for messages with complex formats
-		String restored = protection.restore(translatedText);
-		assertEquals(original, restored);
+		// This is a known limitation
+		assertEquals(original, result);
 	}
 
 	@Test
