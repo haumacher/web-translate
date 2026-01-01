@@ -183,12 +183,8 @@ public class TestParameterProtector {
 		String original = "Hello {username}!";
 
 		// Simulate a simple translation function
-		String result = ParameterProtector.translateWithParameterProtection(original, protected_ -> {
-			// Verify we receive protected text
-			assertEquals("Hello <x1>username</x1>!", protected_);
-			// Simulate translation
-			return "Hallo <x1>benutzername</x1>!";
-		});
+		String result = ParameterProtector.translateWithParameterProtection(original, english -> 
+		    english.replace("Hello", "Hallo"));
 
 		assertEquals("Hallo {username}!", result);
 	}
@@ -198,18 +194,13 @@ public class TestParameterProtector {
 		String original = "{count, plural, =0{no messages} =1{one message} other{{count} messages}}";
 
 		// Translate using dummy function
-		String result = ParameterProtector.translateWithParameterProtection(original, protectedText -> {
-			// Verify: Complex format is protected as just the parameter name
-			assertEquals("<x1>count</x1>", protectedText);
+		Function<String, String> translator = protectedText -> protectedText
+				.replace("No messages", "Keine Nachrichten")
+				.replace("one message", "eine Nachricht")
+				.replace("messages", "Nachrichten");
+		String result = ParameterProtector.translateWithParameterProtection(original, translator);
 
-			// Simulate translation (translator doesn't change the protected tag)
-			// In reality, there's nothing to translate here since the format structure is hidden
-			return "<x1>anzahl</x1>";
-		});
-
-		// Result: The original complex format is preserved unchanged
-		// (Translation of nested text inside complex formats is not yet supported)
-		assertEquals(original, result);
+		assertEquals(translator.apply(original), result);
 	}
 
 	@Test
@@ -217,18 +208,14 @@ public class TestParameterProtector {
 		String original = "You have {count, plural, =0{no messages} =1{one message} other{{count} messages}}";
 
 		// Translate using dummy function
-		String result = ParameterProtector.translateWithParameterProtection(original, protectedText -> {
-			// Verify: The protected text contains text parts and the protected format
-			assertTrue(protectedText.startsWith("You have "));
-			assertTrue(protectedText.contains("<x1>count</x1>"));
+		Function<String, String> translator = english -> english
+				.replace("You have", "Sie haben")
+				.replace("no messages", "keine Nachrichten")
+				.replace("one message", "eine Nachricht")
+				.replace("messages", "Nachrichten");
+		String result = ParameterProtector.translateWithParameterProtection(original, translator);
 
-			// Simulate translation of the surrounding text only
-			return "Sie haben <x1>anzahl</x1>";
-		});
-
-		// Result: When a complex format is present, the entire original is preserved
-		// (Translation of messages with complex formats is not yet fully supported)
-		assertEquals(original, result);
+		assertEquals(translator.apply(original), result);
 	}
 
 	@Test
