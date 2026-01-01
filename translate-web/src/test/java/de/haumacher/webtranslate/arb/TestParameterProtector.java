@@ -148,7 +148,7 @@ public class TestParameterProtector {
 		String original = "Hello {username}!";
 
 		// Simulate a simple translation function
-		String result = ParameterProtector.protectAndTranslate(original, protected_ -> {
+		String result = ParameterProtector.translateWithParameterProtection(original, protected_ -> {
 			// Verify we receive protected text
 			assertEquals("Hello <x1>username</x1>!", protected_);
 			// Simulate translation

@@ -278,7 +278,7 @@ public class ParameterProtector {
 	 * @param translationFunction A function that translates the protected text
 	 * @return The translated text with original parameters restored
 	 */
-	public static String protectAndTranslate(String text,
+	public static String translateWithParameterProtection(String text,
 			java.util.function.Function<String, String> translationFunction) {
 		ProtectedText protection = protect(text);
 		String translated = translationFunction.apply(protection.getProtectedText());
