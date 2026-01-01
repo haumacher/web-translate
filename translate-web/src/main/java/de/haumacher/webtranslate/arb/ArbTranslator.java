@@ -114,6 +114,20 @@ public class ArbTranslator {
 			String sourceLang, String targetLang)
 			throws IOException, DeepLException, InterruptedException {
 
+		// Check if target file already exists and load it
+		File targetFile = createTargetFile(sourceFile, targetLang);
+		ArbBundle existingTargetBundle = null;
+		if (targetFile.exists()) {
+			try {
+				existingTargetBundle = parser.parse(targetFile);
+				System.out.println("Found existing target file with " +
+					existingTargetBundle.getResourceCount() + " resources");
+			} catch (Exception e) {
+				System.err.println("WARN: Could not parse existing target file, will create new: " +
+					e.getMessage());
+			}
+		}
+
 		// Create target bundle
 		ArbBundle targetBundle = new ArbBundle();
 
@@ -135,44 +149,59 @@ public class ArbTranslator {
 			targetBundle.setLocale(targetLang);
 		}
 
-		// Collect all resource values for batch translation
+		// Separate resources into: existing (reuse) and new (translate)
 		List<String> textsToTranslate = new ArrayList<>();
-		List<String> resourceIds = new ArrayList<>();
+		List<String> resourceIdsToTranslate = new ArrayList<>();
+		int reusedCount = 0;
 
 		for (var entry : sourceBundle.getResources().entrySet()) {
 			String resourceId = entry.getKey();
 			ArbResource sourceResource = entry.getValue();
 
-			textsToTranslate.add(sourceResource.getValue());
-			resourceIds.add(resourceId);
+			// Check if this resource already exists in target
+			if (existingTargetBundle != null && existingTargetBundle.hasResource(resourceId)) {
+				// Reuse existing translation
+				ArbResource existingResource = existingTargetBundle.getResource(resourceId);
+				targetBundle.addResource(new ArbResource(resourceId, existingResource.getValue()));
+				reusedCount++;
+			} else {
+				// Need to translate this resource
+				textsToTranslate.add(sourceResource.getValue());
+				resourceIdsToTranslate.add(resourceId);
+			}
 		}
 
-		// Translate all texts in batch
-		System.out.println("Translating " + textsToTranslate.size() + " resources...");
-		List<TextResult> results = translator.translateText(
-			textsToTranslate,
-			sourceLang,
-			targetLang
-		);
+		System.out.println("Reusing " + reusedCount + " existing translations");
+		System.out.println("Translating " + textsToTranslate.size() + " new resources...");
 
-		// Create target resources with translated values
+		// Translate only new texts in batch
 		int billedChars = 0;
-		for (int i = 0; i < results.size(); i++) {
-			TextResult result = results.get(i);
-			String resourceId = resourceIds.get(i);
+		if (!textsToTranslate.isEmpty()) {
+			List<TextResult> results = translator.translateText(
+				textsToTranslate,
+				sourceLang,
+				targetLang
+			);
 
-			// Create target resource with translated value only (no metadata)
-			ArbResource targetResource = new ArbResource(resourceId, result.getText());
+			// Create target resources with translated values
+			for (int i = 0; i < results.size(); i++) {
+				TextResult result = results.get(i);
+				String resourceId = resourceIdsToTranslate.get(i);
 
-			targetBundle.addResource(targetResource);
-			billedChars += result.getBilledCharacters();
+				// Create target resource with translated value only (no metadata)
+				ArbResource targetResource = new ArbResource(resourceId, result.getText());
+
+				targetBundle.addResource(targetResource);
+				billedChars += result.getBilledCharacters();
+			}
+		} else {
+			System.out.println("No new resources to translate");
 		}
 
 		totalBilledChars += billedChars;
 		System.out.println("Billed characters: " + billedChars);
 
 		// Write target ARB file in compact mode (without metadata)
-		File targetFile = createTargetFile(sourceFile, targetLang);
 		writer.write(targetBundle, targetFile, false); // compact mode - no metadata
 		System.out.println("Written to: " + targetFile.getAbsolutePath());
 	}
