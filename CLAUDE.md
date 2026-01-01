@@ -34,7 +34,71 @@ mvn package
 
 ## Running the Translator
 
-The main entry point is `Translator.java`:
+### Maven Goal (Recommended)
+
+The recommended way to run the translator is using the Maven goal:
+
+```bash
+cd translate-web
+mvn web-translate:translate -DapiKey=YOUR_DEEPL_API_KEY
+```
+
+**Configuration Options:**
+
+All parameters can be configured via command-line properties:
+
+```bash
+mvn web-translate:translate \
+  -DapiKey=YOUR_DEEPL_API_KEY \
+  -DsourceLang=en \
+  -DtargetLangs=de,fr,es \
+  -DtemplateDirectory=./templates \
+  -DpropertiesDirectory=./properties \
+  -DpropertiesCharset=UTF-8
+```
+
+Or in your `pom.xml`:
+
+```xml
+<plugin>
+  <groupId>de.haumacher</groupId>
+  <artifactId>web-translate</artifactId>
+  <version>1.0.0-SNAPSHOT</version>
+  <configuration>
+    <apiKey>${env.DEEPL_API_KEY}</apiKey>
+    <sourceLang>en</sourceLang>
+    <targetLangs>de,fr</targetLangs>
+    <templateDirectory>${project.basedir}/templates</templateDirectory>
+    <propertiesDirectory>${project.basedir}/properties</propertiesDirectory>
+    <propertiesCharset>UTF-8</propertiesCharset>
+  </configuration>
+</plugin>
+```
+
+**Default Values:**
+- `sourceLang`: `en`
+- `targetLangs`: `de`
+- `templateDirectory`: `${project.basedir}/templates`
+- `propertiesDirectory`: `${project.basedir}/properties`
+- `propertiesCharset`: `UTF-8`
+
+**Directory Structure Expected:**
+```
+templates/
+  en/              # Source language templates
+    index.html
+    about.html
+properties/
+  en/              # Generated source properties
+  de/              # Generated target properties
+  fr/              # Generated target properties
+```
+
+The Maven goal automatically runs all three phases (extract → translate → synthesize) in sequence.
+
+### Java Main Class (Alternative)
+
+You can also run the translator directly via the main class:
 
 ```bash
 java -cp target/web-translate-1.0.0-SNAPSHOT.jar de.haumacher.webtranslate.Translator \
@@ -146,7 +210,9 @@ t0001=Etwas Text <x1>mit Markup</x1>.
 ```
 translate-web/
 ├── src/main/java/de/haumacher/webtranslate/
-│   ├── Translator.java              # Main orchestrator
+│   ├── Translator.java              # Main orchestrator (CLI)
+│   ├── maven/
+│   │   └── TranslateMojo.java       # Maven plugin goal
 │   ├── extract/
 │   │   ├── HtmlAnalyzer.java        # Core analysis/extraction logic
 │   │   ├── TextExtractor.java       # Text → <xN> conversion
@@ -164,6 +230,8 @@ translate-web/
 
 Dependencies:
 - deepl-java 1.9.0 (DeepL API client)
+- maven-plugin-api 3.9.6 (Maven plugin development)
+- maven-plugin-annotations 3.11.0 (Maven plugin annotations)
 - JUnit Jupiter 5.11.1 (testing)
 - Java 17+
 ```
