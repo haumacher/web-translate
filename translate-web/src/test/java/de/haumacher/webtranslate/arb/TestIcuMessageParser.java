@@ -104,20 +104,25 @@ public class TestIcuMessageParser {
 
 		ProtectedText protected_ = ParameterProtector.protect(message);
 
-		// The protected text should have identifiers (count, plural, =1, other) protected
+		// The protected text should have parameter names protected
 		// but the translatable text (1 Meldung, Meldungen) exposed
+		// Structure keywords (plural, =1, other) are kept as-is
 		String protectedText = protected_.getProtectedText();
 
-		// Should contain protected parameter structure
-		assertTrue(protectedText.contains("<x1>count, plural,</x1>"));
+		// Should contain protected parameter name
+		assertTrue(protectedText.contains("<x1>count</x1>"));
 
-		// Should contain protected selectors
-		assertTrue(protectedText.contains("<x2>=1</x2>"));
-		assertTrue(protectedText.contains("<x4>other</x4>"));
+		// Should contain format type and selectors as-is (not protected)
+		assertTrue(protectedText.contains("plural"));
+		assertTrue(protectedText.contains("=1"));
+		assertTrue(protectedText.contains("other"));
 
 		// Should contain translatable text
 		assertTrue(protectedText.contains("1 Meldung"));
 		assertTrue(protectedText.contains("Meldungen"));
+
+		// The nested {count} reference should also be protected
+		assertTrue(protectedText.contains("<x2>count</x2>"));
 	}
 
 	@Test
@@ -137,10 +142,9 @@ public class TestIcuMessageParser {
 
 		// Should have original structure with translated text
 		assertTrue(restored.contains("{count, plural,"));
-		assertTrue(restored.contains("=1"));
-		assertTrue(restored.contains("other"));
-		assertTrue(restored.contains("1 Nachricht"));
-		assertTrue(restored.contains("Nachrichten"));
+		assertTrue(restored.contains("=1{1 Nachricht}"));
+		assertTrue(restored.contains("other{"));
+		assertTrue(restored.contains("Nachrichten}"));
 	}
 
 	@Test

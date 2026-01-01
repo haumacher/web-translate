@@ -39,7 +39,7 @@ import com.deepl.api.Translator;
  */
 public class ArbTranslator {
 
-	private static final Pattern LANG_PATTERN = Pattern.compile("(.+)_(\\w{2}(?:_\\w+)?)\\.arb$");
+	private static final Pattern LANG_PATTERN = Pattern.compile("(.+?)_(\\w{2}(?:_\\w+)?)\\.arb$");
 
 	private final String apiKey;
 	private final Translator translator;

@@ -134,10 +134,15 @@ public class IcuMessageParser {
 		public ConversionResult toProtectedText(int nextParamIndex) {
 			StringBuilder result = new StringBuilder();
 
-			// Protect the argument structure: {argumentName, formatType,
+			// Build ICU format structure preserving syntax
+			// Only protect the argument name, keep format type and selectors as-is
+			result.append("{");
 			result.append("<x").append(nextParamIndex).append(">");
-			result.append(argumentName).append(", ").append(formatType).append(",");
+			result.append(argumentName);
 			result.append("</x").append(nextParamIndex).append(">");
+			result.append(", ");
+			result.append(formatType);
+			result.append(",");
 
 			int currentIndex = nextParamIndex + 1;
 
@@ -145,21 +150,19 @@ public class IcuMessageParser {
 			for (SelectorCase case_ : cases) {
 				result.append(" ");
 
-				// Protect selector keyword (=1, one, other, etc.)
-				result.append("<x").append(currentIndex).append(">");
+				// Keep selector as-is (not protected - it's a keyword)
 				result.append(case_.selector);
-				result.append("</x").append(currentIndex).append(">");
-				currentIndex++;
-
 				result.append("{");
 
-				// Convert case content (may contain nested formats)
+				// Convert case content (may contain nested formats and placeholders)
 				ConversionResult caseResult = convertParts(case_.parts, currentIndex);
 				result.append(caseResult.text);
 				currentIndex = caseResult.nextIndex;
 
 				result.append("}");
 			}
+
+			result.append("}");
 
 			return new ConversionResult(result.toString(), currentIndex);
 		}
@@ -309,6 +312,12 @@ public class IcuMessageParser {
 
 			if (pos >= input.length() || input.charAt(pos) == '}') {
 				// Simple placeholder: {name}
+				// Skip {@...} patterns (ARB masked content syntax) - treat as literal text
+				if (argumentName.startsWith("@")) {
+					pos++; // skip closing }
+					// Return as literal text, not a placeholder
+					return new TextPart("{" + argumentName + "}");
+				}
 				pos++; // skip closing }
 				return new SimplePlaceholder(argumentName.trim());
 			}
@@ -403,7 +412,8 @@ public class IcuMessageParser {
 				} else if (ch == '}') {
 					depth--;
 					if (depth == 0) {
-						// End of this case
+						// End of this case - skip the closing }
+						pos++;
 						break;
 					} else {
 						text.append(ch);
