@@ -223,18 +223,199 @@ translate-web/
 │   ├── translate/
 │   │   ├── PropertiesTranslator.java # DeepL API integration
 │   │   └── NameStrategy.java         # File naming strategies
-│   └── synthesize/
-│       └── TranslationSynthesizer.java # .properties → HTML
-└── src/test/java/de/haumacher/webtranslate/extract/
-    └── TestHtmlAnalyzer.java         # Core tests
+│   ├── synthesize/
+│   │   └── TranslationSynthesizer.java # .properties → HTML
+│   └── arb/
+│       ├── ArbBundle.java           # ARB file container
+│       ├── ArbResource.java         # ARB resource entry
+│       ├── ArbResourceAttributes.java # ARB metadata
+│       ├── ArbPlaceholder.java      # ARB placeholder metadata
+│       ├── ArbParser.java           # JSON → ArbBundle
+│       ├── ArbWriter.java           # ArbBundle → JSON
+│       ├── ArbTranslator.java       # ARB translation tool
+│       ├── IcuMessageParser.java    # ICU MessageFormat parser
+│       └── ParameterProtector.java  # Parameter protection for translation
+└── src/test/java/de/haumacher/webtranslate/
+    ├── extract/
+    │   └── TestHtmlAnalyzer.java         # HTML analysis tests
+    └── arb/
+        ├── TestArbParser.java            # ARB parser tests
+        ├── TestArbTranslator.java        # ARB translator tests
+        ├── TestParameterProtector.java   # Parameter protection tests
+        └── TestIcuMessageParser.java     # ICU format tests
 
 Dependencies:
 - deepl-java 1.9.0 (DeepL API client)
+- gson 2.10.1 (JSON parsing for ARB)
 - maven-plugin-api 3.9.6 (Maven plugin development)
 - maven-plugin-annotations 3.11.0 (Maven plugin annotations)
 - JUnit Jupiter 5.11.1 (testing)
 - Java 17+
 ```
+
+## ARB (Application Resource Bundle) Translation
+
+### Overview
+
+The ARB translation functionality provides automated translation of Flutter/Dart localization files using DeepL API. ARB files use JSON format with ICU MessageFormat syntax for complex features like plurals and gender selection.
+
+### Running ARB Translation
+
+**Command-line usage:**
+```bash
+java de.haumacher.webtranslate.arb.ArbTranslator \
+  <deepl-api-key> \
+  <source-arb-file> \
+  <target-languages>
+```
+
+**Example:**
+```bash
+java de.haumacher.webtranslate.arb.ArbTranslator \
+  YOUR_API_KEY \
+  app_en.arb \
+  de,fr,es
+```
+
+### File Naming Convention
+
+ARB files must follow the pattern: `basename_lang.arb`
+
+Examples:
+- `app_en.arb` (English source)
+- `app_de.arb` (German target)
+- `messages_en_US.arb` (English US with region)
+
+The tool automatically extracts the source language from the filename and creates target files with corresponding language codes.
+
+### Key Features
+
+**1. Incremental Translation**
+- Loads existing target files to avoid retranslating
+- Only translates new or modified resources
+- Significantly reduces API costs for updates
+
+**2. Parameter Protection**
+- Protects ARB parameters from translation: `{username}` → preserved as `{username}`
+- Handles ICU MessageFormat syntax (plural, select, selectordinal)
+- Translates only the actual text, not format identifiers
+
+**3. ICU MessageFormat Support**
+
+Supports complex ICU syntax including:
+
+**Simple placeholders:**
+```json
+"greeting": "Hello {username}!"
+```
+
+**Plural forms:**
+```json
+"messages": "{count, plural, =0{no messages} =1{1 message} other{{count} messages}}"
+```
+
+**Select forms:**
+```json
+"possessive": "{gender, select, male{his} female{her} other{their}}"
+```
+
+**Nested formats:**
+```json
+"complex": "{gender, select, male{He has {count, plural, one{# item} other{# items}}} other{They have items}}"
+```
+
+### Parameter Protection Algorithm
+
+The translation process protects code identifiers while exposing translatable text:
+
+**Original:**
+```json
+"{count, plural, =1{1 Meldung} other{{count} Meldungen}}"
+```
+
+**Protected for DeepL:**
+```
+<x1>count, plural,</x1> <x2>=1</x2>{1 Meldung} <x3>other</x3>{<x4>count</x4> Meldungen}
+```
+
+**After translation:**
+```
+<x1>count, plural,</x1> <x2>=1</x2>{1 report} <x3>other</x3>{<x4>count</x4> reports}
+```
+
+**Restored:**
+```json
+"{count, plural, =1{1 report} other{{count} reports}}"
+```
+
+**What's protected:**
+- Parameter names (`count`, `gender`, etc.)
+- Format types (`plural`, `select`, `selectordinal`)
+- Selector keywords (`=1`, `one`, `other`, `male`, `female`)
+- Special symbols (`#` in plural forms)
+
+**What's translated:**
+- Actual message text inside cases
+- Text outside parameter definitions
+
+### ARB File Structure
+
+**Source file (app_en.arb):**
+```json
+{
+  "@@locale": "en",
+  "greeting": "Hello {username}!",
+  "@greeting": {
+    "description": "Welcome message",
+    "placeholders": {
+      "username": {"example": "John"}
+    }
+  }
+}
+```
+
+**Target file (app_de.arb) - compact format:**
+```json
+{
+  "@@locale": "de",
+  "greeting": "Hallo {username}!"
+}
+```
+
+Note: Target files use compact format (no metadata) since descriptions and placeholder definitions are redundant.
+
+### ARB Architecture Components
+
+**ArbParser/ArbWriter:**
+- Parse ARB JSON to in-memory `ArbBundle` objects
+- Write bundles back to JSON (verbose or compact mode)
+- Preserve resource order using LinkedHashMap
+
+**IcuMessageParser:**
+- Parses ICU MessageFormat syntax
+- Identifies translatable text vs. identifiers
+- Handles nested formats (select within plural, etc.)
+- Supports all ICU format types
+
+**ParameterProtector:**
+- Protects parameters using XML placeholder tags
+- Uses ICU parser for complex formats
+- Falls back to simple regex for basic parameters
+- Restores original parameter names after translation
+
+**ArbTranslator:**
+- Orchestrates the translation workflow
+- Loads existing translations for incremental updates
+- Batch translates new resources via DeepL
+- Writes compact target files
+
+### Testing ARB Translation
+
+Test files demonstrate:
+- Simple parameter protection: `TestParameterProtector.java`
+- ICU format parsing: `TestIcuMessageParser.java`
+- ARB parsing/writing: `TestArbParser.java`
+- Language extraction: `TestArbTranslator.java`
 
 ## Development Guidelines
 
@@ -242,13 +423,29 @@ Dependencies:
 
 When modifying text extraction or injection logic, understand the mapping between original elements and placeholder tags. The index in `children` list corresponds to the `<xN>` tag number minus 1.
 
+### Working with ARB Translation
+
+When extending ICU MessageFormat support:
+1. Update `IcuMessageParser` to handle new format types
+2. Ensure new formats are properly protected in `toProtectedText()`
+3. Add test cases showing the format works end-to-end
+4. Test with real-world complex nested examples
+
 ### Testing
 
+**HTML Translation:**
 TestHtmlAnalyzer.java demonstrates the full extraction-injection cycle. When adding features, add test cases showing:
 1. Original HTML
 2. Extracted properties format
 3. Translated properties
 4. Final synthesized HTML
+
+**ARB Translation:**
+Test files demonstrate round-trip translation (protect → translate → restore). When adding features, test:
+1. Parser correctly identifies all message parts
+2. Protection preserves identifiers
+3. Restoration works with reordered/modified translations
+4. Real-world complex examples work
 
 ### API Key Management
 
