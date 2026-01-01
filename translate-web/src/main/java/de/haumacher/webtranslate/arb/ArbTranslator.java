@@ -160,15 +160,9 @@ public class ArbTranslator {
 		for (int i = 0; i < results.size(); i++) {
 			TextResult result = results.get(i);
 			String resourceId = resourceIds.get(i);
-			ArbResource sourceResource = sourceBundle.getResource(resourceId);
 
-			// Create target resource with translated value
+			// Create target resource with translated value only (no metadata)
 			ArbResource targetResource = new ArbResource(resourceId, result.getText());
-
-			// Copy attributes (placeholders, descriptions, etc. remain the same)
-			if (sourceResource.hasAttributes()) {
-				targetResource.setAttributes(copyAttributes(sourceResource.getAttributes()));
-			}
 
 			targetBundle.addResource(targetResource);
 			billedChars += result.getBilledCharacters();
@@ -177,31 +171,10 @@ public class ArbTranslator {
 		totalBilledChars += billedChars;
 		System.out.println("Billed characters: " + billedChars);
 
-		// Write target ARB file
+		// Write target ARB file in compact mode (without metadata)
 		File targetFile = createTargetFile(sourceFile, targetLang);
-		writer.write(targetBundle, targetFile, true); // verbose mode
+		writer.write(targetBundle, targetFile, false); // compact mode - no metadata
 		System.out.println("Written to: " + targetFile.getAbsolutePath());
-	}
-
-	/**
-	 * Copies resource attributes (shallow copy).
-	 *
-	 * <p>
-	 * Attributes like descriptions, placeholders, and context are language-independent
-	 * and can be copied as-is to the target bundle.
-	 * </p>
-	 */
-	private ArbResourceAttributes copyAttributes(ArbResourceAttributes source) {
-		ArbResourceAttributes copy = new ArbResourceAttributes();
-		copy.setType(source.getType());
-		copy.setContext(source.getContext());
-		copy.setDescription(source.getDescription());
-		copy.setSourceText(source.getSourceText());
-		copy.setScreenshot(source.getScreenshot());
-		copy.setVideo(source.getVideo());
-		copy.setPlaceholders(source.getPlaceholders());
-		copy.setCustomAttributes(source.getCustomAttributes());
-		return copy;
 	}
 
 	/**
