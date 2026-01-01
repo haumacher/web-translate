@@ -2,6 +2,8 @@ package de.haumacher.webtranslate.arb;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.util.function.Function;
+
 import org.junit.jupiter.api.Test;
 
 import de.haumacher.webtranslate.arb.ParameterProtector.ProtectedText;
@@ -234,24 +236,20 @@ public class TestParameterProtector {
 		String original = "You have {count, plural, =0{no messages} =1{one message} other{{count} messages}} in your inbox";
 
 		// Translate using dummy function
-		String result = ParameterProtector.translateWithParameterProtection(original, protectedText -> {
-			// Verify: The protected text contains text parts before, in place of, and after the complex format
-			assertTrue(protectedText.contains("You have "));
-			assertTrue(protectedText.contains("<x1>count</x1>"));
-			assertTrue(protectedText.contains(" in your inbox"));
-
-			// Simulate translation of all text parts
-			String translated = protectedText
-				.replace("You have ", "Sie haben ")
-				.replace(" in your inbox", " in Ihrem Posteingang");
-
-			return translated;
-		});
+		Function<String, String> translation = protectedText -> 
+			protectedText
+				.replace("You have", "Sie haben")
+				.replace("in your inbox", "in Ihrem Posteingang")
+				.replace("no messages", "keine Nachrichten")
+				.replace("one message", "eine Nachricht")
+				.replace("messages", "Nachrichten");
+			
+		String result = ParameterProtector.translateWithParameterProtection(original, translation);
 
 		// Result: Currently, when a complex format is present, the entire original is restored
 		// Translation of surrounding text is not yet supported for messages with complex formats
 		// This is a known limitation
-		assertEquals(original, result);
+		assertEquals(translation.apply(original), result);
 	}
 
 	@Test
