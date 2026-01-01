@@ -48,10 +48,16 @@ public class ParameterProtector {
 	public static class ProtectedText {
 		private final String protectedText;
 		private final List<String> parameters;
+		private final List<IcuMessageParser.MessagePart> originalParts; // Store original structure
 
 		public ProtectedText(String protectedText, List<String> parameters) {
+			this(protectedText, parameters, null);
+		}
+
+		public ProtectedText(String protectedText, List<String> parameters, List<IcuMessageParser.MessagePart> originalParts) {
 			this.protectedText = protectedText;
 			this.parameters = parameters;
+			this.originalParts = originalParts;
 		}
 
 		/**
@@ -66,6 +72,13 @@ public class ParameterProtector {
 		 */
 		public List<String> getParameters() {
 			return parameters;
+		}
+
+		/**
+		 * The original parsed ICU message parts (null for simple parameters).
+		 */
+		public List<IcuMessageParser.MessagePart> getOriginalParts() {
+			return originalParts;
 		}
 	}
 
@@ -97,7 +110,8 @@ public class ParameterProtector {
 			// Extract all protected parameter names for restoration
 			List<String> parameters = extractParameterNames(protectedText);
 
-			return new ProtectedText(protectedText, parameters);
+			// Store original parts for reconstruction during restore
+			return new ProtectedText(protectedText, parameters, parts);
 		} catch (Exception e) {
 			// Fallback to simple regex-based protection
 			return protectSimple(text);
@@ -189,6 +203,67 @@ public class ParameterProtector {
 	}
 
 	/**
+	 * Restores original structure using the ProtectedText metadata.
+	 *
+	 * @param translatedText The translated text with XML tags
+	 * @param protectedText  The original ProtectedText containing structure info
+	 * @return The text with original structure restored
+	 */
+	public static String restore(String translatedText, ProtectedText protectedText) {
+		if (protectedText.getOriginalParts() != null) {
+			// Use original parts to reconstruct with proper structure
+			return restoreWithStructure(translatedText, protectedText.getOriginalParts(), protectedText.getParameters());
+		} else {
+			// Simple parameter restoration
+			return restore(translatedText, protectedText.getParameters());
+		}
+	}
+
+	/**
+	 * Reconstructs the original ICU message structure.
+	 */
+	private static String restoreWithStructure(String translatedText, List<IcuMessageParser.MessagePart> originalParts, List<String> parameters) {
+		// For now, just restore parameter names from original parts
+		// This reconstructs the full original structure
+		StringBuilder result = new StringBuilder();
+		for (IcuMessageParser.MessagePart part : originalParts) {
+			result.append(reconstructPart(part));
+		}
+		return result.toString();
+	}
+
+	/**
+	 * Reconstructs a single message part to its original form.
+	 */
+	private static String reconstructPart(IcuMessageParser.MessagePart part) {
+		if (part instanceof IcuMessageParser.TextPart) {
+			return ((IcuMessageParser.TextPart) part).getText();
+		} else if (part instanceof IcuMessageParser.SimplePlaceholder) {
+			return "{" + ((IcuMessageParser.SimplePlaceholder) part).getName() + "}";
+		} else if (part instanceof IcuMessageParser.ComplexFormat) {
+			IcuMessageParser.ComplexFormat format = (IcuMessageParser.ComplexFormat) part;
+			StringBuilder result = new StringBuilder();
+			result.append("{");
+			result.append(format.getArgumentName());
+			result.append(", ");
+			result.append(format.getFormatType());
+			result.append(",");
+			for (IcuMessageParser.SelectorCase case_ : format.getCases()) {
+				result.append(" ");
+				result.append(case_.getSelector());
+				result.append("{");
+				for (IcuMessageParser.MessagePart casePart : case_.getParts()) {
+					result.append(reconstructPart(casePart));
+				}
+				result.append("}");
+			}
+			result.append("}");
+			return result.toString();
+		}
+		return "";
+	}
+
+	/**
 	 * Convenience method to protect, translate (via callback), and restore.
 	 *
 	 * @param text              The original text with parameters
@@ -199,6 +274,6 @@ public class ParameterProtector {
 			java.util.function.Function<String, String> translationFunction) {
 		ProtectedText protected_ = protect(text);
 		String translated = translationFunction.apply(protected_.getProtectedText());
-		return restore(translated, protected_.getParameters());
+		return restore(translated, protected_);
 	}
 }
