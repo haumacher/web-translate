@@ -96,6 +96,27 @@ public class ParameterProtector {
 				return ParameterProtector.restore(translatedText, parameters);
 			}
 		}
+
+		/**
+		 * Applies translation to this protected text, including inner fragments.
+		 *
+		 * @param translationFunction The function to apply to all text fragments
+		 * @return A new ProtectedText with translation applied
+		 */
+		public ProtectedText translate(java.util.function.Function<String, String> translationFunction) {
+			// Translate the protected text itself
+			String translatedProtectedText = translationFunction.apply(protectedText);
+			
+			if (originalParts != null) {
+				// Translate inner parts recursively
+				List<IcuMessageParser.MessagePart> translatedParts = translateParts(originalParts, translationFunction);
+
+				return new ProtectedText(translatedProtectedText, parameters, translatedParts);
+			} else {
+				// For simple parameters, just translate the protected text
+				return new ProtectedText(translatedProtectedText, parameters);
+			}
+		}
 	}
 
 	/**
@@ -272,6 +293,41 @@ public class ParameterProtector {
 	}
 
 	/**
+	 * Translates all parts recursively.
+	 */
+	private static List<IcuMessageParser.MessagePart> translateParts(List<IcuMessageParser.MessagePart> parts, java.util.function.Function<String, String> translationFunction) {
+		List<IcuMessageParser.MessagePart> result = new ArrayList<>();
+		for (IcuMessageParser.MessagePart part : parts) {
+			result.add(translatePart(part, translationFunction));
+		}
+		return result;
+	}
+
+	/**
+	 * Translates a single message part recursively.
+	 */
+	private static IcuMessageParser.MessagePart translatePart(IcuMessageParser.MessagePart part, java.util.function.Function<String, String> translationFunction) {
+		if (part instanceof IcuMessageParser.TextPart) {
+			String originalText = ((IcuMessageParser.TextPart) part).getText();
+			String translatedText = translationFunction.apply(originalText);
+			return new IcuMessageParser.TextPart(translatedText);
+		} else if (part instanceof IcuMessageParser.SimplePlaceholder) {
+			// Placeholders are not translated
+			return part;
+		} else if (part instanceof IcuMessageParser.ComplexFormat) {
+			IcuMessageParser.ComplexFormat format = (IcuMessageParser.ComplexFormat) part;
+			// Translate all cases recursively
+			List<IcuMessageParser.SelectorCase> translatedCases = new ArrayList<>();
+			for (IcuMessageParser.SelectorCase case_ : format.getCases()) {
+				List<IcuMessageParser.MessagePart> translatedCaseParts = translateParts(case_.getParts(), translationFunction);
+				translatedCases.add(new IcuMessageParser.SelectorCase(case_.getSelector(), translatedCaseParts));
+			}
+			return new IcuMessageParser.ComplexFormat(format.getArgumentName(), format.getFormatType(), translatedCases);
+		}
+		return part;
+	}
+
+	/**
 	 * Convenience method to protect, translate (via callback), and restore.
 	 *
 	 * @param text              The original text with parameters
@@ -281,7 +337,9 @@ public class ParameterProtector {
 	public static String translateWithParameterProtection(String text,
 			java.util.function.Function<String, String> translationFunction) {
 		ProtectedText protection = protect(text);
-		String translated = translationFunction.apply(protection.getProtectedText());
-		return protection.restore(translated);
+		// Apply translation to the protected text and all inner fragments
+		ProtectedText translated = protection.translate(translationFunction);
+		// Restore to get the final result with all translations applied
+		return translated.restore(translated.getProtectedText());
 	}
 }
