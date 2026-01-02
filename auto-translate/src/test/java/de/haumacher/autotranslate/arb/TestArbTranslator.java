@@ -1,4 +1,4 @@
-package de.haumacher.webtranslate.arb;
+package de.haumacher.autotranslate.arb;
 
 import static org.junit.jupiter.api.Assertions.*;
 

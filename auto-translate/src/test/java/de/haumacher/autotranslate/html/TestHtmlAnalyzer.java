@@ -1,4 +1,4 @@
-package de.haumacher.webtranslate.extract;
+package de.haumacher.autotranslate.html;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 

@@ -241,8 +241,7 @@ auto-translate/
 │           └── ArbPlaceholder.java      # ARB placeholder metadata
 └── src/test/java/de/haumacher/autotranslate/
     ├── html/
-    │   └── extract/
-    │       └── TestHtmlAnalyzer.java         # HTML analysis tests
+    │   └── TestHtmlAnalyzer.java         # HTML analysis tests
     └── arb/
         ├── TestArbParser.java            # ARB parser tests
         ├── TestArbTranslator.java        # ARB translator tests
