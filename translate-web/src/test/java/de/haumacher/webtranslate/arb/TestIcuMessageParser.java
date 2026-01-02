@@ -1,12 +1,17 @@
 package de.haumacher.webtranslate.arb;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import de.haumacher.webtranslate.arb.MessagePart;
+import de.haumacher.webtranslate.arb.IcuMessageParser.ComplexParameter;
+import de.haumacher.webtranslate.arb.IcuMessageParser.MessagePart;
+import de.haumacher.webtranslate.arb.IcuMessageParser.SimpleParameter;
+import de.haumacher.webtranslate.arb.IcuMessageParser.TextPart;
 import de.haumacher.webtranslate.arb.ParameterProtector.ProtectedText;
 
 /**

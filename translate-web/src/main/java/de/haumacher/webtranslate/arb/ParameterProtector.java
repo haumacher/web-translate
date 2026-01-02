@@ -314,33 +314,9 @@ public class ParameterProtector {
 	private static List<MessagePart> translateParts(List<MessagePart> parts, java.util.function.Function<String, String> translationFunction) {
 		List<MessagePart> result = new ArrayList<>();
 		for (MessagePart part : parts) {
-			result.add(translatePart(part, translationFunction));
+			result.add(part.translate(translationFunction));
 		}
 		return result;
-	}
-
-	/**
-	 * Translates a single message part recursively.
-	 */
-	private static MessagePart translatePart(MessagePart part, java.util.function.Function<String, String> translationFunction) {
-		if (part instanceof TextPart) {
-			String originalText = ((TextPart) part).getText();
-			String translatedText = translationFunction.apply(originalText);
-			return new TextPart(translatedText);
-		} else if (part instanceof SimpleParameter) {
-			// Placeholders are not translated
-			return part;
-		} else if (part instanceof ComplexParameter) {
-			ComplexParameter format = (ComplexParameter) part;
-			// Translate all cases recursively
-			List<SelectorCase> translatedCases = new ArrayList<>();
-			for (SelectorCase case_ : format.getCases()) {
-				List<MessagePart> translatedCaseParts = translateParts(case_.getParts(), translationFunction);
-				translatedCases.add(new SelectorCase(case_.getSelector(), translatedCaseParts));
-			}
-			return new ComplexParameter(format.getName(), format.getFormatType(), translatedCases);
-		}
-		return part;
 	}
 
 	/**

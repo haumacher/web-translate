@@ -51,6 +51,14 @@ public class IcuMessageParser {
 		 * @return The converted text and the next available index
 		 */
 		public abstract ConversionResult toProtectedText(int nextParamIndex);
+
+		/**
+		 * Translates this message part recursively.
+		 *
+		 * @param translationFunction The function to apply to all text fragments
+		 * @return A new translated MessagePart
+		 */
+		public abstract MessagePart translate(java.util.function.Function<String, String> translationFunction);
 	}
 
 	/**
@@ -88,6 +96,13 @@ public class IcuMessageParser {
 		}
 
 		@Override
+		public MessagePart translate(java.util.function.Function<String, String> translationFunction) {
+			String originalText = getText();
+			String translatedText = translationFunction.apply(originalText);
+			return new TextPart(translatedText);
+		}
+
+		@Override
 		public String toString() {
 			return "Text{" + text + "}";
 		}
@@ -106,6 +121,12 @@ public class IcuMessageParser {
 		public ConversionResult toProtectedText(int nextParamIndex) {
 			String protection = "<x" + nextParamIndex + ">" + getName() + "</x" + nextParamIndex + ">";
 			return new ConversionResult(protection, nextParamIndex + 1);
+		}
+
+		@Override
+		public MessagePart translate(java.util.function.Function<String, String> translationFunction) {
+			// Placeholders are not translated
+			return this;
 		}
 
 		@Override
@@ -141,6 +162,20 @@ public class IcuMessageParser {
 			// Only the parameter name is protected, everything else (including nested content) is hidden
 			String protection = "<x" + nextParamIndex + ">" + getName() + "</x" + nextParamIndex + ">";
 			return new ConversionResult(protection, nextParamIndex + 1);
+		}
+
+		@Override
+		public MessagePart translate(java.util.function.Function<String, String> translationFunction) {
+			// Translate all cases recursively
+			List<SelectorCase> translatedCases = new ArrayList<>();
+			for (SelectorCase case_ : getCases()) {
+				List<MessagePart> translatedCaseParts = new ArrayList<>();
+				for (MessagePart part : case_.getParts()) {
+					translatedCaseParts.add(part.translate(translationFunction));
+				}
+				translatedCases.add(new SelectorCase(case_.getSelector(), translatedCaseParts));
+			}
+			return new ComplexParameter(getName(), getFormatType(), translatedCases);
 		}
 
 		@Override
