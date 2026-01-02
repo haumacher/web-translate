@@ -38,7 +38,7 @@ public class TestIcuMessageParser {
 		assertTrue(parts.get(0) instanceof IcuMessageParser.ComplexFormat);
 
 		IcuMessageParser.ComplexFormat format = (IcuMessageParser.ComplexFormat) parts.get(0);
-		assertEquals("count", format.getArgumentName());
+		assertEquals("count", format.getName());
 		assertEquals("plural", format.getFormatType());
 		assertEquals(2, format.getCases().size());
 
@@ -79,7 +79,7 @@ public class TestIcuMessageParser {
 		assertEquals(1, parts.size());
 		IcuMessageParser.ComplexFormat format = (IcuMessageParser.ComplexFormat) parts.get(0);
 
-		assertEquals("gender", format.getArgumentName());
+		assertEquals("gender", format.getName());
 		assertEquals("select", format.getFormatType());
 		assertEquals(3, format.getCases().size());
 

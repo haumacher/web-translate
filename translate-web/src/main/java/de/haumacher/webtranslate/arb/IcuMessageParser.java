@@ -127,14 +127,6 @@ public class IcuMessageParser {
 			this.cases = cases;
 		}
 
-		/**
-		 * @deprecated Use {@link #getName()} instead.
-		 */
-		@Deprecated
-		public String getArgumentName() {
-			return getName();
-		}
-
 		public String getFormatType() {
 			return formatType;
 		}

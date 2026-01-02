@@ -2,6 +2,7 @@ package de.haumacher.webtranslate.arb;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -282,7 +283,7 @@ public class ParameterProtector {
 			IcuMessageParser.ComplexFormat format = (IcuMessageParser.ComplexFormat) part;
 			StringBuilder result = new StringBuilder();
 			result.append("{");
-			result.append(format.getArgumentName());
+			result.append(format.getName());
 			result.append(", ");
 			result.append(format.getFormatType());
 			result.append(",");
@@ -331,7 +332,7 @@ public class ParameterProtector {
 				List<IcuMessageParser.MessagePart> translatedCaseParts = translateParts(case_.getParts(), translationFunction);
 				translatedCases.add(new IcuMessageParser.SelectorCase(case_.getSelector(), translatedCaseParts));
 			}
-			return new IcuMessageParser.ComplexFormat(format.getArgumentName(), format.getFormatType(), translatedCases);
+			return new IcuMessageParser.ComplexFormat(format.getName(), format.getFormatType(), translatedCases);
 		}
 		return part;
 	}
@@ -343,12 +344,7 @@ public class ParameterProtector {
 	 * @param translationFunction A function that translates the protected text
 	 * @return The translated text with original parameters restored
 	 */
-	public static String translate(String text,
-			java.util.function.Function<String, String> translationFunction) {
-		ProtectedText protection = protect(text);
-		// Apply translation to the protected text and all inner fragments
-		ProtectedText translated = protection.translate(translationFunction);
-		// Restore to get the final result with all translations applied
-		return translated.restore();
+	public static String translate(String text, Function<String, String> translationFunction) {
+		return protect(text).translate(translationFunction).restore();
 	}
 }
