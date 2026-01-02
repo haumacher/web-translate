@@ -21,7 +21,6 @@ public class TestHtmlTranslator {
 	public void testEndToEndSimpleHtml(@TempDir File tempDir) throws Exception {
 		// Setup directory structure
 		File templatesDir = new File(tempDir, "templates");
-		File propertiesDir = new File(tempDir, "properties");
 
 		File templatesEnDir = new File(templatesDir, "en");
 		templatesEnDir.mkdirs();
@@ -46,9 +45,7 @@ public class TestHtmlTranslator {
 				new StubTranslator(),
 				"en",
 				List.of("de", "fr"),
-				propertiesDir,
-				templatesDir,
-				StandardCharsets.UTF_8
+				templatesDir
 			);
 		translator.run();
 
@@ -83,7 +80,6 @@ public class TestHtmlTranslator {
 	public void testEndToEndWithNestedMarkup(@TempDir File tempDir) throws Exception {
 		// Setup directory structure
 		File templatesDir = new File(tempDir, "templates");
-		File propertiesDir = new File(tempDir, "properties");
 
 		File templatesEnDir = new File(templatesDir, "en");
 		templatesEnDir.mkdirs();
@@ -107,9 +103,7 @@ public class TestHtmlTranslator {
 				new StubTranslator(),
 				"en",
 				List.of("de"),
-				propertiesDir,
-				templatesDir,
-				StandardCharsets.UTF_8
+				templatesDir
 			);
 		translator.run();
 
@@ -135,7 +129,6 @@ public class TestHtmlTranslator {
 	public void testEndToEndWithTextAttributes(@TempDir File tempDir) throws Exception {
 		// Setup directory structure
 		File templatesDir = new File(tempDir, "templates");
-		File propertiesDir = new File(tempDir, "properties");
 
 		File templatesEnDir = new File(templatesDir, "en");
 		templatesEnDir.mkdirs();
@@ -158,9 +151,7 @@ public class TestHtmlTranslator {
 				new StubTranslator(),
 				"en",
 				List.of("de"),
-				propertiesDir,
-				templatesDir,
-				StandardCharsets.UTF_8
+				templatesDir
 			);
 		translator.run();
 
@@ -179,7 +170,6 @@ public class TestHtmlTranslator {
 	public void testEndToEndMultipleFiles(@TempDir File tempDir) throws Exception {
 		// Setup directory structure
 		File templatesDir = new File(tempDir, "templates");
-		File propertiesDir = new File(tempDir, "properties");
 
 		File templatesEnDir = new File(templatesDir, "en");
 		templatesEnDir.mkdirs();
@@ -197,9 +187,7 @@ public class TestHtmlTranslator {
 				new StubTranslator(),
 				"en",
 				List.of("de"),
-				propertiesDir,
-				templatesDir,
-				StandardCharsets.UTF_8
+				templatesDir
 			);
 		translator.run();
 
@@ -221,7 +209,6 @@ public class TestHtmlTranslator {
 	public void testEndToEndNestedDirectories(@TempDir File tempDir) throws Exception {
 		// Setup directory structure with nested directories
 		File templatesDir = new File(tempDir, "templates");
-		File propertiesDir = new File(tempDir, "properties");
 
 		File templatesEnDir = new File(templatesDir, "en");
 		File nestedDir = new File(templatesEnDir, "docs");
@@ -237,9 +224,7 @@ public class TestHtmlTranslator {
 				new StubTranslator(),
 				"en",
 				List.of("de"),
-				propertiesDir,
-				templatesDir,
-				StandardCharsets.UTF_8
+				templatesDir
 			);
 		translator.run();
 
@@ -255,7 +240,6 @@ public class TestHtmlTranslator {
 	public void testIncrementalTranslation(@TempDir File tempDir) throws Exception {
 		// Setup directory structure
 		File templatesDir = new File(tempDir, "templates");
-		File propertiesDir = new File(tempDir, "properties");
 
 		File templatesEnDir = new File(templatesDir, "en");
 		templatesEnDir.mkdirs();
@@ -270,9 +254,7 @@ public class TestHtmlTranslator {
 				new StubTranslator(),
 				"en",
 				List.of("de"),
-				propertiesDir,
-				templatesDir,
-				StandardCharsets.UTF_8
+				templatesDir
 			);
 		translator1.run();
 
@@ -291,9 +273,7 @@ public class TestHtmlTranslator {
 				new StubTranslator(),
 				"en",
 				List.of("de"),
-				propertiesDir,
-				templatesDir,
-				StandardCharsets.UTF_8
+				templatesDir
 			);
 		translator2.run();
 

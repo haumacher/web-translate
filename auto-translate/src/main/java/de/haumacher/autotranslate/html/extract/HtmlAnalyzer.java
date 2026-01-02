@@ -94,6 +94,12 @@ public class HtmlAnalyzer {
 
 	private Map<String, String> _textById = new HashMap<>();
 
+	/**
+	 * Set of text IDs that existed in the source document before analysis.
+	 * These IDs are considered "existing" and don't need unconditional translation.
+	 */
+	private Set<String> _existingIds = new HashSet<>();
+
 	public HtmlAnalyzer(Document document) {
 		_document = document;
 	}
@@ -112,6 +118,14 @@ public class HtmlAnalyzer {
 
 	public void setTextById(Map<String, String> textById) {
 		_textById = textById;
+	}
+
+	/**
+	 * Returns the set of text IDs that existed in the source document before analysis.
+	 * These are IDs that were already present as data-tx attributes.
+	 */
+	public Set<String> getExistingIds() {
+		return _existingIds;
 	}
 
 	public void inject() {
@@ -225,10 +239,12 @@ public class HtmlAnalyzer {
 
 	/**
 	 * Scans all existing text node IDs in the given document and computes the next free ID to assign.
+	 * Also tracks which IDs existed before analysis.
 	 */
 	private void scanExistingIds(Element element) {
 		String id = element.getAttribute(ID_ATTR);
 		if (id != null && !id.isEmpty()) {
+			_existingIds.add(id);
 			Matcher matcher = TEXT_ID_PATTERN.matcher(id);
 			if (matcher.matches()) {
 				_nextId = Math.max(_nextId, Integer.parseInt(matcher.group(1)) + 1);
