@@ -106,9 +106,9 @@ public class ParameterProtector {
 		}
 
 		/**
-		 * The original parsed ICU message parts (null for simple parameters).
+		 * The parsed ICU message parts.
 		 */
-		public List<MessagePart> getOriginalParts() {
+		public List<MessagePart> getParts() {
 			return parts;
 		}
 
@@ -164,6 +164,10 @@ public class ParameterProtector {
 				translatedParts.add(part.translate(translationFunction));
 			}
 
+			return create(translatedProtectedText, translatedParts);
+		}
+
+		protected ProtectedText create(String translatedProtectedText, List<MessagePart> translatedParts) {
 			return new ProtectedText(translatedProtectedText, translatedParts);
 		}
 	}

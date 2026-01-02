@@ -2,6 +2,9 @@ package de.haumacher.webtranslate.arb;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
+
+import de.haumacher.webtranslate.arb.ParameterProtector.ProtectedText;
 
 /**
  * Parser for ICU MessageFormat syntax used in ARB files.
@@ -104,7 +107,9 @@ public class IcuMessageParser {
 
 		@Override
 		public MessagePart translate(java.util.function.Function<String, String> translationFunction) {
-			return new TextPart(translationFunction.apply(getText()));
+			// Text parts are never translated, instead the whole protected text with
+			// placeholders is translated and the parameters are restored later on.
+			return this;
 		}
 
 		@Override
@@ -184,11 +189,7 @@ public class IcuMessageParser {
 			// Translate all cases recursively
 			List<SelectorCase> translatedCases = new ArrayList<>();
 			for (SelectorCase originalCase : getCases()) {
-				List<MessagePart> translatedCaseParts = new ArrayList<>();
-				for (MessagePart part : originalCase.getParts()) {
-					translatedCaseParts.add(part.translate(translationFunction));
-				}
-				translatedCases.add(new SelectorCase(originalCase.getSelector(), translatedCaseParts));
+				translatedCases.add(originalCase.translate(translationFunction));
 			}
 			return new ComplexParameter(getName(), getFormatType(), translatedCases);
 		}
@@ -201,13 +202,11 @@ public class IcuMessageParser {
 			result.append(", ");
 			result.append(getFormatType());
 			result.append(",");
-			for (SelectorCase case_ : getCases()) {
+			for (SelectorCase selectorCase : getCases()) {
 				result.append(" ");
-				result.append(case_.getSelector());
+				result.append(selectorCase.getSelector());
 				result.append("{");
-				for (MessagePart casePart : case_.getParts()) {
-					result.append(casePart.reconstruct());
-				}
+				result.append(selectorCase.restore());
 				result.append("}");
 			}
 			result.append("}");
@@ -223,21 +222,30 @@ public class IcuMessageParser {
 	/**
 	 * A single case in a select/plural format.
 	 */
-	public static class SelectorCase {
+	public static class SelectorCase extends ProtectedText {
 		private final String selector;  // e.g., "=1", "one", "other", "male"
-		private final List<MessagePart> parts;
 
 		public SelectorCase(String selector, List<MessagePart> parts) {
+			this(selector, IcuMessageParser.toProtectedText(parts), parts);
+		}
+		
+		public SelectorCase(String selector, String protectedText, List<MessagePart> parts) {
+			super(protectedText, parts);
 			this.selector = selector;
-			this.parts = parts;
 		}
 
 		public String getSelector() {
 			return selector;
 		}
-
-		public List<MessagePart> getParts() {
-			return parts;
+		
+		@Override
+		public SelectorCase translate(Function<String, String> translationFunction) {
+			return (SelectorCase) super.translate(translationFunction);
+		}
+		
+		@Override
+		protected SelectorCase create(String translatedProtectedText, List<MessagePart> translatedParts) {
+			return new SelectorCase(selector, translatedProtectedText, translatedParts);
 		}
 	}
 

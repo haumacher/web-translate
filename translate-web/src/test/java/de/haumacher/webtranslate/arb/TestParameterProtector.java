@@ -232,6 +232,7 @@ public class TestParameterProtector {
 				translator, 
 				"You have <x1>count</x1>",
 				"no messages",
+				"one message",
 				"<x1>count</x1> messages"));
 
 		assertEquals(translator.apply(original), result);
