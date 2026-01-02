@@ -80,6 +80,8 @@ public class TestParameterProtector {
 
 		// Simulate translation
 		String translatedText = "Hallo <x1>benutzername</x1>!";
+		
+		protection = protection.translate(x -> translatedText);
 
 		// Restore
 		String restored = protection.restore();
@@ -96,6 +98,8 @@ public class TestParameterProtector {
 
 		// Simulate translation
 		String translatedText = "Hallo <x1>benutzername</x1>, Sie haben <x2>anzahl</x2> Nachrichten";
+		
+		protection = protection.translate(x -> translatedText);
 
 		// Restore
 		String restored = protection.restore();
@@ -113,6 +117,8 @@ public class TestParameterProtector {
 		// Simulate translation where the translator changed parameter names inside tags
 		// (this should be ignored)
 		String translatedText = "Hallo <x1>nom-utilisateur</x1>, vous avez <x2>nombre</x2> messages";
+		
+		protection = protection.translate(x -> translatedText);
 
 		// Restore - original parameter names are restored, ignoring translated names
 		String restored = protection.restore();
@@ -129,6 +135,8 @@ public class TestParameterProtector {
 
 		// Simulate translation (no parameters to protect)
 		String translatedText = "Hallo Welt!";
+		
+		protection = protection.translate(x -> translatedText);
 
 		// Restore
 		String restored = protection.restore();
@@ -146,6 +154,8 @@ public class TestParameterProtector {
 		// Simulate translation where parameters are reordered
 		String translatedText = "Sie haben <x2>anzahl</x2> Nachrichten, <x1>benutzername</x1>";
 
+		protection = protection.translate(x -> translatedText);
+		
 		// Restore
 		String restored = protection.restore();
 
