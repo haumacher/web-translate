@@ -43,10 +43,6 @@ import de.haumacher.webtranslate.arb.IcuMessageParser.TextPart;
  */
 public class ParameterProtector {
 
-	// Pattern to match ARB parameters: {paramName}
-	// Excludes {@content} which is a special ARB syntax for masked content
-	private static final Pattern PARAMETER_PATTERN = Pattern.compile("\\{(?!@)([^}]+)\\}");
-
 	// Pattern to match XML tags: <xN>...</xN>
 	private static final Pattern TAG_PATTERN = Pattern.compile("<x(\\d+)>.*?</x\\1>");
 
@@ -57,10 +53,40 @@ public class ParameterProtector {
 		private final String protectedText;
 		private final List<MessagePart> parts; // Store original structure
 
+		/**
+		 * Creates a ProtectedText from pre-parsed message parts.
+		 *
+		 * @param protectedText The text with parameters replaced by XML tags
+		 * @param originalParts The original parsed ICU message parts
+		 */
 		public ProtectedText(String protectedText, List<MessagePart> originalParts) {
 			assert originalParts != null;
 			this.protectedText = protectedText;
 			this.parts = originalParts;
+		}
+
+		/**
+		 * Creates a ProtectedText by parsing and protecting the given text.
+		 *
+		 * <p>
+		 * This constructor handles both simple parameters and complex ICU MessageFormat syntax:
+		 * <ul>
+		 *   <li>Simple: {@code "Hello {username}"} → {@code "Hello <x1>username</x1>"}</li>
+		 *   <li>Plural: {@code "{count, plural, =1{1 message} other{{count} messages}}"}</li>
+		 * </ul>
+		 * </p>
+		 *
+		 * <p>
+		 * For complex ICU formats (plural, select), only translatable text is exposed
+		 * while identifiers (parameter names, format types, selector keywords) are protected.
+		 * </p>
+		 *
+		 * @param text The original text with ARB parameters
+		 */
+		public ProtectedText(String text) {
+			List<MessagePart> parsedParts = IcuMessageParser.parse(text);
+			this.protectedText = IcuMessageParser.toProtectedText(parsedParts);
+			this.parts = parsedParts;
 		}
 
 		/**
@@ -144,11 +170,7 @@ public class ParameterProtector {
 	 * @return ProtectedText containing the protected text and parameter list
 	 */
 	public static ProtectedText protect(String text) {
-		List<MessagePart> parts = IcuMessageParser.parse(text);
-		String protectedText = IcuMessageParser.toProtectedText(parts);
-
-		// Store original parts for reconstruction during restore
-		return new ProtectedText(protectedText, parts);
+		return new ProtectedText(text);
 	}
 
 	/**
@@ -257,6 +279,6 @@ public class ParameterProtector {
 	 * @return The translated text with original parameters restored
 	 */
 	public static String translate(String text, Function<String, String> translationFunction) {
-		return protect(text).translate(translationFunction).restore();
+		return new ProtectedText(text).translate(translationFunction).restore();
 	}
 }
