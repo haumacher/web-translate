@@ -48,7 +48,6 @@ public class ArbTranslator {
 
 	private static final String X_TRANSLATED_ATTR = "x-translated";
 
-	private final String apiKey;
 	private final Translator translator;
 	private final ArbParser parser;
 	private final ArbWriter writer;
@@ -78,7 +77,7 @@ public class ArbTranslator {
 	 * @param apiKey DeepL API authentication key
 	 */
 	public ArbTranslator(String apiKey) {
-		this(apiKey, new Translator(apiKey));
+		this(new Translator(apiKey));
 	}
 
 	/**
@@ -87,12 +86,9 @@ public class ArbTranslator {
 	 * <p>
 	 * This constructor allows dependency injection for testing purposes.
 	 * </p>
-	 *
-	 * @param apiKey DeepL API authentication key
 	 * @param translator Custom translator instance (can be a test stub)
 	 */
-	public ArbTranslator(String apiKey, Translator translator) {
-		this.apiKey = apiKey;
+	public ArbTranslator(Translator translator) {
 		this.translator = translator;
 		this.parser = new ArbParser();
 		this.writer = new ArbWriter();

@@ -111,7 +111,7 @@ public class TestArbTranslator {
 			"Should not have x-translated attribute initially");
 
 		// Use ArbTranslator - should add checksums for new resources
-		ArbTranslator arbTranslator = new ArbTranslator("fake-api-key", createStubTranslator());
+		ArbTranslator arbTranslator = new ArbTranslator(createStubTranslator());
 		arbTranslator.translate(sourceFile, List.of("de"));
 
 		// Re-parse and verify checksums were added
@@ -184,7 +184,7 @@ public class TestArbTranslator {
 			"Current checksum should differ from outdated stored checksum");
 
 		// Use ArbTranslator - should detect mismatch and re-translate
-		ArbTranslator arbTranslator = new ArbTranslator("fake-api-key", createStubTranslator());
+		ArbTranslator arbTranslator = new ArbTranslator(createStubTranslator());
 		arbTranslator.translate(sourceFile, List.of("de"));
 
 		// Verify source file was updated with new checksum
@@ -248,7 +248,7 @@ public class TestArbTranslator {
 			"Checksums should match, indicating no translation needed");
 
 		// Use ArbTranslator - should skip translation since checksum matches
-		ArbTranslator arbTranslator = new ArbTranslator("fake-api-key", createStubTranslator());
+		ArbTranslator arbTranslator = new ArbTranslator(createStubTranslator());
 		arbTranslator.translate(sourceFile, List.of("de"));
 
 		// Verify target file was NOT updated (translation was skipped)
@@ -323,7 +323,7 @@ public class TestArbTranslator {
 			"Initial checksum should not match current text");
 
 		// Use ArbTranslator with stub translator
-		ArbTranslator arbTranslator = new ArbTranslator("fake-api-key", createStubTranslator());
+		ArbTranslator arbTranslator = new ArbTranslator(createStubTranslator());
 		arbTranslator.translate(sourceFile, List.of("de", "fr"));
 
 		// Verify the source file was updated with correct checksums
