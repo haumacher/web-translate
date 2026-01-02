@@ -389,8 +389,8 @@ public class TestArbTranslator {
 			"Should not have x-translated attribute initially");
 
 		// Use ArbTranslator to "translate" (actually just process existing translations)
-		// We use a fake API key since no actual translation will happen (all resources exist in targets)
-		ArbTranslator translator = new ArbTranslator("fake-api-key-for-test");
+		// No actual translation will happen (all resources exist in targets)
+		ArbTranslator translator = new ArbTranslator(createStubTranslator());
 		translator.translate(sourceFile, List.of("de", "fr"));
 
 		// Parse source file after translation to check if checksums were added

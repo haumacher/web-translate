@@ -15,6 +15,7 @@ import java.util.zip.CRC32;
 import com.deepl.api.DeepLException;
 import com.deepl.api.TextResult;
 import com.deepl.api.Translator;
+import com.deepl.api.DeepLClient;
 
 /**
  * Translates ARB (Application Resource Bundle) files using DeepL API.
@@ -72,21 +73,9 @@ public class ArbTranslator {
 	private Map<String, String> translatedResourceChecksums;
 
 	/**
-	 * Creates a new ARB translator with the given DeepL API key.
+	 * Creates a new ARB translator with a translator instance.
 	 *
-	 * @param apiKey DeepL API authentication key
-	 */
-	public ArbTranslator(String apiKey) {
-		this(new Translator(apiKey));
-	}
-
-	/**
-	 * Creates a new ARB translator with a custom translator instance.
-	 *
-	 * <p>
-	 * This constructor allows dependency injection for testing purposes.
-	 * </p>
-	 * @param translator Custom translator instance (can be a test stub)
+	 * @param translator Translator instance for DeepL API communication
 	 */
 	public ArbTranslator(Translator translator) {
 		this.translator = translator;
@@ -428,7 +417,8 @@ public class ArbTranslator {
 		}
 
 		try {
-			ArbTranslator translator = new ArbTranslator(apiKey);
+			Translator deeplTranslator = new DeepLClient(apiKey);
+			ArbTranslator translator = new ArbTranslator(deeplTranslator);
 			translator.translate(sourceFile, targetLangs);
 		} catch (IllegalArgumentException e) {
 			System.err.println("Error: " + e.getMessage());
