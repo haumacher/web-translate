@@ -198,7 +198,7 @@ public class ArbTranslator {
 				// Restore original parameters after translation
 				String translatedText = ParameterProtector.restore(
 					result.getText(),
-					protection.getParameters()
+					protection.getParameterNames()
 				);
 
 				// Create target resource with translated value only (no metadata)

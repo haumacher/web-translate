@@ -8,6 +8,7 @@ import java.util.regex.Pattern;
 
 import de.haumacher.webtranslate.arb.IcuMessageParser.ComplexParameter;
 import de.haumacher.webtranslate.arb.IcuMessageParser.MessagePart;
+import de.haumacher.webtranslate.arb.IcuMessageParser.ParameterPart;
 import de.haumacher.webtranslate.arb.IcuMessageParser.SelectorCase;
 import de.haumacher.webtranslate.arb.IcuMessageParser.SimpleParameter;
 import de.haumacher.webtranslate.arb.IcuMessageParser.TextPart;
@@ -54,12 +55,12 @@ public class ParameterProtector {
 	 */
 	public static class ProtectedText {
 		private final String protectedText;
-		private final List<MessagePart> originalParts; // Store original structure
+		private final List<MessagePart> parts; // Store original structure
 
 		public ProtectedText(String protectedText, List<MessagePart> originalParts) {
 			assert originalParts != null;
 			this.protectedText = protectedText;
-			this.originalParts = originalParts;
+			this.parts = originalParts;
 		}
 
 		/**
@@ -72,15 +73,21 @@ public class ParameterProtector {
 		/**
 		 * The original parameter names in order of appearance.
 		 */
-		public List<String> getParameters() {
-			return extractParameterNames(originalParts);
+		public List<String> getParameterNames() {
+			List<String> parameterNames = new ArrayList<>();
+			for (MessagePart part : parts) {
+				if (part instanceof ParameterPart parameter) {
+					parameterNames.add(parameter.getName());
+				}
+			}
+			return parameterNames;
 		}
 
 		/**
 		 * The original parsed ICU message parts (null for simple parameters).
 		 */
 		public List<MessagePart> getOriginalParts() {
-			return originalParts;
+			return parts;
 		}
 
 		/**
@@ -89,12 +96,12 @@ public class ParameterProtector {
 		 * @return The text with original structure restored
 		 */
 		public String restore() {
-			if (originalParts != null) {
+			if (parts != null) {
 				// Use original parts to reconstruct with proper structure
-				return restoreWithStructure(protectedText, originalParts, getParameters());
+				return restoreWithStructure(protectedText, parts, getParameterNames());
 			} else {
 				// Simple parameter restoration
-				return ParameterProtector.restore(protectedText, getParameters());
+				return ParameterProtector.restore(protectedText, getParameterNames());
 			}
 		}
 
@@ -109,7 +116,7 @@ public class ParameterProtector {
 			String translatedProtectedText = translationFunction.apply(protectedText);
 
 			List<MessagePart> translatedParts = new ArrayList<>();
-			for (MessagePart part : originalParts) {
+			for (MessagePart part : parts) {
 				translatedParts.add(part.translate(translationFunction));
 			}
 
@@ -184,28 +191,6 @@ public class ParameterProtector {
 		}
 
 		return new ProtectedText(result.toString(), parts);
-	}
-
-	/**
-	 * Extracts parameter names from message parts.
-	 */
-	private static List<String> extractParameterNames(List<MessagePart> parts) {
-		List<String> parameters = new ArrayList<>();
-		if (parts != null) {
-			extractParameterNamesFromParts(parts, parameters);
-		}
-		return parameters;
-	}
-
-	/**
-	 * Recursively extracts parameter names from message parts.
-	 */
-	private static void extractParameterNamesFromParts(List<MessagePart> parts, List<String> parameters) {
-		for (MessagePart part : parts) {
-			if (part instanceof IcuMessageParser.ParameterPart) {
-				parameters.add(((IcuMessageParser.ParameterPart) part).getName());
-			}
-		}
 	}
 
 	/**

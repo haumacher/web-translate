@@ -122,8 +122,8 @@ public class TestIcuMessageParser {
 		assertTrue(protectedText.contains("<x1>count</x1>"));
 
 		// Verify it's just the parameter name in the tag
-		assertEquals(1, protection.getParameters().size());
-		assertEquals("count", protection.getParameters().get(0));
+		assertEquals(1, protection.getParameterNames().size());
+		assertEquals("count", protection.getParameterNames().get(0));
 	}
 
 	@Test
@@ -147,9 +147,9 @@ public class TestIcuMessageParser {
 		ProtectedText protection = ParameterProtector.protect(original);
 
 		// Should just protect the parameter name
-		assertNotNull(protection.getParameters());
-		assertEquals(1, protection.getParameters().size());
-		assertEquals("reportsCount", protection.getParameters().get(0));
+		assertNotNull(protection.getParameterNames());
+		assertEquals(1, protection.getParameterNames().size());
+		assertEquals("reportsCount", protection.getParameterNames().get(0));
 
 		// The protected text is just the parameter tag
 		String protectedText = protection.getProtectedText();

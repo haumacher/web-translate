@@ -166,12 +166,12 @@ public class IcuMessageParser {
 		public MessagePart translate(java.util.function.Function<String, String> translationFunction) {
 			// Translate all cases recursively
 			List<SelectorCase> translatedCases = new ArrayList<>();
-			for (SelectorCase case_ : getCases()) {
+			for (SelectorCase originalCase : getCases()) {
 				List<MessagePart> translatedCaseParts = new ArrayList<>();
-				for (MessagePart part : case_.getParts()) {
+				for (MessagePart part : originalCase.getParts()) {
 					translatedCaseParts.add(part.translate(translationFunction));
 				}
-				translatedCases.add(new SelectorCase(case_.getSelector(), translatedCaseParts));
+				translatedCases.add(new SelectorCase(originalCase.getSelector(), translatedCaseParts));
 			}
 			return new ComplexParameter(getName(), getFormatType(), translatedCases);
 		}

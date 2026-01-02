@@ -23,8 +23,8 @@ public class TestParameterProtector {
 		ProtectedText protection = ParameterProtector.protect(text);
 
 		assertEquals("Hello <x1>username</x1>!", protection.getProtectedText());
-		assertEquals(1, protection.getParameters().size());
-		assertEquals("username", protection.getParameters().get(0));
+		assertEquals(1, protection.getParameterNames().size());
+		assertEquals("username", protection.getParameterNames().get(0));
 	}
 
 	@Test
@@ -34,9 +34,9 @@ public class TestParameterProtector {
 
 		assertEquals("Hello <x1>username</x1>, you have <x2>count</x2> messages",
 			protection.getProtectedText());
-		assertEquals(2, protection.getParameters().size());
-		assertEquals("username", protection.getParameters().get(0));
-		assertEquals("count", protection.getParameters().get(1));
+		assertEquals(2, protection.getParameterNames().size());
+		assertEquals("username", protection.getParameterNames().get(0));
+		assertEquals("count", protection.getParameterNames().get(1));
 	}
 
 	@Test
@@ -45,7 +45,7 @@ public class TestParameterProtector {
 		ProtectedText protection = ParameterProtector.protect(text);
 
 		assertEquals("Hello World!", protection.getProtectedText());
-		assertEquals(0, protection.getParameters().size());
+		assertEquals(0, protection.getParameterNames().size());
 	}
 
 	@Test
@@ -56,9 +56,9 @@ public class TestParameterProtector {
 		assertEquals(
 			"Your balance is <x1>amount_usd</x1> and you have <x2>pending-count</x2> pending items",
 			protection.getProtectedText());
-		assertEquals(2, protection.getParameters().size());
-		assertEquals("amount_usd", protection.getParameters().get(0));
-		assertEquals("pending-count", protection.getParameters().get(1));
+		assertEquals(2, protection.getParameterNames().size());
+		assertEquals("amount_usd", protection.getParameterNames().get(0));
+		assertEquals("pending-count", protection.getParameterNames().get(1));
 	}
 
 	@Test
@@ -68,7 +68,7 @@ public class TestParameterProtector {
 		ProtectedText protection = ParameterProtector.protect(text);
 
 		assertEquals("Some text {@content} with markup", protection.getProtectedText());
-		assertEquals(0, protection.getParameters().size());
+		assertEquals(0, protection.getParameterNames().size());
 	}
 
 	@Test
@@ -175,7 +175,7 @@ public class TestParameterProtector {
 		String translated = "Hallo <x1>benutzername</x1>, Ihr Guthaben ist <x2>betrag</x2>";
 
 		// Restore
-		String restored = ParameterProtector.restore(translated, protection.getParameters());
+		String restored = ParameterProtector.restore(translated, protection.getParameterNames());
 		assertEquals("Hallo {username}, Ihr Guthaben ist {amount}", restored);
 	}
 
@@ -188,7 +188,7 @@ public class TestParameterProtector {
 		// German might reorder these
 		String translated = "Für <x2>benutzername</x2> gibt es <x1>anzahl</x1> neue Nachrichten";
 
-		String restored = ParameterProtector.restore(translated, protection.getParameters());
+		String restored = ParameterProtector.restore(translated, protection.getParameterNames());
 		assertEquals("Für {username} gibt es {count} neue Nachrichten", restored);
 	}
 
@@ -274,19 +274,19 @@ public class TestParameterProtector {
 
 		ProtectedText protection =ParameterProtector.protect(original);
 
-		assertEquals(5, protection.getParameters().size());
-		assertEquals("num", protection.getParameters().get(0));
-		assertEquals("product", protection.getParameters().get(1));
-		assertEquals("price", protection.getParameters().get(2));
-		assertEquals("total", protection.getParameters().get(3));
-		assertEquals("discount", protection.getParameters().get(4));
+		assertEquals(5, protection.getParameterNames().size());
+		assertEquals("num", protection.getParameterNames().get(0));
+		assertEquals("product", protection.getParameterNames().get(1));
+		assertEquals("price", protection.getParameterNames().get(2));
+		assertEquals("total", protection.getParameterNames().get(3));
+		assertEquals("discount", protection.getParameterNames().get(4));
 
 		// Simulate German translation
 		String translated = "Sie haben <x1>anzahl</x1> Einheiten von <x2>produkt</x2> " +
 			"für <x3>preis</x3> gekauft. Ihre Gesamtsumme beträgt <x4>gesamt</x4> " +
 			"und Sie haben <x5>rabatt</x5>% Rabatt.";
 
-		String restored = ParameterProtector.restore(translated, protection.getParameters());
+		String restored = ParameterProtector.restore(translated, protection.getParameterNames());
 
 		assertEquals("Sie haben {num} Einheiten von {product} " +
 			"für {price} gekauft. Ihre Gesamtsumme beträgt {total} " +
