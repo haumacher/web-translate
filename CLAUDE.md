@@ -429,6 +429,18 @@ Test files demonstrate:
 
 ## Development Guidelines
 
+### Code Conventions
+
+**Instance Variable Naming:**
+All instance variables (non-static fields) must start with an underscore prefix (`_`). This convention eliminates the need for `this.` prefixes and makes instance variable access clearer throughout the codebase.
+
+Examples:
+```java
+private String _apiKey;
+private List<String> _destLangs;
+private final File _templateDirectory;
+```
+
 ### Working with HTML Analysis
 
 When modifying text extraction or injection logic, understand the mapping between original elements and placeholder tags. The index in `children` list corresponds to the `<xN>` tag number minus 1.
