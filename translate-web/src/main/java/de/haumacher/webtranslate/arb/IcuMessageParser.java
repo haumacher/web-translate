@@ -97,9 +97,7 @@ public class IcuMessageParser {
 
 		@Override
 		public MessagePart translate(java.util.function.Function<String, String> translationFunction) {
-			String originalText = getText();
-			String translatedText = translationFunction.apply(originalText);
-			return new TextPart(translatedText);
+			return new TextPart(translationFunction.apply(getText()));
 		}
 
 		@Override
