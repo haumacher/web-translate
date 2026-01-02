@@ -236,6 +236,9 @@ public class HtmlAnalyzer {
 	private void extractText(Element element) {
 		String id = fetchId(element);
 		if (id != null) {
+			// Collect all texts for this element to compute combined CRC
+			StringBuilder combinedText = new StringBuilder();
+
 			NamedNodeMap attributes = element.getAttributes();
 			for (int n = 0, cnt = attributes.getLength(); n < cnt; n ++) {
 				Node attr = attributes.item(n);
@@ -244,7 +247,7 @@ public class HtmlAnalyzer {
 					if (!attrText.isBlank()) {
 						String textId = id + "." + attr.getNodeName();
 						_textById.put(textId, attrText);
-						_crcById.put(textId, computeCrc(attrText));
+						combinedText.append(attr.getNodeName()).append("=").append(attrText).append("\n");
 					}
 				}
 			}
@@ -254,8 +257,13 @@ public class HtmlAnalyzer {
 				if (containsText(element)) {
 					String text = new TextExtractor(element).extract();
 					_textById.put(id, text);
-					_crcById.put(id, computeCrc(text));
+					combinedText.append("content=").append(text).append("\n");
 				}
+			}
+
+			// Store combined CRC for the entire element
+			if (combinedText.length() > 0) {
+				_crcById.put(id, computeCrc(combinedText.toString()));
 			}
 		}
 

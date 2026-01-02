@@ -249,7 +249,7 @@ public class TestHtmlTranslator {
 
 		// Create initial HTML file
 		File sourceHtml = new File(templatesEnDir, "page.html");
-		Files.writeString(sourceHtml.toPath(), "<html><body><h1>Title</h1></body></html>");
+		Files.writeString(sourceHtml.toPath(), "<html><body><h1 title=\"Description\">Title</h1></body></html>");
 
 		// First translation run
 		de.haumacher.autotranslate.html.Translator translator1 =
@@ -265,10 +265,14 @@ public class TestHtmlTranslator {
 		File deHtml = new File(templatesDir, "de/page.html");
 		String deContent1 = Files.readString(deHtml.toPath(), StandardCharsets.UTF_8);
 		assertTrue(deContent1.contains("Title [de]"), "First translation should work");
+		assertTrue(deContent1.contains("Description [de]"), "First translation should work");
 
-		// Add more content to source HTML
-		Files.writeString(sourceHtml.toPath(),
-			"<html><body><h1>Title</h1><p>New paragraph</p></body></html>");
+		// Read the source file (which now has data-tx attributes with CRCs)
+		String sourceAfterFirstRun = Files.readString(sourceHtml.toPath(), StandardCharsets.UTF_8);
+
+		// Add more content to source HTML - preserve the data-tx attribute from h1
+		String sourceWithNewParagraph = sourceAfterFirstRun.replace("</h1></body>", "</h1><p>New paragraph</p></body>");
+		Files.writeString(sourceHtml.toPath(), sourceWithNewParagraph);
 
 		// Second translation run (incremental)
 		de.haumacher.autotranslate.html.Translator translator2 =
@@ -288,6 +292,36 @@ public class TestHtmlTranslator {
 		// Verify incremental translation contains both old and new content
 		String deContent2 = Files.readString(deHtml.toPath(), StandardCharsets.UTF_8);
 		assertTrue(deContent2.contains("Title [de]"), "Old content should remain");
+		assertTrue(deContent2.contains("Description [de]"), "Old content should remain");
 		assertTrue(deContent2.contains("New paragraph [de-new]"), "New content should be translated");
+		
+		// Incrementally modify the text attribute
+		String sourceContent = Files.readString(sourceHtml.toPath(), StandardCharsets.UTF_8);
+		String sourceContent2 = sourceContent
+				.replace("Description", "Description [updated]")
+				.replace("Title", "Title [updated]")
+				;
+		Files.writeString(sourceHtml.toPath(), sourceContent2, StandardCharsets.UTF_8);
+		
+		// Third translation run (incremental)
+		de.haumacher.autotranslate.html.Translator translator3 =
+			new de.haumacher.autotranslate.html.Translator(
+				new StubTranslator() {
+					@Override
+					protected String translateSingle(String text, String targetLang) {
+						return text + " [" + targetLang + "-new2]";
+					}
+				},
+				"en",
+				List.of("de"),
+				templatesDir
+			);
+		translator3.run();
+		
+		// Verify incremental translation contains both old and new content
+		String deContent3 = Files.readString(deHtml.toPath(), StandardCharsets.UTF_8);
+		assertTrue(deContent3.contains("Title [updated] [de-new2]"), "Update should be detected");
+		assertTrue(deContent3.contains("Description [updated] [de-new2]"), "Update should be detected");
+		assertTrue(deContent3.contains("New paragraph [de-new]"), "Old content should remain");
 	}
 }

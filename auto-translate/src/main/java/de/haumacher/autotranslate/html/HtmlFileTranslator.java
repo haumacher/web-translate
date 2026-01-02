@@ -94,21 +94,22 @@ public class HtmlFileTranslator {
 
 		for (Map.Entry<String, String> entry : sourceTexts.entrySet()) {
 			String textId = entry.getKey();
+			String baseId = extractBaseId(textId);
 
 			// New text (ID didn't exist before)
-			if (!existingIds.contains(extractBaseId(textId))) {
+			if (!existingIds.contains(baseId)) {
 				textsNeedingTranslation.add(textId);
 			}
 			// Existing text but CRC changed
 			else {
-				String oldCrc = oldCrcs.get(textId);
-				String currentCrc = currentCrcs.get(textId);
+				// CRC is stored under the base ID (covers all texts for that element)
+				String oldCrc = oldCrcs.get(baseId);
+				String currentCrc = currentCrcs.get(baseId);
 
 				// If no old CRC, assume unchanged (backward compatibility)
-				// If CRCs differ, text has changed
+				// If CRCs differ, text has changed - re-translate ALL texts for this element
 				if (oldCrc != null && currentCrc != null && !oldCrc.equals(currentCrc)) {
 					textsNeedingTranslation.add(textId);
-					System.out.println("Text changed (CRC mismatch): " + textId);
 				}
 			}
 		}
@@ -201,13 +202,13 @@ public class HtmlFileTranslator {
 			String textId = entry.getKey();
 			String sourceText = entry.getValue();
 
-			// Use existing translation if available
-			if (existingTargetTexts.containsKey(textId)) {
-				targetTexts.put(textId, existingTargetTexts.get(textId));
-			}
-			// Otherwise use new translation
-			else if (translatedTexts.containsKey(sourceText)) {
+			// Use new translation if it was just translated
+			if (translatedTexts.containsKey(sourceText)) {
 				targetTexts.put(textId, translatedTexts.get(sourceText));
+			}
+			// Otherwise use existing translation if available
+			else if (existingTargetTexts.containsKey(textId)) {
+				targetTexts.put(textId, existingTargetTexts.get(textId));
 			}
 		}
 

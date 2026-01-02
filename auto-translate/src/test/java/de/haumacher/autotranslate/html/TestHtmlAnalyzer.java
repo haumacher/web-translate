@@ -39,15 +39,15 @@ public class TestHtmlAnalyzer {
 		
 		assertEquals("""
 			<!DOCTYPE html>
-			<html><body data-tx="t0001:84c95780">Some <a>funny <b><c>new</c><d>ly</d></b> generated <e>awesome</e></a> text</body></html>""", 
+			<html><body data-tx="t0001:68ea8b3c">Some <a>funny <b><c>new</c><d>ly</d></b> generated <e>awesome</e></a> text</body></html>""",
 			html(document));
 		
 		analyzer.getTextById().put("t0001", "<x1>Lustiger <x2><x3>neu</x3></x2> generierter Text, der <x5>wunderbar</x5></x1> ist");
 		analyzer.inject();
-		
+
 		assertEquals("""
 			<!DOCTYPE html>
-			<html><body data-tx="t0001:84c95780"><a>Lustiger <b><c>neu</c><d></d></b> generierter Text, der <e>wunderbar</e></a> ist</body></html>""", 
+			<html><body data-tx="t0001:68ea8b3c"><a>Lustiger <b><c>neu</c><d></d></b> generierter Text, der <e>wunderbar</e></a> ist</body></html>""",
 			html(document));
 	}
 
@@ -66,7 +66,7 @@ public class TestHtmlAnalyzer {
 
 		assertEquals("""
 			<!DOCTYPE html>
-			<nav data-tx="t0001:44f217ed" title="My title"><ul><li data-tx="t0002:4f93c011">My text</li></ul></nav>""",
+			<nav data-tx="t0001:98c2b6c7" title="My title"><ul><li data-tx="t0002:780af66c">My text</li></ul></nav>""",
 			html(document));
 		
 		assertEquals("""
@@ -78,10 +78,10 @@ public class TestHtmlAnalyzer {
 		analyzer.getTextById().put("t0001.title", "Mein Titel");
 		analyzer.getTextById().put("t0002", "Mein Text");
 		analyzer.inject();
-		
+
 		assertEquals("""
 			<!DOCTYPE html>
-			<nav data-tx="t0001:44f217ed" title="Mein Titel"><ul><li data-tx="t0002:4f93c011">Mein Text</li></ul></nav>""",
+			<nav data-tx="t0001:98c2b6c7" title="Mein Titel"><ul><li data-tx="t0002:780af66c">Mein Text</li></ul></nav>""",
 			html(document));
 	}
 	
