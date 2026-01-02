@@ -193,13 +193,18 @@ public class ArbTranslator {
 			for (int i = 0; i < results.size(); i++) {
 				TextResult result = results.get(i);
 				String resourceId = resourceIdsToTranslate.get(i);
-				ParameterProtector.ProtectedText protection = protectedTexts.get(i);
+				ParameterProtector.ProtectedText originalProtection = protectedTexts.get(i);
+
+				// Create a new ProtectedText with the translated protected text
+				// and the original parts, then restore to get final translation
+				ParameterProtector.ProtectedText translatedProtection =
+					new ParameterProtector.ProtectedText(
+						result.getText(),
+						originalProtection.getParts()
+					);
 
 				// Restore original parameters after translation
-				String translatedText = ParameterProtector.restore(
-					result.getText(),
-					protection.getParameterNames()
-				);
+				String translatedText = translatedProtection.restore();
 
 				// Create target resource with translated value only (no metadata)
 				ArbResource targetResource = new ArbResource(resourceId, translatedText);

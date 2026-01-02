@@ -196,51 +196,6 @@ public class ParameterProtector {
 	}
 
 	/**
-	 * Restores original parameters in the translated text.
-	 *
-	 * <p>
-	 * Replaces XML tags with the original parameter syntax. The content inside
-	 * the XML tags is ignored (may have been translated), and the original
-	 * parameter names are restored.
-	 * </p>
-	 *
-	 * <p>
-	 * Example:
-	 * <pre>
-	 * Translated: "Hallo &lt;x1&gt;benutzername&lt;/x1&gt;, Sie haben &lt;x2&gt;anzahl&lt;/x2&gt; Nachrichten"
-	 * Parameters: ["username", "count"]
-	 * Output:     "Hallo {username}, Sie haben {count} Nachrichten"
-	 * </pre>
-	 * </p>
-	 *
-	 * @param translatedText The translated text with XML tags
-	 * @param parameters     The original parameter names in order
-	 * @return The text with original ARB parameter syntax restored
-	 */
-	public static String restore(String translatedText, List<String> parameters) {
-		Matcher matcher = TAG_PATTERN.matcher(translatedText);
-		StringBuffer result = new StringBuffer();
-
-		while (matcher.find()) {
-			String indexStr = matcher.group(1);
-			int index = Integer.parseInt(indexStr);
-
-			// Get original parameter name (index is 1-based)
-			if (index > 0 && index <= parameters.size()) {
-				String originalParam = parameters.get(index - 1);
-				String replacement = "{" + originalParam + "}";
-				matcher.appendReplacement(result, Matcher.quoteReplacement(replacement));
-			} else {
-				// Keep as-is if index is out of bounds (shouldn't happen)
-				matcher.appendReplacement(result, Matcher.quoteReplacement(matcher.group()));
-			}
-		}
-		matcher.appendTail(result);
-
-		return result.toString();
-	}
-
-	/**
 	 * Convenience method to protect, translate (via callback), and restore.
 	 *
 	 * @param text              The original text with parameters
