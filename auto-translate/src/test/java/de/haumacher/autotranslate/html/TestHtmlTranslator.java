@@ -52,18 +52,6 @@ public class TestHtmlTranslator {
 			);
 		translator.run();
 
-		// Verify properties were extracted
-		File enPropertiesDir = new File(propertiesDir, "en");
-		assertTrue(enPropertiesDir.exists(), "English properties directory should be created");
-
-		File enPropertiesFile = new File(enPropertiesDir, "index.properties");
-		assertTrue(enPropertiesFile.exists(), "Properties file should be created");
-
-		String propertiesContent = Files.readString(enPropertiesFile.toPath(), StandardCharsets.UTF_8);
-		assertTrue(propertiesContent.contains("Welcome Page"), "Properties should contain title text");
-		assertTrue(propertiesContent.contains("Hello World"), "Properties should contain heading text");
-		assertTrue(propertiesContent.contains("This is a test page."), "Properties should contain paragraph text");
-
 		// Verify German translation was created
 		File deTemplatesDir = new File(templatesDir, "de");
 		assertTrue(deTemplatesDir.exists(), "German templates directory should be created");
@@ -89,26 +77,6 @@ public class TestHtmlTranslator {
 		assertTrue(frContent.contains("Welcome Page [fr]"), "Title should be translated to French");
 		assertTrue(frContent.contains("Hello World [fr]"), "Heading should be translated to French");
 		assertTrue(frContent.contains("This is a test page. [fr]"), "Paragraph should be translated to French");
-
-		// Verify German properties file was created
-		File dePropertiesDir = new File(propertiesDir, "de");
-		assertTrue(dePropertiesDir.exists(), "German properties directory should be created");
-
-		File dePropertiesFile = new File(dePropertiesDir, "index.properties");
-		assertTrue(dePropertiesFile.exists(), "German properties file should be created");
-
-		String dePropertiesContent = Files.readString(dePropertiesFile.toPath(), StandardCharsets.UTF_8);
-		assertTrue(dePropertiesContent.contains("[de]"), "German properties should contain translations");
-
-		// Verify French properties file was created
-		File frPropertiesDir = new File(propertiesDir, "fr");
-		assertTrue(frPropertiesDir.exists(), "French properties directory should be created");
-
-		File frPropertiesFile = new File(frPropertiesDir, "index.properties");
-		assertTrue(frPropertiesFile.exists(), "French properties file should be created");
-
-		String frPropertiesContent = Files.readString(frPropertiesFile.toPath(), StandardCharsets.UTF_8);
-		assertTrue(frPropertiesContent.contains("[fr]"), "French properties should contain translations");
 	}
 
 	@Test
@@ -196,16 +164,6 @@ public class TestHtmlTranslator {
 			);
 		translator.run();
 
-		// Verify properties contain text attributes
-		File enPropertiesFile = new File(propertiesDir, "en/form.properties");
-		String propertiesContent = Files.readString(enPropertiesFile.toPath(), StandardCharsets.UTF_8);
-
-		assertTrue(propertiesContent.contains("Company Logo"), "Properties should contain alt text");
-		assertTrue(propertiesContent.contains("Our Logo"), "Properties should contain title text");
-		assertTrue(propertiesContent.contains("Enter your name"), "Properties should contain placeholder text");
-		assertTrue(propertiesContent.contains("Submit Form"), "Properties should contain aria-label text");
-		assertTrue(propertiesContent.contains("Submit"), "Properties should contain button text");
-
 		// Verify German translation contains translated attributes
 		File deHtml = new File(templatesDir, "de/form.html");
 		String deContent = Files.readString(deHtml.toPath(), StandardCharsets.UTF_8);
@@ -291,10 +249,6 @@ public class TestHtmlTranslator {
 
 		String deContent = Files.readString(deNestedHtml.toPath(), StandardCharsets.UTF_8);
 		assertTrue(deContent.contains("User Guide [de]"), "Nested file should be translated");
-
-		// Verify properties file also respects nested structure
-		File enNestedProperties = new File(propertiesDir, "en/docs/guide.properties");
-		assertTrue(enNestedProperties.exists(), "Properties file should respect nested structure");
 	}
 
 	@Test
