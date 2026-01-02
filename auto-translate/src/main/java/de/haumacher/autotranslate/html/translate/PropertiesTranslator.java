@@ -21,6 +21,7 @@ import java.util.Properties;
 import com.deepl.api.DeepLClient;
 import com.deepl.api.DeepLException;
 import com.deepl.api.TextResult;
+import com.deepl.api.Translator;
 
 import de.haumacher.autotranslate.html.extract.PropertiesWriter;
 
@@ -37,14 +38,25 @@ public class PropertiesTranslator {
 	private File _propertiesDir;
 	private String _srcLang;
 	private List<String> _destLangs;
-	private DeepLClient _client;
+	private Translator _translator;
 
 	private int  _totalChars;
 	private File _src;
 	private NameStrategy _nameStrategy;
 	private Charset _propertiesCharset;
 
-	public PropertiesTranslator(String apikey, String srcLang, List<String> destLangs, File propertiesDir, File src, NameStrategy nameStrategy, Charset propertiesCharset) {
+	/**
+	 * Creates a new properties translator with a translator instance.
+	 *
+	 * @param translator Translator instance for DeepL API communication
+	 * @param srcLang Source language code
+	 * @param destLangs List of destination language codes
+	 * @param propertiesDir Base properties directory
+	 * @param src Source file or directory (null to use default)
+	 * @param nameStrategy Strategy for naming translated files
+	 * @param propertiesCharset Charset for properties files
+	 */
+	public PropertiesTranslator(Translator translator, String srcLang, List<String> destLangs, File propertiesDir, File src, NameStrategy nameStrategy, Charset propertiesCharset) {
 		_srcLang = srcLang;
 		_destLangs = destLangs;
 		_nameStrategy = nameStrategy;
@@ -52,7 +64,22 @@ public class PropertiesTranslator {
 		_propertiesDir = propertiesDir;
 		_propertiesCharset = propertiesCharset;
 
-        _client = new DeepLClient(apikey);
+        _translator = translator;
+	}
+
+	/**
+	 * Creates a new properties translator with an API key.
+	 *
+	 * @param apikey DeepL API key
+	 * @param srcLang Source language code
+	 * @param destLangs List of destination language codes
+	 * @param propertiesDir Base properties directory
+	 * @param src Source file or directory (null to use default)
+	 * @param nameStrategy Strategy for naming translated files
+	 * @param propertiesCharset Charset for properties files
+	 */
+	public PropertiesTranslator(String apikey, String srcLang, List<String> destLangs, File propertiesDir, File src, NameStrategy nameStrategy, Charset propertiesCharset) {
+		this(new DeepLClient(apikey), srcLang, destLangs, propertiesDir, src, nameStrategy, propertiesCharset);
 	}
 
 	public void translate() throws IOException, DeepLException, InterruptedException {
@@ -112,7 +139,7 @@ public class PropertiesTranslator {
 		}
 
 		{
-			List<TextResult> results = inputs.isEmpty() ? Collections.emptyList() : _client.translateText(inputs, _srcLang, destLang);
+			List<TextResult> results = inputs.isEmpty() ? Collections.emptyList() : _translator.translateText(inputs, _srcLang, destLang);
 
 			output.getParentFile().mkdirs();
 

@@ -17,6 +17,7 @@ import com.deepl.api.DeepLException;
 import com.deepl.api.TextResult;
 import com.deepl.api.Translator;
 
+import de.haumacher.autotranslate.StubTranslator;
 import de.haumacher.autotranslate.arb.ArbTranslator;
 import de.haumacher.autotranslate.arb.io.ArbParser;
 import de.haumacher.autotranslate.arb.model.ArbBundle;
@@ -26,30 +27,6 @@ import de.haumacher.autotranslate.arb.model.ArbResource;
  * Test cases for {@link ArbTranslator}.
  */
 public class TestArbTranslator {
-
-	/**
-	 * Creates a stub translator for testing that returns predictable translations.
-	 *
-	 * <p>
-	 * The stub appends the target language code in brackets to show it was "translated".
-	 * For example, "Hello" translates to "Hello [de]" for German.
-	 * </p>
-	 */
-	private static Translator createStubTranslator() {
-		return new Translator("fake-api-key") {
-			@Override
-			public List<TextResult> translateText(List<String> texts, String sourceLang, String targetLang)
-					throws DeepLException, InterruptedException {
-				List<TextResult> results = new ArrayList<>();
-				for (String text : texts) {
-					// Simple stub: append language suffix to show it was "translated"
-					String translated = text + " [" + targetLang + "]";
-					results.add(new TextResult(translated, sourceLang, text.length(), targetLang));
-				}
-				return results;
-			}
-		};
-	}
 
 	@Test
 	public void testExtractLanguageSimple() {
@@ -116,7 +93,7 @@ public class TestArbTranslator {
 			"Should not have x-translated attribute initially");
 
 		// Use ArbTranslator - should add checksums for new resources
-		ArbTranslator arbTranslator = new ArbTranslator(createStubTranslator());
+		ArbTranslator arbTranslator = new ArbTranslator(new StubTranslator());
 		arbTranslator.translate(sourceFile, List.of("de"));
 
 		// Re-parse and verify checksums were added
@@ -189,7 +166,7 @@ public class TestArbTranslator {
 			"Current checksum should differ from outdated stored checksum");
 
 		// Use ArbTranslator - should detect mismatch and re-translate
-		ArbTranslator arbTranslator = new ArbTranslator(createStubTranslator());
+		ArbTranslator arbTranslator = new ArbTranslator(new StubTranslator());
 		arbTranslator.translate(sourceFile, List.of("de"));
 
 		// Verify source file was updated with new checksum
@@ -253,7 +230,7 @@ public class TestArbTranslator {
 			"Checksums should match, indicating no translation needed");
 
 		// Use ArbTranslator - should skip translation since checksum matches
-		ArbTranslator arbTranslator = new ArbTranslator(createStubTranslator());
+		ArbTranslator arbTranslator = new ArbTranslator(new StubTranslator());
 		arbTranslator.translate(sourceFile, List.of("de"));
 
 		// Verify target file was NOT updated (translation was skipped)
@@ -328,7 +305,7 @@ public class TestArbTranslator {
 			"Initial checksum should not match current text");
 
 		// Use ArbTranslator with stub translator
-		ArbTranslator arbTranslator = new ArbTranslator(createStubTranslator());
+		ArbTranslator arbTranslator = new ArbTranslator(new StubTranslator());
 		arbTranslator.translate(sourceFile, List.of("de", "fr"));
 
 		// Verify the source file was updated with correct checksums
@@ -395,7 +372,7 @@ public class TestArbTranslator {
 
 		// Use ArbTranslator to "translate" (actually just process existing translations)
 		// No actual translation will happen (all resources exist in targets)
-		ArbTranslator translator = new ArbTranslator(createStubTranslator());
+		ArbTranslator translator = new ArbTranslator(new StubTranslator());
 		translator.translate(sourceFile, List.of("de", "fr"));
 
 		// Parse source file after translation to check if checksums were added
