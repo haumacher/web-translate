@@ -129,7 +129,7 @@ public class TestIcuMessageParser {
 		ProtectedText protection = ParameterProtector.protect(original);
 
 		// Restore should return the original
-		String restored = protection.restore(protection.getProtectedText());
+		String restored = protection.restore();
 
 		// Protect + restore must yield the original input
 		assertEquals(original, restored);
@@ -194,7 +194,7 @@ public class TestIcuMessageParser {
 		assertTrue(protectedText.contains("<x1>reportsCount</x1>"));
 
 		// Restore should give back the original
-		String restored = protection.restore(protectedText);
+		String restored = protection.restore();
 		assertEquals(original, restored);
 	}
 }

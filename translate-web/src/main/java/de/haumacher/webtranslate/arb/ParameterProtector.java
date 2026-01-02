@@ -47,16 +47,10 @@ public class ParameterProtector {
 	 */
 	public static class ProtectedText {
 		private final String protectedText;
-		private final List<String> parameters;
 		private final List<IcuMessageParser.MessagePart> originalParts; // Store original structure
 
-		public ProtectedText(String protectedText, List<String> parameters) {
-			this(protectedText, parameters, null);
-		}
-
-		public ProtectedText(String protectedText, List<String> parameters, List<IcuMessageParser.MessagePart> originalParts) {
+		public ProtectedText(String protectedText, List<IcuMessageParser.MessagePart> originalParts) {
 			this.protectedText = protectedText;
-			this.parameters = parameters;
 			this.originalParts = originalParts;
 		}
 
@@ -71,7 +65,7 @@ public class ParameterProtector {
 		 * The original parameter names in order of appearance.
 		 */
 		public List<String> getParameters() {
-			return parameters;
+			return extractParameterNames(originalParts);
 		}
 
 		/**
@@ -84,16 +78,15 @@ public class ParameterProtector {
 		/**
 		 * Restores original structure from translated text.
 		 *
-		 * @param translatedText The translated text with XML tags
 		 * @return The text with original structure restored
 		 */
-		public String restore(String translatedText) {
+		public String restore() {
 			if (originalParts != null) {
 				// Use original parts to reconstruct with proper structure
-				return restoreWithStructure(translatedText, originalParts, parameters);
+				return restoreWithStructure(protectedText, originalParts, getParameters());
 			} else {
 				// Simple parameter restoration
-				return ParameterProtector.restore(translatedText, parameters);
+				return ParameterProtector.restore(protectedText, getParameters());
 			}
 		}
 
@@ -106,15 +99,15 @@ public class ParameterProtector {
 		public ProtectedText translate(java.util.function.Function<String, String> translationFunction) {
 			// Translate the protected text itself
 			String translatedProtectedText = translationFunction.apply(protectedText);
-			
+
 			if (originalParts != null) {
 				// Translate inner parts recursively
 				List<IcuMessageParser.MessagePart> translatedParts = translateParts(originalParts, translationFunction);
 
-				return new ProtectedText(translatedProtectedText, parameters, translatedParts);
+				return new ProtectedText(translatedProtectedText, translatedParts);
 			} else {
 				// For simple parameters, just translate the protected text
-				return new ProtectedText(translatedProtectedText, parameters);
+				return new ProtectedText(translatedProtectedText, originalParts);
 			}
 		}
 	}
@@ -144,11 +137,8 @@ public class ParameterProtector {
 			List<IcuMessageParser.MessagePart> parts = IcuMessageParser.parse(text);
 			String protectedText = IcuMessageParser.toProtectedText(parts);
 
-			// Extract all protected parameter names for restoration
-			List<String> parameters = extractParameterNames(protectedText);
-
 			// Store original parts for reconstruction during restore
-			return new ProtectedText(protectedText, parameters, parts);
+			return new ProtectedText(protectedText, parts);
 		} catch (Exception e) {
 			// Fallback to simple regex-based protection
 			return protectSimple(text);
@@ -159,39 +149,58 @@ public class ParameterProtector {
 	 * Simple regex-based protection (fallback for non-ICU messages).
 	 */
 	private static ProtectedText protectSimple(String text) {
-		List<String> parameters = new ArrayList<>();
+		List<IcuMessageParser.MessagePart> parts = new ArrayList<>();
 		Matcher matcher = PARAMETER_PATTERN.matcher(text);
 		StringBuffer result = new StringBuffer();
 
+		int lastEnd = 0;
 		int paramIndex = 1;
 		while (matcher.find()) {
+			// Add text before parameter
+			if (matcher.start() > lastEnd) {
+				parts.add(new IcuMessageParser.TextPart(text.substring(lastEnd, matcher.start())));
+			}
+
 			String paramName = matcher.group(1);
-			parameters.add(paramName);
+			parts.add(new IcuMessageParser.SimplePlaceholder(paramName));
 
 			// Replace {paramName} with <xN>paramName</xN>
 			String replacement = "<x" + paramIndex + ">" + paramName + "</x" + paramIndex + ">";
 			matcher.appendReplacement(result, Matcher.quoteReplacement(replacement));
 
+			lastEnd = matcher.end();
 			paramIndex++;
 		}
 		matcher.appendTail(result);
 
-		return new ProtectedText(result.toString(), parameters);
+		// Add remaining text
+		if (lastEnd < text.length()) {
+			parts.add(new IcuMessageParser.TextPart(text.substring(lastEnd)));
+		}
+
+		return new ProtectedText(result.toString(), parts);
 	}
 
 	/**
-	 * Extracts parameter names from protected text (content inside XML tags).
+	 * Extracts parameter names from message parts.
 	 */
-	private static List<String> extractParameterNames(String protectedText) {
+	private static List<String> extractParameterNames(List<IcuMessageParser.MessagePart> parts) {
 		List<String> parameters = new ArrayList<>();
-		Pattern extractPattern = Pattern.compile("<x\\d+>([^<]+)</x\\d+>");
-		Matcher matcher = extractPattern.matcher(protectedText);
-
-		while (matcher.find()) {
-			parameters.add(matcher.group(1));
+		if (parts != null) {
+			extractParameterNamesFromParts(parts, parameters);
 		}
-
 		return parameters;
+	}
+
+	/**
+	 * Recursively extracts parameter names from message parts.
+	 */
+	private static void extractParameterNamesFromParts(List<IcuMessageParser.MessagePart> parts, List<String> parameters) {
+		for (IcuMessageParser.MessagePart part : parts) {
+			if (part instanceof IcuMessageParser.ParameterPart) {
+				parameters.add(((IcuMessageParser.ParameterPart) part).getName());
+			}
+		}
 	}
 
 	/**
@@ -340,6 +349,6 @@ public class ParameterProtector {
 		// Apply translation to the protected text and all inner fragments
 		ProtectedText translated = protection.translate(translationFunction);
 		// Restore to get the final result with all translations applied
-		return translated.restore(translated.getProtectedText());
+		return translated.restore();
 	}
 }

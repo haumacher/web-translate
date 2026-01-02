@@ -54,6 +54,21 @@ public class IcuMessageParser {
 	}
 
 	/**
+	 * Base class for message parts that have a parameter name.
+	 */
+	public static abstract class ParameterPart extends MessagePart {
+		private final String name;
+
+		public ParameterPart(String name) {
+			this.name = name;
+		}
+
+		public String getName() {
+			return name;
+		}
+	}
+
+	/**
 	 * Plain text that should be translated.
 	 */
 	public static class TextPart extends MessagePart {
@@ -81,45 +96,43 @@ public class IcuMessageParser {
 	/**
 	 * A simple placeholder: {@code {name}} or {@code {0}}.
 	 */
-	public static class SimplePlaceholder extends MessagePart {
-		private final String name;
+	public static class SimplePlaceholder extends ParameterPart {
 
 		public SimplePlaceholder(String name) {
-			this.name = name;
-		}
-
-		public String getName() {
-			return name;
+			super(name);
 		}
 
 		@Override
 		public ConversionResult toProtectedText(int nextParamIndex) {
-			String protection = "<x" + nextParamIndex + ">" + name + "</x" + nextParamIndex + ">";
+			String protection = "<x" + nextParamIndex + ">" + getName() + "</x" + nextParamIndex + ">";
 			return new ConversionResult(protection, nextParamIndex + 1);
 		}
 
 		@Override
 		public String toString() {
-			return "Placeholder{" + name + "}";
+			return "Placeholder{" + getName() + "}";
 		}
 	}
 
 	/**
 	 * A complex format with type and style: {@code {count, plural, ...}}.
 	 */
-	public static class ComplexFormat extends MessagePart {
-		private final String argumentName;
+	public static class ComplexFormat extends ParameterPart {
 		private final String formatType;
 		private final List<SelectorCase> cases;
 
 		public ComplexFormat(String argumentName, String formatType, List<SelectorCase> cases) {
-			this.argumentName = argumentName;
+			super(argumentName);
 			this.formatType = formatType;
 			this.cases = cases;
 		}
 
+		/**
+		 * @deprecated Use {@link #getName()} instead.
+		 */
+		@Deprecated
 		public String getArgumentName() {
-			return argumentName;
+			return getName();
 		}
 
 		public String getFormatType() {
@@ -134,13 +147,13 @@ public class IcuMessageParser {
 		public ConversionResult toProtectedText(int nextParamIndex) {
 			// Complex format is treated as a single top-level parameter
 			// Only the parameter name is protected, everything else (including nested content) is hidden
-			String protection = "<x" + nextParamIndex + ">" + argumentName + "</x" + nextParamIndex + ">";
+			String protection = "<x" + nextParamIndex + ">" + getName() + "</x" + nextParamIndex + ">";
 			return new ConversionResult(protection, nextParamIndex + 1);
 		}
 
 		@Override
 		public String toString() {
-			return "ComplexFormat{" + argumentName + ", " + formatType + ", cases=" + cases.size() + "}";
+			return "ComplexFormat{" + getName() + ", " + formatType + ", cases=" + cases.size() + "}";
 		}
 	}
 

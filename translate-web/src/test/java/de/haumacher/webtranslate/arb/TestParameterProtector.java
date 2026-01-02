@@ -82,7 +82,7 @@ public class TestParameterProtector {
 		String translatedText = "Hallo <x1>benutzername</x1>!";
 
 		// Restore
-		String restored = protection.restore(translatedText);
+		String restored = protection.restore();
 
 		assertEquals("Hallo {username}!", restored);
 	}
@@ -98,7 +98,7 @@ public class TestParameterProtector {
 		String translatedText = "Hallo <x1>benutzername</x1>, Sie haben <x2>anzahl</x2> Nachrichten";
 
 		// Restore
-		String restored = protection.restore(translatedText);
+		String restored = protection.restore();
 
 		assertEquals("Hallo {username}, Sie haben {count} Nachrichten", restored);
 	}
@@ -115,7 +115,7 @@ public class TestParameterProtector {
 		String translatedText = "Hallo <x1>nom-utilisateur</x1>, vous avez <x2>nombre</x2> messages";
 
 		// Restore - original parameter names are restored, ignoring translated names
-		String restored = protection.restore(translatedText);
+		String restored = protection.restore();
 
 		assertEquals("Hallo {username}, vous avez {count} messages", restored);
 	}
@@ -131,7 +131,7 @@ public class TestParameterProtector {
 		String translatedText = "Hallo Welt!";
 
 		// Restore
-		String restored = protection.restore(translatedText);
+		String restored = protection.restore();
 
 		assertEquals("Hallo Welt!", restored);
 	}
@@ -147,7 +147,7 @@ public class TestParameterProtector {
 		String translatedText = "Sie haben <x2>anzahl</x2> Nachrichten, <x1>benutzername</x1>";
 
 		// Restore
-		String restored = protection.restore(translatedText);
+		String restored = protection.restore();
 
 		assertEquals("Sie haben {count} Nachrichten, {username}", restored);
 	}
