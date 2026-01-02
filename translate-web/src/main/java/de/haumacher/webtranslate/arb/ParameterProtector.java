@@ -108,9 +108,11 @@ public class ParameterProtector {
 			// Translate the protected text itself
 			String translatedProtectedText = translationFunction.apply(protectedText);
 
-			// Translate inner parts recursively
-			List<MessagePart> translatedParts = translateParts(originalParts, translationFunction);
-			
+			List<MessagePart> translatedParts = new ArrayList<>();
+			for (MessagePart part : originalParts) {
+				translatedParts.add(part.translate(translationFunction));
+			}
+
 			return new ProtectedText(translatedProtectedText, translatedParts);
 		}
 	}
@@ -302,17 +304,6 @@ public class ParameterProtector {
 			return result.toString();
 		}
 		return "";
-	}
-
-	/**
-	 * Translates all parts recursively.
-	 */
-	private static List<MessagePart> translateParts(List<MessagePart> parts, java.util.function.Function<String, String> translationFunction) {
-		List<MessagePart> result = new ArrayList<>();
-		for (MessagePart part : parts) {
-			result.add(part.translate(translationFunction));
-		}
-		return result;
 	}
 
 	/**
