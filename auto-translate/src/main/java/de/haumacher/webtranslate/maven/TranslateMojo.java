@@ -39,7 +39,7 @@ import de.haumacher.webtranslate.translate.PropertiesTranslator;
  * <p>
  * Usage example:
  * <pre>
- * mvn web-translate:translate -DapiKey=YOUR_DEEPL_API_KEY
+ * mvn auto-translate:translate -DapiKey=YOUR_DEEPL_API_KEY
  * </pre>
  * </p>
  */
@@ -103,7 +103,7 @@ public class TranslateMojo extends AbstractMojo {
 	public void execute() throws MojoExecutionException, MojoFailureException {
 		try {
 			getLog().info("========================================");
-			getLog().info("Starting web-translate translation process");
+			getLog().info("Starting auto-translate translation process");
 			getLog().info("========================================");
 			getLog().info("Source language: " + sourceLang);
 			getLog().info("Target languages: " + targetLangs);

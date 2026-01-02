@@ -4,31 +4,31 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-web-translate is a Java-based HTML translation tool that integrates with DeepL API to translate HTML templates while preserving markup structure. The project is located in the `translate-web/` subdirectory.
+auto-translate is a Java-based HTML translation tool that integrates with DeepL API to translate HTML templates while preserving markup structure. The project is located in the `auto-translate/` subdirectory.
 
 ## Build and Development Commands
 
 ### Building the Project
 ```bash
-cd translate-web
+cd auto-translate
 mvn clean compile
 ```
 
 ### Running Tests
 ```bash
-cd translate-web
+cd auto-translate
 mvn test
 ```
 
 Run a single test class:
 ```bash
-cd translate-web
+cd auto-translate
 mvn test -Dtest=TestHtmlAnalyzer
 ```
 
 ### Packaging
 ```bash
-cd translate-web
+cd auto-translate
 mvn package
 ```
 
@@ -39,8 +39,8 @@ mvn package
 The recommended way to run the translator is using the Maven goal:
 
 ```bash
-cd translate-web
-mvn web-translate:translate -DapiKey=YOUR_DEEPL_API_KEY
+cd auto-translate
+mvn auto-translate:translate -DapiKey=YOUR_DEEPL_API_KEY
 ```
 
 **Configuration Options:**
@@ -48,7 +48,7 @@ mvn web-translate:translate -DapiKey=YOUR_DEEPL_API_KEY
 All parameters can be configured via command-line properties:
 
 ```bash
-mvn web-translate:translate \
+mvn auto-translate:translate \
   -DapiKey=YOUR_DEEPL_API_KEY \
   -DsourceLang=en \
   -DtargetLangs=de,fr,es \
@@ -62,7 +62,7 @@ Or in your `pom.xml`:
 ```xml
 <plugin>
   <groupId>de.haumacher</groupId>
-  <artifactId>web-translate</artifactId>
+  <artifactId>auto-translate</artifactId>
   <version>1.0.0-SNAPSHOT</version>
   <configuration>
     <apiKey>${env.DEEPL_API_KEY}</apiKey>
@@ -101,7 +101,7 @@ The Maven goal automatically runs all three phases (extract → translate → sy
 You can also run the translator directly via the main class:
 
 ```bash
-java -cp target/web-translate-1.0.0-SNAPSHOT.jar de.haumacher.webtranslate.Translator \
+java -cp target/auto-translate-1.0.0-SNAPSHOT.jar de.haumacher.webtranslate.Translator \
   <deepl-api-key> \
   <source-language> \
   <dest-languages-comma-separated> \
@@ -208,7 +208,7 @@ t0001=Etwas Text <x1>mit Markup</x1>.
 ## Project Structure
 
 ```
-translate-web/
+auto-translate/
 ├── src/main/java/de/haumacher/webtranslate/
 │   ├── Translator.java              # Main orchestrator (CLI)
 │   ├── maven/

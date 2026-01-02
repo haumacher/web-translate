@@ -27,7 +27,7 @@ import de.haumacher.webtranslate.arb.ArbTranslator;
  * <p>
  * Usage example:
  * <pre>
- * mvn web-translate:translate-arb -DapiKey=YOUR_DEEPL_API_KEY -DsourceFile=app_en.arb -DtargetLangs=de,fr
+ * mvn auto-translate:translate-arb -DapiKey=YOUR_DEEPL_API_KEY -DsourceFile=app_en.arb -DtargetLangs=de,fr
  * </pre>
  * </p>
  *
