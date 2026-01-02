@@ -4,31 +4,31 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Stack<T> {
-	
-	private final List<T> elements = new ArrayList<>();
+
+	private final List<T> _elements = new ArrayList<>();
 
 	public void push(T element) {
-		elements.add(element);
+		_elements.add(element);
 	}
 
 	public T top() {
-		return elements.get(elements.size() - 1);
+		return _elements.get(_elements.size() - 1);
 	}
 
 	public T pop() {
-		return elements.remove(elements.size() - 1);
+		return _elements.remove(_elements.size() - 1);
 	}
 
 	public boolean hasTop() {
 		return !isEmpty();
 	}
-	
+
 	public boolean isEmpty() {
-		return elements.isEmpty();
+		return _elements.isEmpty();
 	}
 
 	public boolean contains(T element) {
-		return elements.contains(element);
+		return _elements.contains(element);
 	}
 	
 }

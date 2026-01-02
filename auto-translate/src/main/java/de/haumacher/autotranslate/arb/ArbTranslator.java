@@ -56,11 +56,11 @@ public class ArbTranslator {
 
 	private static final String X_TRANSLATED_ATTR = "x-translated";
 
-	private final Translator translator;
-	private final ArbParser parser;
-	private final ArbWriter writer;
+	private final Translator _translator;
+	private final ArbParser _parser;
+	private final ArbWriter _writer;
 
-	private int totalBilledChars = 0;
+	private int _totalBilledChars = 0;
 
 	/**
 	 * Tracks checksums for resources that were translated during the current translation session.
@@ -77,7 +77,7 @@ public class ArbTranslator {
 	 * first one.
 	 * </p>
 	 */
-	private Map<String, String> translatedResourceChecksums;
+	private Map<String, String> _translatedResourceChecksums;
 
 	/**
 	 * Creates a new ARB translator with a translator instance.
@@ -85,9 +85,9 @@ public class ArbTranslator {
 	 * @param translator Translator instance for DeepL API communication
 	 */
 	public ArbTranslator(Translator translator) {
-		this.translator = translator;
-		this.parser = new ArbParser();
-		this.writer = new ArbWriter();
+		_translator = translator;
+		_parser = new ArbParser();
+		_writer = new ArbWriter();
 	}
 
 	/**
@@ -123,11 +123,11 @@ public class ArbTranslator {
 		System.out.println();
 
 		// Parse source ARB file
-		ArbBundle sourceBundle = parser.parse(sourceFile);
+		ArbBundle sourceBundle = _parser.parse(sourceFile);
 		System.out.println("Parsed source ARB: " + sourceBundle.getResourceCount() + " resources");
 
 		// Initialize tracking for translated resources
-		translatedResourceChecksums = new HashMap<>();
+		_translatedResourceChecksums = new HashMap<>();
 
 		// Translate to each target language
 		for (String targetLang : targetLangs) {
@@ -137,12 +137,12 @@ public class ArbTranslator {
 		}
 
 		// Update source file with checksums if any resources were translated
-		if (!translatedResourceChecksums.isEmpty()) {
+		if (!_translatedResourceChecksums.isEmpty()) {
 			System.out.println();
 			System.out.println("Updating source file with translation checksums...");
 
 			// Update checksums for all translated resources
-			for (var entry : translatedResourceChecksums.entrySet()) {
+			for (var entry : _translatedResourceChecksums.entrySet()) {
 				String resourceId = entry.getKey();
 				String checksum = entry.getValue();
 
@@ -157,15 +157,15 @@ public class ArbTranslator {
 				}
 			}
 
-			writer.write(sourceBundle, sourceFile, true); // verbose mode to preserve metadata
+			_writer.write(sourceBundle, sourceFile, true); // verbose mode to preserve metadata
 			System.out.println("Source file updated: " + sourceFile.getAbsolutePath());
-			System.out.println("Updated checksums for " + translatedResourceChecksums.size() + " resources");
+			System.out.println("Updated checksums for " + _translatedResourceChecksums.size() + " resources");
 		}
 
 		System.out.println();
 		System.out.println("========================================");
 		System.out.println("Translation complete!");
-		System.out.println("Total billed characters: " + totalBilledChars);
+		System.out.println("Total billed characters: " + _totalBilledChars);
 		System.out.println("========================================");
 	}
 
@@ -178,7 +178,7 @@ public class ArbTranslator {
 		ArbBundle existingTargetBundle = null;
 		if (targetFile.exists()) {
 			try {
-				existingTargetBundle = parser.parse(targetFile);
+				existingTargetBundle = _parser.parse(targetFile);
 				System.out.println("Found existing target file with " +
 					existingTargetBundle.getResourceCount() + " resources");
 			} catch (Exception e) {
@@ -236,12 +236,12 @@ public class ArbTranslator {
 					System.out.println("  Resource '" + resourceId + "' has changed (checksum mismatch), will update all translations");
 
 					// Track checksum for update
-					translatedResourceChecksums.put(resourceId, currentChecksum);
+					_translatedResourceChecksums.put(resourceId, currentChecksum);
 				}
 			} else {
 				// No checksum stored - need to establish baseline
 				// Track checksum even if resource exists in target files
-				translatedResourceChecksums.put(resourceId, currentChecksum);
+				_translatedResourceChecksums.put(resourceId, currentChecksum);
 
 				if (existingTargetBundle == null || !existingTargetBundle.hasResource(resourceId)) {
 					// Resource doesn't exist in target - translate it
@@ -287,7 +287,7 @@ public class ArbTranslator {
 			System.out.println("Collected " + textsToTranslate.size() + " text fragments to translate");
 
 			// Phase 2: Translate all collected texts using DeepL
-			List<TextResult> results = translator.translateText(
+			List<TextResult> results = _translator.translateText(
 				new ArrayList<>(textsToTranslate),
 				sourceLang,
 				targetLang
@@ -323,11 +323,11 @@ public class ArbTranslator {
 			System.out.println("No new resources to translate");
 		}
 
-		totalBilledChars += billedChars;
+		_totalBilledChars += billedChars;
 		System.out.println("Billed characters: " + billedChars);
 
 		// Write target ARB file in compact mode (without metadata)
-		writer.write(targetBundle, targetFile, false); // compact mode - no metadata
+		_writer.write(targetBundle, targetFile, false); // compact mode - no metadata
 		System.out.println("Written to: " + targetFile.getAbsolutePath());
 	}
 
@@ -398,7 +398,7 @@ public class ArbTranslator {
 	 * Gets the total number of characters billed by DeepL API during translation.
 	 */
 	public int getTotalBilledChars() {
-		return totalBilledChars;
+		return _totalBilledChars;
 	}
 
 	/**

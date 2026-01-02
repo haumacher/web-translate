@@ -30,65 +30,65 @@ import java.util.Map;
  */
 public class ArbResourceAttributes {
 
-	private String type;
-	private String context;
-	private String description;
-	private String sourceText;
-	private Map<String, ArbPlaceholder> placeholders;
-	private String screenshot;
-	private String video;
-	private Map<String, String> customAttributes;
+	private String _type;
+	private String _context;
+	private String _description;
+	private String _sourceText;
+	private Map<String, ArbPlaceholder> _placeholders;
+	private String _screenshot;
+	private String _video;
+	private Map<String, String> _customAttributes;
 
 	/**
 	 * Creates new resource attributes with no metadata.
 	 */
 	public ArbResourceAttributes() {
-		this.placeholders = new HashMap<>();
-		this.customAttributes = new HashMap<>();
+		_placeholders = new HashMap<>();
+		_customAttributes = new HashMap<>();
 	}
 
 	/**
 	 * The resource type: "text", "image", or "css".
 	 */
 	public String getType() {
-		return type;
+		return _type;
 	}
 
 	public void setType(String type) {
-		this.type = type;
+		_type = type;
 	}
 
 	/**
 	 * Hierarchical context using colon-separated notation (e.g., "HomePage:MainPanel").
 	 */
 	public String getContext() {
-		return context;
+		return _context;
 	}
 
 	public void setContext(String context) {
-		this.context = context;
+		_context = context;
 	}
 
 	/**
 	 * Human-readable description for translators explaining when/how this resource is used.
 	 */
 	public String getDescription() {
-		return description;
+		return _description;
 	}
 
 	public void setDescription(String description) {
-		this.description = description;
+		_description = description;
 	}
 
 	/**
 	 * Original source text for tracking changes across versions.
 	 */
 	public String getSourceText() {
-		return sourceText;
+		return _sourceText;
 	}
 
 	public void setSourceText(String sourceText) {
-		this.sourceText = sourceText;
+		_sourceText = sourceText;
 	}
 
 	/**
@@ -100,40 +100,40 @@ public class ArbResourceAttributes {
 	 * </p>
 	 */
 	public Map<String, ArbPlaceholder> getPlaceholders() {
-		return placeholders;
+		return _placeholders;
 	}
 
 	public void setPlaceholders(Map<String, ArbPlaceholder> placeholders) {
-		this.placeholders = placeholders != null ? placeholders : new HashMap<>();
+		_placeholders = placeholders != null ? placeholders : new HashMap<>();
 	}
 
 	/**
 	 * Adds a placeholder to this resource's metadata.
 	 */
 	public void addPlaceholder(ArbPlaceholder placeholder) {
-		this.placeholders.put(placeholder.getName(), placeholder);
+		_placeholders.put(placeholder.getName(), placeholder);
 	}
 
 	/**
 	 * URL reference to a screenshot showing this resource in context.
 	 */
 	public String getScreenshot() {
-		return screenshot;
+		return _screenshot;
 	}
 
 	public void setScreenshot(String screenshot) {
-		this.screenshot = screenshot;
+		_screenshot = screenshot;
 	}
 
 	/**
 	 * URL reference to a video showing this resource in context.
 	 */
 	public String getVideo() {
-		return video;
+		return _video;
 	}
 
 	public void setVideo(String video) {
-		this.video = video;
+		_video = video;
 	}
 
 	/**
@@ -145,11 +145,11 @@ public class ArbResourceAttributes {
 	 * </p>
 	 */
 	public Map<String, String> getCustomAttributes() {
-		return customAttributes;
+		return _customAttributes;
 	}
 
 	public void setCustomAttributes(Map<String, String> customAttributes) {
-		this.customAttributes = customAttributes != null ? customAttributes : new HashMap<>();
+		_customAttributes = customAttributes != null ? customAttributes : new HashMap<>();
 	}
 
 	/**
@@ -159,31 +159,31 @@ public class ArbResourceAttributes {
 	 * @param value Attribute value
 	 */
 	public void addCustomAttribute(String name, String value) {
-		this.customAttributes.put(name, value);
+		_customAttributes.put(name, value);
 	}
 
 	/**
 	 * Checks if any metadata is present.
 	 */
 	public boolean isEmpty() {
-		return type == null &&
-			context == null &&
-			description == null &&
-			sourceText == null &&
-			screenshot == null &&
-			video == null &&
-			placeholders.isEmpty() &&
-			customAttributes.isEmpty();
+		return _type == null &&
+			_context == null &&
+			_description == null &&
+			_sourceText == null &&
+			_screenshot == null &&
+			_video == null &&
+			_placeholders.isEmpty() &&
+			_customAttributes.isEmpty();
 	}
 
 	@Override
 	public String toString() {
 		return "ArbResourceAttributes{" +
-			"type='" + type + '\'' +
-			", context='" + context + '\'' +
-			", description='" + description + '\'' +
-			", placeholders=" + placeholders.size() +
-			", customAttributes=" + customAttributes.size() +
+			"type='" + _type + '\'' +
+			", context='" + _context + '\'' +
+			", description='" + _description + '\'' +
+			", placeholders=" + _placeholders.size() +
+			", customAttributes=" + _customAttributes.size() +
 			'}';
 	}
 }

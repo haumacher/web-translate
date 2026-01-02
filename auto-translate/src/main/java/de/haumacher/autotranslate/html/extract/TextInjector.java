@@ -14,14 +14,14 @@ import org.w3c.dom.Node;
 public class TextInjector {
 
 	private static final Pattern MARKUP_PATTERN = Pattern.compile("<(/)?x([1-9]\\d*)>");
-	
-	private List<Element> children = new ArrayList<>();
-	private Set<Element> contentElements = new HashSet<>();
 
-	private Element element;
-	
+	private List<Element> _children = new ArrayList<>();
+	private Set<Element> _contentElements = new HashSet<>();
+
+	private Element _element;
+
 	public TextInjector(Element element) {
-		this.element = element;
+		_element = element;
 	}
 
 	/**
@@ -35,18 +35,18 @@ public class TextInjector {
 		for (Node child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
 			if (child instanceof Element sub) {
 				boolean containsText = TextExtractor.containsText(sub);
-				
+
 				if (hasTextSibblings || containsText) {
-					children.add(sub);
+					_children.add(sub);
 				}
-				
+
 				analyze(sub, containsText);
 			}
 		}
-		
+
 		if (hasTextSibblings) {
 			clear(element);
-			contentElements.add(element);
+			_contentElements.add(element);
 		}
 	}
 
@@ -66,32 +66,32 @@ public class TextInjector {
 	}
 	
 	private void doInject(String text) {
-		analyze(element, true);
-		clear(element);
-		Document doc = element.getOwnerDocument();
-		
+		analyze(_element, true);
+		clear(_element);
+		Document doc = _element.getOwnerDocument();
+
 		Matcher matcher = MARKUP_PATTERN.matcher(text);
 		int pos = 0;
 		Stack<Element> elements = new Stack<>();
 		Stack<Integer> ids = new Stack<>();
-		elements.push(element);
+		elements.push(_element);
 		while (matcher.find()) {
 			int start = matcher.start();
 			if (start > pos) {
 				elements.top().appendChild(doc.createTextNode(text.substring(pos, start)));
 			}
-			
+
 			boolean startTag = matcher.group(1) == null;
 			int index = Integer.parseInt(matcher.group(2));
-			
+
 			if (startTag) {
-				Element child = children.get(index - 1);
+				Element child = _children.get(index - 1);
 				if (child != null) {
 					// Never use twice.
-					children.set(index - 1, null);
+					_children.set(index - 1, null);
 
 					Element top = elements.top();
-					if (contentElements.contains(top)) {
+					if (_contentElements.contains(top)) {
 						top.appendChild(child);
 					}
 					ids.push(index);
@@ -115,7 +115,7 @@ public class TextInjector {
 					System.err.println("WARN: Missing start tag for end tag '" + matcher.group() + "' in: " + text);
 				}
 			}
-			
+
 			pos = matcher.end();
 		}
 		if (text.length() > pos) {

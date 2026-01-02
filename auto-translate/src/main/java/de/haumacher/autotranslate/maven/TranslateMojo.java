@@ -57,19 +57,19 @@ public class TranslateMojo extends AbstractMojo {
 	 * </p>
 	 */
 	@Parameter(property = "apiKey", required = true)
-	private String apiKey;
+	private String _apiKey;
 
 	/**
 	 * Source language code (e.g., "en", "de", "fr").
 	 */
 	@Parameter(property = "sourceLang", defaultValue = "en")
-	private String sourceLang;
+	private String _sourceLang;
 
 	/**
 	 * Comma-separated list of target language codes (e.g., "de,fr,es").
 	 */
 	@Parameter(property = "targetLangs", defaultValue = "de")
-	private String targetLangs;
+	private String _targetLangs;
 
 	/**
 	 * Directory containing the source HTML templates.
@@ -80,7 +80,7 @@ public class TranslateMojo extends AbstractMojo {
 	 * </p>
 	 */
 	@Parameter(property = "templateDirectory", defaultValue = "${project.basedir}/templates")
-	private File templateDirectory;
+	private File _templateDirectory;
 
 	/**
 	 * Directory where properties files are stored and generated.
@@ -91,13 +91,13 @@ public class TranslateMojo extends AbstractMojo {
 	 * </p>
 	 */
 	@Parameter(property = "propertiesDirectory", defaultValue = "${project.basedir}/properties")
-	private File propertiesDirectory;
+	private File _propertiesDirectory;
 
 	/**
 	 * Character encoding for properties files.
 	 */
 	@Parameter(property = "propertiesCharset", defaultValue = "UTF-8")
-	private String propertiesCharset;
+	private String _propertiesCharset;
 
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
@@ -105,14 +105,14 @@ public class TranslateMojo extends AbstractMojo {
 			getLog().info("========================================");
 			getLog().info("Starting auto-translate translation process");
 			getLog().info("========================================");
-			getLog().info("Source language: " + sourceLang);
-			getLog().info("Target languages: " + targetLangs);
-			getLog().info("Template directory: " + templateDirectory.getAbsolutePath());
-			getLog().info("Properties directory: " + propertiesDirectory.getAbsolutePath());
-			getLog().info("Charset: " + propertiesCharset);
+			getLog().info("Source language: " + _sourceLang);
+			getLog().info("Target languages: " + _targetLangs);
+			getLog().info("Template directory: " + _templateDirectory.getAbsolutePath());
+			getLog().info("Properties directory: " + _propertiesDirectory.getAbsolutePath());
+			getLog().info("Charset: " + _propertiesCharset);
 			getLog().info("");
 
-			Charset charset = Charset.forName(propertiesCharset);
+			Charset charset = Charset.forName(_propertiesCharset);
 			List<String> destLangs = parseTargetLanguages();
 
 			// Phase 1: Extract
@@ -140,7 +140,7 @@ public class TranslateMojo extends AbstractMojo {
 	}
 
 	private List<String> parseTargetLanguages() {
-		return Arrays.stream(targetLangs.split(","))
+		return Arrays.stream(_targetLangs.split(","))
 			.map(String::strip)
 			.filter(s -> !s.isEmpty())
 			.toList();
@@ -148,8 +148,8 @@ public class TranslateMojo extends AbstractMojo {
 
 	private void extractProperties(Charset charset)
 			throws ParserConfigurationException, SAXException, IOException {
-		File srcPropertiesDir = new File(propertiesDirectory, sourceLang);
-		File srcTemplateDir = new File(templateDirectory, sourceLang);
+		File srcPropertiesDir = new File(_propertiesDirectory, _sourceLang);
+		File srcTemplateDir = new File(_templateDirectory, _sourceLang);
 
 		if (!srcTemplateDir.exists()) {
 			throw new IOException("Source template directory does not exist: " + srcTemplateDir.getAbsolutePath());
@@ -161,17 +161,17 @@ public class TranslateMojo extends AbstractMojo {
 
 	private void translateProperties(Charset charset, List<String> destLangs)
 			throws IOException, DeepLException, InterruptedException {
-		File srcPropertiesDir = new File(propertiesDirectory, sourceLang);
+		File srcPropertiesDir = new File(_propertiesDirectory, _sourceLang);
 
 		if (!srcPropertiesDir.exists()) {
 			throw new IOException("Source properties directory does not exist: " + srcPropertiesDir.getAbsolutePath());
 		}
 
 		PropertiesTranslator translator = new PropertiesTranslator(
-			apiKey,
-			sourceLang,
+			_apiKey,
+			_sourceLang,
 			destLangs,
-			propertiesDirectory,
+			_propertiesDirectory,
 			srcPropertiesDir,
 			NameStrategy.LANG_TAG_DIR,
 			charset
@@ -182,9 +182,9 @@ public class TranslateMojo extends AbstractMojo {
 	private void synthesizeTemplates(Charset charset, List<String> destLangs)
 			throws IOException, ParserConfigurationException, SAXException {
 		TranslationSynthesizer synthesizer = new TranslationSynthesizer(
-			templateDirectory,
-			propertiesDirectory,
-			sourceLang,
+			_templateDirectory,
+			_propertiesDirectory,
+			_sourceLang,
 			destLangs,
 			charset
 		);

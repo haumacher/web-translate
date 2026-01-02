@@ -25,9 +25,9 @@ package de.haumacher.autotranslate.arb.model;
  */
 public class ArbPlaceholder {
 
-	private String name;
-	private String description;
-	private String example;
+	private String _name;
+	private String _description;
+	private String _example;
 
 	/**
 	 * Creates a new placeholder with all metadata.
@@ -37,9 +37,9 @@ public class ArbPlaceholder {
 	 * @param example     Example value to illustrate the placeholder
 	 */
 	public ArbPlaceholder(String name, String description, String example) {
-		this.name = name;
-		this.description = description;
-		this.example = example;
+		_name = name;
+		_description = description;
+		_example = example;
 	}
 
 	/**
@@ -55,41 +55,41 @@ public class ArbPlaceholder {
 	 * The placeholder identifier as it appears in the resource value.
 	 */
 	public String getName() {
-		return name;
+		return _name;
 	}
 
 	public void setName(String name) {
-		this.name = name;
+		_name = name;
 	}
 
 	/**
 	 * Usage description for translators explaining what this placeholder represents.
 	 */
 	public String getDescription() {
-		return description;
+		return _description;
 	}
 
 	public void setDescription(String description) {
-		this.description = description;
+		_description = description;
 	}
 
 	/**
 	 * Example value illustrating how the placeholder will be replaced at runtime.
 	 */
 	public String getExample() {
-		return example;
+		return _example;
 	}
 
 	public void setExample(String example) {
-		this.example = example;
+		_example = example;
 	}
 
 	@Override
 	public String toString() {
 		return "ArbPlaceholder{" +
-			"name='" + name + '\'' +
-			", description='" + description + '\'' +
-			", example='" + example + '\'' +
+			"name='" + _name + '\'' +
+			", description='" + _description + '\'' +
+			", example='" + _example + '\'' +
 			'}';
 	}
 }

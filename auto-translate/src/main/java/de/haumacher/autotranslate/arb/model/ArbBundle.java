@@ -37,15 +37,15 @@ import java.util.Map;
  */
 public class ArbBundle {
 
-	private Map<String, String> globalAttributes;
-	private Map<String, ArbResource> resources;
+	private Map<String, String> _globalAttributes;
+	private Map<String, ArbResource> _resources;
 
 	/**
 	 * Creates a new empty ARB bundle.
 	 */
 	public ArbBundle() {
-		this.globalAttributes = new LinkedHashMap<>();
-		this.resources = new LinkedHashMap<>();
+		_globalAttributes = new LinkedHashMap<>();
+		_resources = new LinkedHashMap<>();
 	}
 
 	/**
@@ -62,11 +62,11 @@ public class ArbBundle {
 	 * </p>
 	 */
 	public Map<String, String> getGlobalAttributes() {
-		return globalAttributes;
+		return _globalAttributes;
 	}
 
 	public void setGlobalAttributes(Map<String, String> globalAttributes) {
-		this.globalAttributes = globalAttributes != null ? globalAttributes : new LinkedHashMap<>();
+		_globalAttributes = globalAttributes != null ? globalAttributes : new LinkedHashMap<>();
 	}
 
 	/**
@@ -78,7 +78,7 @@ public class ArbBundle {
 	public void setGlobalAttribute(String name, String value) {
 		// Ensure the attribute name has @@ prefix
 		String key = name.startsWith("@@") ? name : "@@" + name;
-		this.globalAttributes.put(key, value);
+		_globalAttributes.put(key, value);
 	}
 
 	/**
@@ -89,7 +89,7 @@ public class ArbBundle {
 	 */
 	public String getGlobalAttribute(String name) {
 		String key = name.startsWith("@@") ? name : "@@" + name;
-		return this.globalAttributes.get(key);
+		return _globalAttributes.get(key);
 	}
 
 	/**
@@ -132,18 +132,18 @@ public class ArbBundle {
 	 * </p>
 	 */
 	public Map<String, ArbResource> getResources() {
-		return resources;
+		return _resources;
 	}
 
 	public void setResources(Map<String, ArbResource> resources) {
-		this.resources = resources != null ? resources : new LinkedHashMap<>();
+		_resources = resources != null ? resources : new LinkedHashMap<>();
 	}
 
 	/**
 	 * Adds a resource to this bundle.
 	 */
 	public void addResource(ArbResource resource) {
-		this.resources.put(resource.getId(), resource);
+		_resources.put(resource.getId(), resource);
 	}
 
 	/**
@@ -153,29 +153,29 @@ public class ArbBundle {
 	 * @return The resource, or {@code null} if not found
 	 */
 	public ArbResource getResource(String id) {
-		return this.resources.get(id);
+		return _resources.get(id);
 	}
 
 	/**
 	 * Checks if this bundle contains a resource with the given ID.
 	 */
 	public boolean hasResource(String id) {
-		return this.resources.containsKey(id);
+		return _resources.containsKey(id);
 	}
 
 	/**
 	 * Gets the number of resources in this bundle.
 	 */
 	public int getResourceCount() {
-		return this.resources.size();
+		return _resources.size();
 	}
 
 	@Override
 	public String toString() {
 		return "ArbBundle{" +
 			"locale='" + getLocale() + '\'' +
-			", resources=" + resources.size() +
-			", globalAttributes=" + globalAttributes.size() +
+			", resources=" + _resources.size() +
+			", globalAttributes=" + _globalAttributes.size() +
 			'}';
 	}
 }

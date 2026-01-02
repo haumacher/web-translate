@@ -26,9 +26,9 @@ package de.haumacher.autotranslate.arb.model;
  */
 public class ArbResource {
 
-	private String id;
-	private String value;
-	private ArbResourceAttributes attributes;
+	private String _id;
+	private String _value;
+	private ArbResourceAttributes _attributes;
 
 	/**
 	 * Creates a new resource with an ID and value.
@@ -37,9 +37,9 @@ public class ArbResource {
 	 * @param value Translatable content (the string value)
 	 */
 	public ArbResource(String id, String value) {
-		this.id = id;
-		this.value = value;
-		this.attributes = null;
+		_id = id;
+		_value = value;
+		_attributes = null;
 	}
 
 	/**
@@ -50,9 +50,9 @@ public class ArbResource {
 	 * @param attributes Metadata for this resource
 	 */
 	public ArbResource(String id, String value, ArbResourceAttributes attributes) {
-		this.id = id;
-		this.value = value;
-		this.attributes = attributes;
+		_id = id;
+		_value = value;
+		_attributes = attributes;
 	}
 
 	/**
@@ -64,11 +64,11 @@ public class ArbResource {
 	 * </p>
 	 */
 	public String getId() {
-		return id;
+		return _id;
 	}
 
 	public void setId(String id) {
-		this.id = id;
+		_id = id;
 	}
 
 	/**
@@ -80,11 +80,11 @@ public class ArbResource {
 	 * </p>
 	 */
 	public String getValue() {
-		return value;
+		return _value;
 	}
 
 	public void setValue(String value) {
-		this.value = value;
+		_value = value;
 	}
 
 	/**
@@ -93,25 +93,25 @@ public class ArbResource {
 	 * @return The attributes, or {@code null} if no metadata is present
 	 */
 	public ArbResourceAttributes getAttributes() {
-		return attributes;
+		return _attributes;
 	}
 
 	public void setAttributes(ArbResourceAttributes attributes) {
-		this.attributes = attributes;
+		_attributes = attributes;
 	}
 
 	/**
 	 * Checks if this resource has any metadata.
 	 */
 	public boolean hasAttributes() {
-		return attributes != null && !attributes.isEmpty();
+		return _attributes != null && !_attributes.isEmpty();
 	}
 
 	@Override
 	public String toString() {
 		return "ArbResource{" +
-			"id='" + id + '\'' +
-			", value='" + value + '\'' +
+			"id='" + _id + '\'' +
+			", value='" + _value + '\'' +
 			", hasAttributes=" + hasAttributes() +
 			'}';
 	}

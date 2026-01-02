@@ -54,7 +54,7 @@ public class TranslateArbMojo extends AbstractMojo {
 	 * </p>
 	 */
 	@Parameter(property = "apiKey", required = true)
-	private String apiKey;
+	private String _apiKey;
 
 	/**
 	 * Source ARB file to translate.
@@ -66,7 +66,7 @@ public class TranslateArbMojo extends AbstractMojo {
 	 * </p>
 	 */
 	@Parameter(property = "sourceFile", required = true)
-	private File sourceFile;
+	private File _sourceFile;
 
 	/**
 	 * Comma-separated list of target language codes (e.g., "de,fr,es").
@@ -77,7 +77,7 @@ public class TranslateArbMojo extends AbstractMojo {
 	 * </p>
 	 */
 	@Parameter(property = "targetLangs", required = true)
-	private String targetLangs;
+	private String _targetLangs;
 
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
@@ -87,34 +87,34 @@ public class TranslateArbMojo extends AbstractMojo {
 			getLog().info("========================================");
 
 			// Validate source file
-			if (!sourceFile.exists()) {
+			if (!_sourceFile.exists()) {
 				throw new MojoExecutionException(
-					"Source file not found: " + sourceFile.getAbsolutePath()
+					"Source file not found: " + _sourceFile.getAbsolutePath()
 				);
 			}
 
 			// Extract source language from filename
-			String sourceLang = ArbTranslator.extractLanguage(sourceFile);
+			String sourceLang = ArbTranslator.extractLanguage(_sourceFile);
 			if (sourceLang == null) {
 				throw new MojoExecutionException(
-					"Cannot determine source language from filename: " + sourceFile.getName() +
+					"Cannot determine source language from filename: " + _sourceFile.getName() +
 					". Expected format: basename_lang.arb (e.g., app_en.arb)"
 				);
 			}
 
 			List<String> targetLangsList = parseTargetLanguages();
 
-			getLog().info("Source file: " + sourceFile.getAbsolutePath());
+			getLog().info("Source file: " + _sourceFile.getAbsolutePath());
 			getLog().info("Source language: " + sourceLang);
 			getLog().info("Target languages: " + targetLangsList);
 			getLog().info("");
 
 			// Create DeepL translator
-			Translator deeplTranslator = new DeepLClient(apiKey);
+			Translator deeplTranslator = new DeepLClient(_apiKey);
 
 			// Create and run ARB translator
 			ArbTranslator arbTranslator = new ArbTranslator(deeplTranslator);
-			arbTranslator.translate(sourceFile, targetLangsList);
+			arbTranslator.translate(_sourceFile, targetLangsList);
 
 			getLog().info("");
 			getLog().info("========================================");
@@ -128,7 +128,7 @@ public class TranslateArbMojo extends AbstractMojo {
 	}
 
 	private List<String> parseTargetLanguages() {
-		return Arrays.stream(targetLangs.split(","))
+		return Arrays.stream(_targetLangs.split(","))
 			.map(String::strip)
 			.filter(s -> !s.isEmpty())
 			.toList();

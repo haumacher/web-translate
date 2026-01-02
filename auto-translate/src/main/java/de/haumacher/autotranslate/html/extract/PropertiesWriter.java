@@ -10,17 +10,17 @@ import java.util.Map;
 
 public class PropertiesWriter {
 
-	private OutputStream out;
-	private Charset charset;
+	private OutputStream _out;
+	private Charset _charset;
 
 	public PropertiesWriter(OutputStream out, Charset charset) {
-		this.out = out;
-		this.charset = charset;
+		_out = out;
+		_charset = charset;
 	}
 
 	public void write(Map<String, String> properties) {
-		CharsetEncoder encoder = charset.newEncoder();
-		try (PrintWriter w = new PrintWriter(new OutputStreamWriter(out, charset))) {
+		CharsetEncoder encoder = _charset.newEncoder();
+		try (PrintWriter w = new PrintWriter(new OutputStreamWriter(_out, _charset))) {
 			List<String> keysSorted = properties.keySet().stream().sorted().toList();
 			for (String id : keysSorted) {
 				String value = properties.get(id);

@@ -41,13 +41,13 @@ import de.haumacher.autotranslate.arb.model.ArbResourceAttributes;
  */
 public class ArbWriter {
 
-	private final Gson gson;
+	private final Gson _gson;
 
 	/**
 	 * Creates a new ARB writer with pretty-printing enabled.
 	 */
 	public ArbWriter() {
-		this.gson = new GsonBuilder()
+		_gson = new GsonBuilder()
 			.setPrettyPrinting()
 			.disableHtmlEscaping()
 			.create();
@@ -89,7 +89,7 @@ public class ArbWriter {
 	 */
 	public void write(ArbBundle bundle, Writer writer, boolean verbose) throws IOException {
 		JsonObject root = buildJsonObject(bundle, verbose);
-		gson.toJson(root, writer);
+		_gson.toJson(root, writer);
 	}
 
 	/**
@@ -101,7 +101,7 @@ public class ArbWriter {
 	 */
 	public String toJson(ArbBundle bundle, boolean verbose) {
 		JsonObject root = buildJsonObject(bundle, verbose);
-		return gson.toJson(root);
+		return _gson.toJson(root);
 	}
 
 	private JsonObject buildJsonObject(ArbBundle bundle, boolean verbose) {

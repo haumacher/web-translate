@@ -20,26 +20,26 @@ import de.haumacher.autotranslate.html.translate.PropertiesTranslator;
 
 public class Translator {
 
-	private final String apikey;
-	private final String srcLang;
-	private final List<String> destLangs;
-	private final File propertiesDir;
-	private final File templateDir;
-	private Charset propertiesCharset;
+	private final String _apikey;
+	private final String _srcLang;
+	private final List<String> _destLangs;
+	private final File _propertiesDir;
+	private final File _templateDir;
+	private Charset _propertiesCharset;
 
 	public Translator(String apikey, String srcLang, List<String> destLangs, File propertiesDir, File templateDir, Charset propertiesCharset) {
-		this.apikey = apikey;
-		this.srcLang = srcLang;
-		this.destLangs = destLangs;
-		this.propertiesDir = propertiesDir;
-		this.templateDir = templateDir;
-		this.propertiesCharset = propertiesCharset;
+		_apikey = apikey;
+		_srcLang = srcLang;
+		_destLangs = destLangs;
+		_propertiesDir = propertiesDir;
+		_templateDir = templateDir;
+		_propertiesCharset = propertiesCharset;
 	}
 
 	private void run() throws ParserConfigurationException, SAXException, IOException, DeepLException, InterruptedException {
-		new PropertiesExtractor(new File(propertiesDir, srcLang), new File(templateDir, srcLang), propertiesCharset).process();
-		new PropertiesTranslator(apikey, srcLang, destLangs, propertiesDir, null, NameStrategy.LANG_TAG_DIR, propertiesCharset).translate();
-		new TranslationSynthesizer(templateDir, propertiesDir, srcLang, destLangs, propertiesCharset).synthesize();
+		new PropertiesExtractor(new File(_propertiesDir, _srcLang), new File(_templateDir, _srcLang), _propertiesCharset).process();
+		new PropertiesTranslator(_apikey, _srcLang, _destLangs, _propertiesDir, null, NameStrategy.LANG_TAG_DIR, _propertiesCharset).translate();
+		new TranslationSynthesizer(_templateDir, _propertiesDir, _srcLang, _destLangs, _propertiesCharset).synthesize();
 	}
 	
 	public static void main(String[] args) throws ParserConfigurationException, SAXException, IOException, DeepLException, InterruptedException {

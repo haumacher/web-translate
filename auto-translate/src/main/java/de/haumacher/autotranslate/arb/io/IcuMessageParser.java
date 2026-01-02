@@ -76,14 +76,14 @@ public class IcuMessageParser {
 	 * Base class for message parts that have a parameter name.
 	 */
 	public static abstract class ParameterPart extends MessagePart {
-		private final String name;
+		private final String _name;
 
 		public ParameterPart(String name) {
-			this.name = name;
+			_name = name;
 		}
 
 		public String getName() {
-			return name;
+			return _name;
 		}
 	}
 
@@ -91,19 +91,19 @@ public class IcuMessageParser {
 	 * Plain text that should be translated.
 	 */
 	public static class TextPart extends MessagePart {
-		private final String text;
+		private final String _text;
 
 		public TextPart(String text) {
-			this.text = text;
+			_text = text;
 		}
 
 		public String getText() {
-			return text;
+			return _text;
 		}
 
 		@Override
 		public ConversionResult toProtectedText(int nextParamIndex) {
-			return new ConversionResult(text, nextParamIndex);
+			return new ConversionResult(_text, nextParamIndex);
 		}
 
 		@Override
@@ -120,7 +120,7 @@ public class IcuMessageParser {
 
 		@Override
 		public String toString() {
-			return "Text{" + text + "}";
+			return "Text{" + _text + "}";
 		}
 	}
 
@@ -160,21 +160,21 @@ public class IcuMessageParser {
 	 * A complex format with type and style: {@code {count, plural, ...}}.
 	 */
 	public static class ComplexParameter extends ParameterPart {
-		private final String formatType;
-		private final List<SelectorCase> cases;
+		private final String _formatType;
+		private final List<SelectorCase> _cases;
 
 		public ComplexParameter(String argumentName, String formatType, List<SelectorCase> cases) {
 			super(argumentName);
-			this.formatType = formatType;
-			this.cases = cases;
+			_formatType = formatType;
+			_cases = cases;
 		}
 
 		public String getFormatType() {
-			return formatType;
+			return _formatType;
 		}
 
 		public List<SelectorCase> getCases() {
-			return cases;
+			return _cases;
 		}
 
 		@Override
@@ -216,7 +216,7 @@ public class IcuMessageParser {
 
 		@Override
 		public String toString() {
-			return "ComplexFormat{" + getName() + ", " + formatType + ", cases=" + cases.size() + "}";
+			return "ComplexFormat{" + getName() + ", " + _formatType + ", cases=" + _cases.size() + "}";
 		}
 	}
 
@@ -224,19 +224,19 @@ public class IcuMessageParser {
 	 * A single case in a select/plural format.
 	 */
 	public static class SelectorCase extends ProtectedText {
-		private final String selector;  // e.g., "=1", "one", "other", "male"
+		private final String _selector;  // e.g., "=1", "one", "other", "male"
 
 		public SelectorCase(String selector, List<MessagePart> parts) {
 			this(selector, IcuMessageParser.toProtectedText(parts), parts);
 		}
-		
+
 		public SelectorCase(String selector, String protectedText, List<MessagePart> parts) {
 			super(protectedText, parts);
-			this.selector = selector;
+			_selector = selector;
 		}
 
 		public String getSelector() {
-			return selector;
+			return _selector;
 		}
 		
 		@Override
@@ -246,7 +246,7 @@ public class IcuMessageParser {
 		
 		@Override
 		protected SelectorCase create(String translatedProtectedText, List<MessagePart> translatedParts) {
-			return new SelectorCase(selector, translatedProtectedText, translatedParts);
+			return new SelectorCase(_selector, translatedProtectedText, translatedParts);
 		}
 	}
 
@@ -302,20 +302,20 @@ public class IcuMessageParser {
 	 * Internal parser implementation.
 	 */
 	private static class Parser {
-		private final String input;
-		private int pos;
+		private final String _input;
+		private int _pos;
 
 		public Parser(String input) {
-			this.input = input;
-			this.pos = 0;
+			_input = input;
+			_pos = 0;
 		}
 
 		public List<MessagePart> parseMessage() {
 			List<MessagePart> parts = new ArrayList<>();
 			StringBuilder text = new StringBuilder();
 
-			while (pos < input.length()) {
-				char ch = input.charAt(pos);
+			while (_pos < _input.length()) {
+				char ch = _input.charAt(_pos);
 
 				if (ch == '{') {
 					// Save accumulated text
@@ -331,24 +331,24 @@ public class IcuMessageParser {
 					}
 				} else if (ch == '\'') {
 					// Handle quoted text (escaping)
-					pos++;
-					if (pos < input.length() && input.charAt(pos) == '\'') {
+					_pos++;
+					if (_pos < _input.length() && _input.charAt(_pos) == '\'') {
 						// Two apostrophes = literal apostrophe
 						text.append('\'');
-						pos++;
+						_pos++;
 					} else {
 						// Quoted section - find closing apostrophe
-						while (pos < input.length() && input.charAt(pos) != '\'') {
-							text.append(input.charAt(pos));
-							pos++;
+						while (_pos < _input.length() && _input.charAt(_pos) != '\'') {
+							text.append(_input.charAt(_pos));
+							_pos++;
 						}
-						if (pos < input.length()) {
-							pos++; // skip closing '
+						if (_pos < _input.length()) {
+							_pos++; // skip closing '
 						}
 					}
 				} else {
 					text.append(ch);
-					pos++;
+					_pos++;
 				}
 			}
 
@@ -361,36 +361,36 @@ public class IcuMessageParser {
 		}
 
 		private MessagePart parsePlaceholder() {
-			pos++; // skip opening {
+			_pos++; // skip opening {
 
 			// Read argument name
 			String argumentName = readUntil(',', '}');
 
-			if (pos >= input.length() || input.charAt(pos) == '}') {
+			if (_pos >= _input.length() || _input.charAt(_pos) == '}') {
 				// Simple placeholder: {name}
 				// Skip {@...} patterns (ARB masked content syntax) - treat as literal text
 				if (argumentName.startsWith("@")) {
-					pos++; // skip closing }
+					_pos++; // skip closing }
 					// Return as literal text, not a placeholder
 					return new TextPart("{" + argumentName + "}");
 				}
-				pos++; // skip closing }
+				_pos++; // skip closing }
 				return new SimpleParameter(argumentName.trim());
 			}
 
 			// Complex format: {name, type, ...}
-			pos++; // skip comma
+			_pos++; // skip comma
 
 			String formatType = readUntil(',', '}').trim();
 
-			if (pos >= input.length() || input.charAt(pos) == '}') {
+			if (_pos >= _input.length() || _input.charAt(_pos) == '}') {
 				// Format with type but no style: {count, number}
 				// Treat as simple placeholder for now
-				pos++; // skip closing }
+				_pos++; // skip closing }
 				return new SimpleParameter(argumentName.trim());
 			}
 
-			pos++; // skip comma
+			_pos++; // skip comma
 
 			// Check if this is a select/plural format
 			if (formatType.equals("plural") || formatType.equals("select") || formatType.equals("selectordinal")) {
@@ -400,8 +400,8 @@ public class IcuMessageParser {
 				// Other format types (number, date, time with styles)
 				// Skip to end of placeholder for now
 				readUntil('}');
-				if (pos < input.length()) {
-					pos++; // skip closing }
+				if (_pos < _input.length()) {
+					_pos++; // skip closing }
 				}
 				return new SimpleParameter(argumentName.trim());
 			}
@@ -413,15 +413,15 @@ public class IcuMessageParser {
 			// Skip whitespace
 			skipWhitespace();
 
-			while (pos < input.length() && input.charAt(pos) != '}') {
+			while (_pos < _input.length() && _input.charAt(_pos) != '}') {
 				// Read selector keyword (=1, one, other, etc.)
 				String selector = readUntil('{').trim();
 
-				if (pos >= input.length()) {
+				if (_pos >= _input.length()) {
 					break;
 				}
 
-				pos++; // skip opening {
+				_pos++; // skip opening {
 
 				// Parse case content (may contain nested placeholders)
 				List<MessagePart> caseParts = parseCaseContent();
@@ -431,8 +431,8 @@ public class IcuMessageParser {
 				skipWhitespace();
 			}
 
-			if (pos < input.length() && input.charAt(pos) == '}') {
-				pos++; // skip closing } of entire format
+			if (_pos < _input.length() && _input.charAt(_pos) == '}') {
+				_pos++; // skip closing } of entire format
 			}
 
 			return cases;
@@ -443,8 +443,8 @@ public class IcuMessageParser {
 			StringBuilder text = new StringBuilder();
 			int depth = 1; // We're already inside one {
 
-			while (pos < input.length() && depth > 0) {
-				char ch = input.charAt(pos);
+			while (_pos < _input.length() && depth > 0) {
+				char ch = _input.charAt(_pos);
 
 				if (ch == '{') {
 					// Save accumulated text
@@ -454,26 +454,26 @@ public class IcuMessageParser {
 					}
 
 					// Check if this is a nested placeholder or literal {
-					int savedPos = pos;
+					int savedPos = _pos;
 					MessagePart part = parsePlaceholder();
 
 					if (part != null) {
 						parts.add(part);
 					} else {
 						// Failed to parse, treat as literal
-						pos = savedPos;
+						_pos = savedPos;
 						text.append(ch);
-						pos++;
+						_pos++;
 					}
 				} else if (ch == '}') {
 					depth--;
 					if (depth == 0) {
 						// End of this case - skip the closing }
-						pos++;
+						_pos++;
 						break;
 					} else {
 						text.append(ch);
-						pos++;
+						_pos++;
 					}
 				} else if (ch == '#') {
 					// # is a special symbol in plural forms representing the number
@@ -483,10 +483,10 @@ public class IcuMessageParser {
 						text.setLength(0);
 					}
 					parts.add(new SimpleParameter("#"));
-					pos++;
+					_pos++;
 				} else {
 					text.append(ch);
-					pos++;
+					_pos++;
 				}
 			}
 
@@ -501,8 +501,8 @@ public class IcuMessageParser {
 		private String readUntil(char... terminators) {
 			StringBuilder result = new StringBuilder();
 
-			while (pos < input.length()) {
-				char ch = input.charAt(pos);
+			while (_pos < _input.length()) {
+				char ch = _input.charAt(_pos);
 
 				for (char terminator : terminators) {
 					if (ch == terminator) {
@@ -511,15 +511,15 @@ public class IcuMessageParser {
 				}
 
 				result.append(ch);
-				pos++;
+				_pos++;
 			}
 
 			return result.toString();
 		}
 
 		private void skipWhitespace() {
-			while (pos < input.length() && Character.isWhitespace(input.charAt(pos))) {
-				pos++;
+			while (_pos < _input.length() && Character.isWhitespace(_input.charAt(_pos))) {
+				_pos++;
 			}
 		}
 	}

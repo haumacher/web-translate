@@ -25,23 +25,23 @@ import de.haumacher.autotranslate.html.extract.PropertiesExtractor;
 
 public class TranslationSynthesizer {
 
-	private File propertiesDir;
-	private File templateDir;
-	private List<String> destLangs;
-	private String srcLang;
-	private Charset propertiesCharset;
-	
+	private File _propertiesDir;
+	private File _templateDir;
+	private List<String> _destLangs;
+	private String _srcLang;
+	private Charset _propertiesCharset;
+
 	public TranslationSynthesizer(File templateDir, File propertiesDir, String srcLang, List<String> destLangs, Charset propertiesCharset) {
-		this.templateDir = templateDir;
-		this.propertiesDir = propertiesDir;
-		this.srcLang = srcLang;
-		this.destLangs = destLangs;
-		this.propertiesCharset = propertiesCharset;
+		_templateDir = templateDir;
+		_propertiesDir = propertiesDir;
+		_srcLang = srcLang;
+		_destLangs = destLangs;
+		_propertiesCharset = propertiesCharset;
 	}
 
 	public void synthesize() throws IOException, ParserConfigurationException, SAXException {
-		for (String destLang : destLangs) {
-			synthesize(new File(templateDir, srcLang), destLang);
+		for (String destLang : _destLangs) {
+			synthesize(new File(_templateDir, _srcLang), destLang);
 		}
 	}
 
@@ -57,23 +57,23 @@ public class TranslationSynthesizer {
 
 	private void synthesizeHtml(File srcFile, String destLang) throws IOException, ParserConfigurationException, SAXException {
 		String propertiesName = PropertiesExtractor.baseName(srcFile) + ".properties";
-		
-		Path path = templateDir.toPath().resolve(srcLang).relativize(srcFile.toPath());
-		File propertiesFile = propertiesDir.toPath().resolve(destLang).resolve(path).getParent().resolve(propertiesName).toFile();
-		File outputFile = templateDir.toPath().resolve(destLang).resolve(path).toFile();
+
+		Path path = _templateDir.toPath().resolve(_srcLang).relativize(srcFile.toPath());
+		File propertiesFile = _propertiesDir.toPath().resolve(destLang).resolve(path).getParent().resolve(propertiesName).toFile();
+		File outputFile = _templateDir.toPath().resolve(destLang).resolve(path).toFile();
 
 		System.err.println("Synthesizing: " + outputFile.getPath());
 
 		Properties properties = new Properties();
 		try (FileInputStream in = new FileInputStream(propertiesFile)) {
-			properties.load(new InputStreamReader(in, propertiesCharset));
+			properties.load(new InputStreamReader(in, _propertiesCharset));
 		}
-		
+
 		Document document = PropertiesExtractor.parseHtml(srcFile);
 		HtmlAnalyzer analyzer = new HtmlAnalyzer(document);
 		analyzer.setTextById(toMap(properties));
 		analyzer.inject();
-		
+
 		outputFile.getParentFile().mkdirs();
 		try (FileOutputStream out = new FileOutputStream(outputFile)) {
 			PropertiesExtractor.serializeDocument(out, document);

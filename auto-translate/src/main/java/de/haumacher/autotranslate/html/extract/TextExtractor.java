@@ -6,17 +6,17 @@ import org.w3c.dom.Text;
 
 public class TextExtractor {
 
-	private Element root;
-	private StringBuilder buffer = new StringBuilder();
-	private int nextId = 1;
+	private Element _root;
+	private StringBuilder _buffer = new StringBuilder();
+	private int _nextId = 1;
 
 	public TextExtractor(Element element) {
-		this.root = element;
+		_root = element;
 	}
 
 	public String extract() {
-		extractText(root, true);
-		return normalizeWhitespace(buffer.toString().trim());
+		extractText(_root, true);
+		return normalizeWhitespace(_buffer.toString().trim());
 	}
 
 	private String normalizeWhitespace(String text) {
@@ -26,20 +26,20 @@ public class TextExtractor {
 	private void extractText(Element element, boolean hasTextSibbling) {
 		for (Node child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
 			if (child instanceof Text text) {
-				buffer.append(text.getTextContent());
+				_buffer.append(text.getTextContent());
 			}
 			else if (child instanceof Element sub) {
 				boolean subText = containsText(sub);
 				if (hasTextSibbling || subText) {
-					int id = nextId++;
-					
-					buffer.append("<x");
-					buffer.append(id);
-					buffer.append(">");
+					int id = _nextId++;
+
+					_buffer.append("<x");
+					_buffer.append(id);
+					_buffer.append(">");
 					extractText(sub, subText);
-					buffer.append("</x");
-					buffer.append(id);
-					buffer.append(">");
+					_buffer.append("</x");
+					_buffer.append(id);
+					_buffer.append(">");
 				} else {
 					extractText(sub, false);
 				}

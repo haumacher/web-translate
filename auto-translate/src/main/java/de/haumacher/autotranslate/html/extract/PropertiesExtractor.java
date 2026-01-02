@@ -47,18 +47,18 @@ public class PropertiesExtractor {
 	    "track", 
 	    "wbr")); 
 	
-	private File propertiesDir;
-	private File templateDir;
-	private Charset propertiesCharset;
+	private File _propertiesDir;
+	private File _templateDir;
+	private Charset _propertiesCharset;
 
 	public PropertiesExtractor(File propertiesDir, File templateDir, Charset propertiesCharset) {
-		this.propertiesDir = propertiesDir;
-		this.templateDir = templateDir;
-		this.propertiesCharset = propertiesCharset;
+		_propertiesDir = propertiesDir;
+		_templateDir = templateDir;
+		_propertiesCharset = propertiesCharset;
 	}
 	
 	public void process() throws ParserConfigurationException, SAXException, IOException {
-		process(templateDir);
+		process(_templateDir);
 	}
 	
 	private void process(File file) throws ParserConfigurationException, SAXException, IOException {
@@ -139,12 +139,12 @@ public class PropertiesExtractor {
 
 	private void writeProperties(File file, Map<String, String> textById) throws IOException {
 	    String baseName = baseName(file);
-		
-		Path path = templateDir.toPath().relativize(file.getParentFile().toPath()).resolve(baseName + ".properties");
-		File output = propertiesDir.toPath().resolve(path).toFile();
+
+		Path path = _templateDir.toPath().relativize(file.getParentFile().toPath()).resolve(baseName + ".properties");
+		File output = _propertiesDir.toPath().resolve(path).toFile();
 		output.getParentFile().mkdirs();
 		try (FileOutputStream out = new FileOutputStream(output)) {
-			new PropertiesWriter(out, propertiesCharset).write(textById);
+			new PropertiesWriter(out, _propertiesCharset).write(textById);
 		}
 	}
 

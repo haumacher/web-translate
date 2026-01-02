@@ -47,8 +47,8 @@ public class ParameterProtector {
 	 * Holds information about a translation with protected parameters.
 	 */
 	public static class ProtectedText {
-		private final String protectedText;
-		private final List<MessagePart> parts; // Store original structure
+		private final String _protectedText;
+		private final List<MessagePart> _parts; // Store original structure
 
 		/**
 		 * Creates a ProtectedText from pre-parsed message parts.
@@ -58,8 +58,8 @@ public class ParameterProtector {
 		 */
 		public ProtectedText(String protectedText, List<MessagePart> originalParts) {
 			assert originalParts != null;
-			this.protectedText = protectedText;
-			this.parts = originalParts;
+			_protectedText = protectedText;
+			_parts = originalParts;
 		}
 
 		/**
@@ -82,15 +82,15 @@ public class ParameterProtector {
 		 */
 		public ProtectedText(String text) {
 			List<MessagePart> parsedParts = IcuMessageParser.parse(text);
-			this.protectedText = IcuMessageParser.toProtectedText(parsedParts);
-			this.parts = parsedParts;
+			_protectedText = IcuMessageParser.toProtectedText(parsedParts);
+			_parts = parsedParts;
 		}
 
 		/**
 		 * The text with parameters replaced by XML tags.
 		 */
 		public String getProtectedText() {
-			return protectedText;
+			return _protectedText;
 		}
 
 		/**
@@ -98,7 +98,7 @@ public class ParameterProtector {
 		 */
 		public List<String> getParameterNames() {
 			List<String> parameterNames = new ArrayList<>();
-			for (MessagePart part : parts) {
+			for (MessagePart part : _parts) {
 				if (part instanceof ParameterPart parameter) {
 					parameterNames.add(parameter.getName());
 				}
@@ -110,7 +110,7 @@ public class ParameterProtector {
 		 * The parsed ICU message parts.
 		 */
 		public List<MessagePart> getParts() {
-			return parts;
+			return _parts;
 		}
 
 		/**
@@ -122,13 +122,13 @@ public class ParameterProtector {
 			// Replace <xN>...</xN> placeholders in the translated protected text
 			// with the reconstructed original parameters
 			List<ParameterPart> parameters = new ArrayList<>();
-			for (MessagePart part : parts) {
+			for (MessagePart part : _parts) {
 				if (part instanceof ParameterPart) {
 					parameters.add((ParameterPart) part);
 				}
 			}
 
-			Matcher matcher = TAG_PATTERN.matcher(protectedText);
+			Matcher matcher = TAG_PATTERN.matcher(_protectedText);
 			StringBuffer result = new StringBuffer();
 
 			while (matcher.find()) {
@@ -158,10 +158,10 @@ public class ParameterProtector {
 		 */
 		public ProtectedText translate(java.util.function.Function<String, String> translationFunction) {
 			// Translate the protected text itself
-			String translatedProtectedText = translationFunction.apply(protectedText);
+			String translatedProtectedText = translationFunction.apply(_protectedText);
 
 			List<MessagePart> translatedParts = new ArrayList<>();
-			for (MessagePart part : parts) {
+			for (MessagePart part : _parts) {
 				translatedParts.add(part.translate(translationFunction));
 			}
 

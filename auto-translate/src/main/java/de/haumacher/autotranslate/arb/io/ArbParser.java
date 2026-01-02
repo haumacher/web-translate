@@ -42,13 +42,13 @@ import de.haumacher.autotranslate.arb.model.ArbResourceAttributes;
  */
 public class ArbParser {
 
-	private final Gson gson;
+	private final Gson _gson;
 
 	/**
 	 * Creates a new ARB parser.
 	 */
 	public ArbParser() {
-		this.gson = new GsonBuilder().create();
+		_gson = new GsonBuilder().create();
 	}
 
 	/**

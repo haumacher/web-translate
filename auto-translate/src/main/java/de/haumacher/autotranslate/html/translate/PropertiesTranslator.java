@@ -28,44 +28,44 @@ public class PropertiesTranslator {
 
 	/**
 	 * Top-level properties directory.
-	 * 
+	 *
 	 * <p>
 	 * The code expects that there is a sub-directory for each language. This
 	 * language directory then contains property files to translate.
 	 * </p>
 	 */
-	private File propertiesDir;
-	private String srcLang;
-	private List<String> destLangs;
-	private DeepLClient client;
-	
-	private int  totalChars;
-	private File src;
-	private NameStrategy nameStrategy;
-	private Charset propertiesCharset;
-	
+	private File _propertiesDir;
+	private String _srcLang;
+	private List<String> _destLangs;
+	private DeepLClient _client;
+
+	private int  _totalChars;
+	private File _src;
+	private NameStrategy _nameStrategy;
+	private Charset _propertiesCharset;
+
 	public PropertiesTranslator(String apikey, String srcLang, List<String> destLangs, File propertiesDir, File src, NameStrategy nameStrategy, Charset propertiesCharset) {
-		this.srcLang = srcLang;
-		this.destLangs = destLangs;
-		this.nameStrategy = nameStrategy;
-		this.src = src != null ? src : new File(propertiesDir, srcLang);
-		this.propertiesDir = propertiesDir;
-		this.propertiesCharset = propertiesCharset;
-		
-        client = new DeepLClient(apikey);		
+		_srcLang = srcLang;
+		_destLangs = destLangs;
+		_nameStrategy = nameStrategy;
+		_src = src != null ? src : new File(propertiesDir, srcLang);
+		_propertiesDir = propertiesDir;
+		_propertiesCharset = propertiesCharset;
+
+        _client = new DeepLClient(apikey);
 	}
 
 	public void translate() throws IOException, DeepLException, InterruptedException {
-		for (String destLang : destLangs) {
-			File destDir = nameStrategy.destDir(propertiesDir, destLang);
-			
+		for (String destLang : _destLangs) {
+			File destDir = _nameStrategy.destDir(_propertiesDir, destLang);
+
 			System.err.println();
 			System.err.println("# Translating to '" + destLang + "': " + destDir);
 			System.err.println();
-			translate(src, destLang, destDir);
+			translate(_src, destLang, destDir);
 		}
-		
-		System.err.println("Total billed chars: " + totalChars);
+
+		System.err.println("Total billed chars: " + _totalChars);
 	}
 
 	private void translate(File file, String destLang, File destDir) throws IOException, DeepLException, InterruptedException {
@@ -82,21 +82,21 @@ public class PropertiesTranslator {
 
 	private void translateProperties(File file, String destLang, File destDir) throws IOException, DeepLException, InterruptedException {
 		System.err.println("Processing: " + file.getPath());
-		
+
 		Path path;
-		if (src.equals(file)) {
-			path = src.toPath().getParent().relativize(file.toPath());
+		if (_src.equals(file)) {
+			path = _src.toPath().getParent().relativize(file.toPath());
 		} else {
-			path = src.toPath().relativize(file.toPath());
+			path = _src.toPath().relativize(file.toPath());
 		}
-		File output = destDir.toPath().resolve(nameStrategy.destPath(path, destLang)).toFile();
+		File output = destDir.toPath().resolve(_nameStrategy.destPath(path, destLang)).toFile();
 
 		Properties srcProperties = new Properties();
-		srcProperties.load(new InputStreamReader(new FileInputStream(file), propertiesCharset));
-		
+		srcProperties.load(new InputStreamReader(new FileInputStream(file), _propertiesCharset));
+
 		Properties destProperties = new Properties();
 		if (output.exists()) {
-			destProperties.load(new InputStreamReader(new FileInputStream(output), propertiesCharset));
+			destProperties.load(new InputStreamReader(new FileInputStream(output), _propertiesCharset));
 		}
 
 		List<String> keys = srcProperties.keySet().stream().map(x -> ((String) x)).sorted().toList();
@@ -110,12 +110,12 @@ public class PropertiesTranslator {
 				inputs.add(srcProperties.getProperty(key));
 			}
 		}
-		
+
 		{
-			List<TextResult> results = inputs.isEmpty() ? Collections.emptyList() : client.translateText(inputs, srcLang, destLang);
-			
+			List<TextResult> results = inputs.isEmpty() ? Collections.emptyList() : _client.translateText(inputs, _srcLang, destLang);
+
 			output.getParentFile().mkdirs();
-			
+
 			Map<String, String> updated = new HashMap<>();
 			int chars = 0;
 			Iterator<TextResult> resultIt = results.iterator();
@@ -128,22 +128,22 @@ public class PropertiesTranslator {
 					value = result.getText();
 					chars += result.getBilledCharacters();
 				}
-				
+
 				updated.put(key, value);
 			}
 
 			try (OutputStream out = new FileOutputStream(output)) {
-				new PropertiesWriter(out, propertiesCharset).write(updated);
+				new PropertiesWriter(out, _propertiesCharset).write(updated);
 			}
-		
+
 			if (inputs.isEmpty()) {
 				// Note: The output file must be written, even if there is not a single property defined in the source file.
 				System.err.println("No change.");
 			} else {
 				System.err.println("Translated " + inputs.size() + " messages, billed chars: " + chars);
 			}
-			
-			totalChars += chars;
+
+			_totalChars += chars;
 		}
 	}
 

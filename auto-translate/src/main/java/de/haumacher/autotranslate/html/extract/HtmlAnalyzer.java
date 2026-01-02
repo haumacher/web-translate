@@ -82,40 +82,40 @@ public class HtmlAnalyzer {
 
 	private static final Set<String> TEXT_ATTRS = new HashSet<>(Arrays.asList("alt", "label", "placeholder", "summary", "title", "aria-label"));
 	
-	private Document document;
+	private Document _document;
 
 	/**
 	 * Mapping of text element (that either has a text attribute or text content to a decision, whether the element contains text content).
 	 */
-	private Map<Element, Boolean> textParents = new LinkedHashMap<>();
-	private Map<String, Element> elementById = new HashMap<>();
-	private int nextId = 1;
-	private DecimalFormat idFormat = new DecimalFormat("t0000");
-	
-	private Map<String, String> textById = new HashMap<>();
+	private Map<Element, Boolean> _textParents = new LinkedHashMap<>();
+	private Map<String, Element> _elementById = new HashMap<>();
+	private int _nextId = 1;
+	private DecimalFormat _idFormat = new DecimalFormat("t0000");
+
+	private Map<String, String> _textById = new HashMap<>();
 
 	public HtmlAnalyzer(Document document) {
-		this.document = document;
+		_document = document;
 	}
 
 	public void analyze() {
-		scanExistingIds(document.getDocumentElement());
-		scanText(document.getDocumentElement());
+		scanExistingIds(_document.getDocumentElement());
+		scanText(_document.getDocumentElement());
 		assignIds();
-		cleanIds(document.getDocumentElement());
-		extractText(document.getDocumentElement());
+		cleanIds(_document.getDocumentElement());
+		extractText(_document.getDocumentElement());
 	}
-	
+
 	public Map<String, String> getTextById() {
-		return textById;
+		return _textById;
 	}
-	
+
 	public void setTextById(Map<String, String> textById) {
-		this.textById = textById;
+		_textById = textById;
 	}
 
 	public void inject() {
-		injectText(document.getDocumentElement());
+		injectText(_document.getDocumentElement());
 	}
 	
 	private void injectText(Element element) {
@@ -125,15 +125,15 @@ public class HtmlAnalyzer {
 			for (int n = 0, cnt = attributes.getLength(); n < cnt; n ++) {
 				Node attr = attributes.item(n);
 				if (TEXT_ATTRS.contains(attr.getNodeName())) {
-					String text = textById.get(id + "." + attr.getNodeName());
+					String text = _textById.get(id + "." + attr.getNodeName());
 					if (text != null) {
 						attr.setNodeValue(text);
 					}
 				}
 			}
-			
+
 			if (!CODE_TAGS.contains(element.getTagName())) {
-				String text = textById.get(id);
+				String text = _textById.get(id);
 				if (text != null) {
 					new TextInjector(element).inject(text);
 				}
@@ -156,15 +156,15 @@ public class HtmlAnalyzer {
 				if (TEXT_ATTRS.contains(attr.getNodeName())) {
 					String attrText = attr.getTextContent();
 					if (!attrText.isBlank()) {
-						textById.put(id + "." + attr.getNodeName(), attrText);
+						_textById.put(id + "." + attr.getNodeName(), attrText);
 					}
 				}
 			}
-			
+
 			if (!CODE_TAGS.contains(element.getTagName())) {
-				// Note: The element could have an ID assigned, because it only contains text attributes. 
+				// Note: The element could have an ID assigned, because it only contains text attributes.
 				if (containsText(element)) {
-					textById.put(id, new TextExtractor(element).extract());
+					_textById.put(id, new TextExtractor(element).extract());
 				}
 			}
 		}
@@ -179,7 +179,7 @@ public class HtmlAnalyzer {
 	private void cleanIds(Element element) {
 		for (Node child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
 			if (child instanceof Element sub) {
-				if (!textParents.containsKey(child)) {
+				if (!_textParents.containsKey(child)) {
 					((Element) child).removeAttribute(ID_ATTR);
 				}
 				cleanIds(sub);
@@ -188,32 +188,32 @@ public class HtmlAnalyzer {
 	}
 
 	private void assignIds() {
-		for (Element textParent : textParents.keySet()) {
+		for (Element textParent : _textParents.keySet()) {
 			if (!hasTextAttribute(textParent) && hasTextParent(textParent)) {
 				textParent.removeAttribute(ID_ATTR);
 				continue;
 			}
-			
+
 			String id = textParent.getAttribute(ID_ATTR);
 			if (id != null && !id.isBlank()) {
-				if (elementById.containsKey(id)) {
+				if (_elementById.containsKey(id)) {
 					// Duplicate assignment, remove.
 					textParent.removeAttribute(ID_ATTR);
 					id = null;
 				}
 			}
 			if (id == null || id.isBlank()) {
-				id = idFormat.format(nextId++);
+				id = _idFormat.format(_nextId++);
 				textParent.setAttribute(ID_ATTR, id);
 			}
 
-			elementById.put(id, textParent);
+			_elementById.put(id, textParent);
 		}
 	}
 
 	private boolean hasTextParent(Element textParent) {
 		for (Node parent = textParent.getParentNode(); parent != null; parent = parent.getParentNode()) {
-			Boolean containsText = textParents.get(parent);
+			Boolean containsText = _textParents.get(parent);
 			if (containsText != null && containsText.booleanValue()) {
 				return true;
 			}
@@ -231,7 +231,7 @@ public class HtmlAnalyzer {
 		if (id != null && !id.isEmpty()) {
 			Matcher matcher = TEXT_ID_PATTERN.matcher(id);
 			if (matcher.matches()) {
-				nextId = Math.max(nextId, Integer.parseInt(matcher.group(1)) + 1);
+				_nextId = Math.max(_nextId, Integer.parseInt(matcher.group(1)) + 1);
 			}
 		}
 
@@ -247,19 +247,19 @@ public class HtmlAnalyzer {
 	 */
 	private void scanText(Element element) {
 		if (hasTextAttribute(element)) {
-			textParents.put(element, Boolean.FALSE);
+			_textParents.put(element, Boolean.FALSE);
 		}
-		
+
 		if (CODE_TAGS.contains(element.getTagName())) {
 			// No translation here.
 			return;
 		}
-		
+
 		for (Node child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
 			if (child instanceof Text text) {
 				if (hasText(text)) {
 					Element textParent = (Element) child.getParentNode();
-					textParents.put(textParent, Boolean.TRUE);
+					_textParents.put(textParent, Boolean.TRUE);
 				}
 			} else if (child instanceof Element sub) {
 				scanText(sub);
