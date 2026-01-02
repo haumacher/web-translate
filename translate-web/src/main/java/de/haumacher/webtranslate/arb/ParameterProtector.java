@@ -144,53 +144,11 @@ public class ParameterProtector {
 	 * @return ProtectedText containing the protected text and parameter list
 	 */
 	public static ProtectedText protect(String text) {
-		// Try to parse as ICU MessageFormat
-		try {
-			List<MessagePart> parts = IcuMessageParser.parse(text);
-			String protectedText = IcuMessageParser.toProtectedText(parts);
+		List<MessagePart> parts = IcuMessageParser.parse(text);
+		String protectedText = IcuMessageParser.toProtectedText(parts);
 
-			// Store original parts for reconstruction during restore
-			return new ProtectedText(protectedText, parts);
-		} catch (Exception e) {
-			// Fallback to simple regex-based protection
-			return protectSimple(text);
-		}
-	}
-
-	/**
-	 * Simple regex-based protection (fallback for non-ICU messages).
-	 */
-	private static ProtectedText protectSimple(String text) {
-		List<MessagePart> parts = new ArrayList<>();
-		Matcher matcher = PARAMETER_PATTERN.matcher(text);
-		StringBuffer result = new StringBuffer();
-
-		int lastEnd = 0;
-		int paramIndex = 1;
-		while (matcher.find()) {
-			// Add text before parameter
-			if (matcher.start() > lastEnd) {
-				parts.add(new TextPart(text.substring(lastEnd, matcher.start())));
-			}
-
-			String paramName = matcher.group(1);
-			parts.add(new SimpleParameter(paramName));
-
-			// Replace {paramName} with <xN>paramName</xN>
-			String replacement = "<x" + paramIndex + ">" + paramName + "</x" + paramIndex + ">";
-			matcher.appendReplacement(result, Matcher.quoteReplacement(replacement));
-
-			lastEnd = matcher.end();
-			paramIndex++;
-		}
-		matcher.appendTail(result);
-
-		// Add remaining text
-		if (lastEnd < text.length()) {
-			parts.add(new TextPart(text.substring(lastEnd)));
-		}
-
-		return new ProtectedText(result.toString(), parts);
+		// Store original parts for reconstruction during restore
+		return new ProtectedText(protectedText, parts);
 	}
 
 	/**
