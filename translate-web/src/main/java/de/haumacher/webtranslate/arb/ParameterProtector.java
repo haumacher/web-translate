@@ -118,11 +118,34 @@ public class ParameterProtector {
 		 * @return The text with original structure restored
 		 */
 		public String restore() {
-			// Use original parts to reconstruct with proper structure
-			StringBuilder result = new StringBuilder();
+			// Replace <xN>...</xN> placeholders in the translated protected text
+			// with the reconstructed original parameters
+			List<ParameterPart> parameters = new ArrayList<>();
 			for (MessagePart part : parts) {
-				result.append(part.reconstruct());
+				if (part instanceof ParameterPart) {
+					parameters.add((ParameterPart) part);
+				}
 			}
+
+			Matcher matcher = TAG_PATTERN.matcher(protectedText);
+			StringBuffer result = new StringBuffer();
+
+			while (matcher.find()) {
+				String indexStr = matcher.group(1);
+				int index = Integer.parseInt(indexStr);
+
+				// Get original parameter (index is 1-based)
+				if (index > 0 && index <= parameters.size()) {
+					ParameterPart originalParam = parameters.get(index - 1);
+					String replacement = originalParam.reconstruct();
+					matcher.appendReplacement(result, Matcher.quoteReplacement(replacement));
+				} else {
+					// Keep as-is if index is out of bounds (shouldn't happen)
+					matcher.appendReplacement(result, Matcher.quoteReplacement(matcher.group()));
+				}
+			}
+			matcher.appendTail(result);
+
 			return result.toString();
 		}
 
