@@ -1,4 +1,4 @@
-package de.haumacher.autotranslate.extract;
+package de.haumacher.autotranslate.html.extract;
 
 import java.util.ArrayList;
 import java.util.List;

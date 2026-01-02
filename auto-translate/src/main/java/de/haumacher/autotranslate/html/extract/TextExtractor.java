@@ -1,4 +1,4 @@
-package de.haumacher.autotranslate.extract;
+package de.haumacher.autotranslate.html.extract;
 
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;

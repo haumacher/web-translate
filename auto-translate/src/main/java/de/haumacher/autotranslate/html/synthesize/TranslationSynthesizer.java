@@ -1,4 +1,4 @@
-package de.haumacher.autotranslate.synthesize;
+package de.haumacher.autotranslate.html.synthesize;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -20,8 +20,8 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
-import de.haumacher.autotranslate.extract.HtmlAnalyzer;
-import de.haumacher.autotranslate.extract.PropertiesExtractor;
+import de.haumacher.autotranslate.html.extract.HtmlAnalyzer;
+import de.haumacher.autotranslate.html.extract.PropertiesExtractor;
 
 public class TranslationSynthesizer {
 

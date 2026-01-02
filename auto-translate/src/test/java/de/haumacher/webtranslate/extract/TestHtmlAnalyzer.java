@@ -15,9 +15,9 @@ import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-import de.haumacher.autotranslate.extract.HtmlAnalyzer;
-import de.haumacher.autotranslate.extract.PropertiesExtractor;
-import de.haumacher.autotranslate.extract.PropertiesWriter;
+import de.haumacher.autotranslate.html.extract.HtmlAnalyzer;
+import de.haumacher.autotranslate.html.extract.PropertiesExtractor;
+import de.haumacher.autotranslate.html.extract.PropertiesWriter;
 
 /**
  * Test case for {@link HtmlAnalyzer}.

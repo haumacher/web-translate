@@ -121,18 +121,18 @@ java -cp target/classes:~/.m2/repository/com/deepl/api/deepl-java/1.9.0/* \
 
 **Extract properties from HTML:**
 ```bash
-java de.haumacher.autotranslate.extract.PropertiesExtractor <template-dir> <properties-dir> [charset]
+java de.haumacher.autotranslate.html.extract.PropertiesExtractor <template-dir> <properties-dir> [charset]
 ```
 
 **Translate properties files:**
 ```bash
-java de.haumacher.autotranslate.translate.PropertiesTranslator \
+java de.haumacher.autotranslate.html.translate.PropertiesTranslator \
   <api-key> <src-lang> <dest-langs> <properties-dir> [src-file] [name-strategy] [charset]
 ```
 
 **Synthesize translated HTML:**
 ```bash
-java de.haumacher.autotranslate.synthesize.TranslationSynthesizer \
+java de.haumacher.autotranslate.html.synthesize.TranslationSynthesizer \
   <template-dir> <properties-dir> <src-lang> <dest-langs> [charset]
 ```
 
@@ -142,34 +142,34 @@ java de.haumacher.autotranslate.synthesize.TranslationSynthesizer \
 
 The translation process has three sequential phases:
 
-1. **Extraction** (`extract` package): Analyzes HTML templates, extracts translatable text to `.properties` files
-2. **Translation** (`translate` package): Uses DeepL API to translate properties files
-3. **Synthesis** (`synthesize` package): Injects translated text back into HTML structure
+1. **Extraction** (`html.extract` package): Analyzes HTML templates, extracts translatable text to `.properties` files
+2. **Translation** (`html.translate` package): Uses DeepL API to translate properties files
+3. **Synthesis** (`html.synthesize` package): Injects translated text back into HTML structure
 
 ### Key Components
 
-**HtmlAnalyzer** (`extract/HtmlAnalyzer.java`):
+**HtmlAnalyzer** (`html.extract/HtmlAnalyzer.java`):
 - Core text extraction and injection logic
 - Assigns `data-tx` IDs to elements containing translatable content
 - Extracts text from both element content and text attributes (`alt`, `title`, `placeholder`, `aria-label`, etc.)
 - Handles nested markup by converting sub-elements to placeholder tags (`<x1>`, `<x2>`, etc.)
 
-**TextExtractor/TextInjector** (`extract/TextExtractor.java`, `extract/TextInjector.java`):
+**TextExtractor/TextInjector** (`html.extract/TextExtractor.java`, `html.extract/TextInjector.java`):
 - TextExtractor: Converts HTML element text to simplified format with `<xN>` placeholders for sub-elements
 - TextInjector: Reconstructs HTML structure from translated text with `<xN>` tags
 
-**PropertiesExtractor** (`extract/PropertiesExtractor.java`):
+**PropertiesExtractor** (`html.extract/PropertiesExtractor.java`):
 - Recursively processes HTML files in template directory
 - Normalizes HTML and writes `.properties` files with extracted text
 - Uses `data-tx` attribute to track element IDs (format: `t0001`, `t0002`, etc.)
 
-**PropertiesTranslator** (`translate/PropertiesTranslator.java`):
+**PropertiesTranslator** (`html.translate/PropertiesTranslator.java`):
 - Translates `.properties` files using DeepL API
 - Supports incremental translation (only translates new keys)
 - Tracks billed character count
 - Supports different naming strategies (LANG_TAG_DIR, etc.)
 
-**TranslationSynthesizer** (`synthesize/TranslationSynthesizer.java`):
+**TranslationSynthesizer** (`html.synthesize/TranslationSynthesizer.java`):
 - Creates translated HTML files by injecting translated properties
 - Maintains template structure while replacing text content
 
@@ -212,19 +212,21 @@ auto-translate/
 ├── src/main/java/de/haumacher/autotranslate/
 │   ├── Translator.java              # Main orchestrator (CLI)
 │   ├── maven/
-│   │   └── TranslateMojo.java       # Maven plugin goal
-│   ├── extract/
-│   │   ├── HtmlAnalyzer.java        # Core analysis/extraction logic
-│   │   ├── TextExtractor.java       # Text → <xN> conversion
-│   │   ├── TextInjector.java        # <xN> → HTML reconstruction
-│   │   ├── PropertiesExtractor.java # HTML → .properties
-│   │   ├── PropertiesWriter.java    # Properties file writer
-│   │   └── Stack.java               # Utility stack implementation
-│   ├── translate/
-│   │   ├── PropertiesTranslator.java # DeepL API integration
-│   │   └── NameStrategy.java         # File naming strategies
-│   ├── synthesize/
-│   │   └── TranslationSynthesizer.java # .properties → HTML
+│   │   ├── TranslateMojo.java       # Maven plugin goal for HTML
+│   │   └── TranslateArbMojo.java    # Maven plugin goal for ARB
+│   ├── html/
+│   │   ├── extract/
+│   │   │   ├── HtmlAnalyzer.java        # Core analysis/extraction logic
+│   │   │   ├── TextExtractor.java       # Text → <xN> conversion
+│   │   │   ├── TextInjector.java        # <xN> → HTML reconstruction
+│   │   │   ├── PropertiesExtractor.java # HTML → .properties
+│   │   │   ├── PropertiesWriter.java    # Properties file writer
+│   │   │   └── Stack.java               # Utility stack implementation
+│   │   ├── translate/
+│   │   │   ├── PropertiesTranslator.java # DeepL API integration
+│   │   │   └── NameStrategy.java         # File naming strategies
+│   │   └── synthesize/
+│   │       └── TranslationSynthesizer.java # .properties → HTML
 │   └── arb/
 │       ├── ArbBundle.java           # ARB file container
 │       ├── ArbResource.java         # ARB resource entry
@@ -236,8 +238,9 @@ auto-translate/
 │       ├── IcuMessageParser.java    # ICU MessageFormat parser
 │       └── ParameterProtector.java  # Parameter protection for translation
 └── src/test/java/de/haumacher/autotranslate/
-    ├── extract/
-    │   └── TestHtmlAnalyzer.java         # HTML analysis tests
+    ├── html/
+    │   └── extract/
+    │       └── TestHtmlAnalyzer.java         # HTML analysis tests
     └── arb/
         ├── TestArbParser.java            # ARB parser tests
         ├── TestArbTranslator.java        # ARB translator tests
