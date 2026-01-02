@@ -26,9 +26,9 @@
   </developers>
 
   <scm>
-    <connection>scm:git:git://github.com/haumacher/auto-translate.git</connection>
-    <developerConnection>scm:git:ssh://github.com:haumacher/auto-translate.git</developerConnection>
-    <url>https://github.com/haumacher/auto-translate/tree/master</url>
+    <connection>scm:git:https://github.com/haumacher/auto-translate.git</connection>
+    <developerConnection>scm:git:https://github.com/haumacher/auto-translate.git</developerConnection>
+    <url>https://github.com/haumacher/auto-translate/</url>
     <tag>v1.0.0</tag>
   </scm>
 
