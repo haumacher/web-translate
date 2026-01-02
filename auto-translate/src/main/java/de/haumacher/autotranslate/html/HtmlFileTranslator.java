@@ -5,6 +5,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -82,13 +83,33 @@ public class HtmlFileTranslator {
 
 		// Extract all text (includes both new and existing IDs)
 		Map<String, String> sourceTexts = sourceAnalyzer.getTextById();
+		Map<String, String> currentCrcs = sourceAnalyzer.getCrcById();
+		Map<String, String> oldCrcs = sourceAnalyzer.getOldCrcById();
 
-		// Determine which IDs are new (need unconditional translation)
+		// Determine which texts need translation:
+		// 1. New IDs (not in source before)
+		// 2. Changed IDs (CRC mismatch between old and current)
 		Set<String> existingIds = sourceAnalyzer.getExistingIds();
-		Map<String, String> newTexts = new HashMap<>();
+		Set<String> textsNeedingTranslation = new HashSet<>();
+
 		for (Map.Entry<String, String> entry : sourceTexts.entrySet()) {
-			if (!existingIds.contains(entry.getKey())) {
-				newTexts.put(entry.getKey(), entry.getValue());
+			String textId = entry.getKey();
+
+			// New text (ID didn't exist before)
+			if (!existingIds.contains(extractBaseId(textId))) {
+				textsNeedingTranslation.add(textId);
+			}
+			// Existing text but CRC changed
+			else {
+				String oldCrc = oldCrcs.get(textId);
+				String currentCrc = currentCrcs.get(textId);
+
+				// If no old CRC, assume unchanged (backward compatibility)
+				// If CRCs differ, text has changed
+				if (oldCrc != null && currentCrc != null && !oldCrc.equals(currentCrc)) {
+					textsNeedingTranslation.add(textId);
+					System.out.println("Text changed (CRC mismatch): " + textId);
+				}
 			}
 		}
 
@@ -99,12 +120,21 @@ public class HtmlFileTranslator {
 
 		// Translate to each target language
 		for (String destLang : _destLangs) {
-			translateToLanguage(sourceFile, targetDir, relativePath, destLang, sourceTexts, newTexts);
+			translateToLanguage(sourceFile, targetDir, relativePath, destLang, sourceTexts, textsNeedingTranslation);
 		}
 	}
 
+	/**
+	 * Extracts the base ID from a text ID (removes attribute suffix if present).
+	 * For example: "t0001" -> "t0001", "t0001.title" -> "t0001"
+	 */
+	private String extractBaseId(String textId) {
+		int dotIndex = textId.indexOf('.');
+		return dotIndex >= 0 ? textId.substring(0, dotIndex) : textId;
+	}
+
 	private void translateToLanguage(File sourceFile, File targetDir, String relativePath,
-			String destLang, Map<String, String> sourceTexts, Map<String, String> newTexts)
+			String destLang, Map<String, String> sourceTexts, Set<String> textsNeedingTranslation)
 			throws IOException, ParserConfigurationException, SAXException, DeepLException, InterruptedException {
 
 		// Determine target file location
@@ -132,12 +162,12 @@ public class HtmlFileTranslator {
 			String textId = entry.getKey();
 			String sourceText = entry.getValue();
 
-			// Always translate new texts
-			if (newTexts.containsKey(textId)) {
+			// Translate if marked as needing translation (new or changed)
+			if (textsNeedingTranslation.contains(textId)) {
 				textsToTranslate.add(sourceText);
 				textIdToSourceText.put(textId, sourceText);
 			}
-			// For existing texts, only translate if not in target
+			// For unchanged texts, only translate if not in target
 			else if (!existingTargetTexts.containsKey(textId)) {
 				textsToTranslate.add(sourceText);
 				textIdToSourceText.put(textId, sourceText);

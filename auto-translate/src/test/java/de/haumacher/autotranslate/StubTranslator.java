@@ -35,9 +35,13 @@ public class StubTranslator extends Translator {
 		List<TextResult> results = new ArrayList<>();
 		for (String text : texts) {
 			// Simple stub: append language suffix to show it was "translated"
-			String translated = text + " [" + targetLang + "]";
+			String translated = translateSingle(text, targetLang);
 			results.add(new TextResult(translated, sourceLang, text.length(), targetLang));
 		}
 		return results;
+	}
+
+	protected String translateSingle(String text, String targetLang) {
+		return text + " [" + targetLang + "]";
 	}
 }

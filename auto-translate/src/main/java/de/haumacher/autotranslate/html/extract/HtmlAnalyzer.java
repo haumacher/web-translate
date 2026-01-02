@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.zip.CRC32;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -76,12 +77,15 @@ public class HtmlAnalyzer {
 
 	private static final String ID_ATTR = "data-tx";
 
-	private static final Pattern TEXT_ID_PATTERN = Pattern.compile("t0*([1-9]\\d*)");
+	/**
+	 * Pattern to match data-tx attribute values with optional CRC: "t0001" or "t0001:abc123"
+	 */
+	private static final Pattern TEXT_ID_PATTERN = Pattern.compile("t0*([1-9]\\d*)(?::([0-9a-f]+))?");
 
 	private static final Set<String> CODE_TAGS = new HashSet<>(Arrays.asList("code", "pre", "script", "xmp", "style"));
 
 	private static final Set<String> TEXT_ATTRS = new HashSet<>(Arrays.asList("alt", "label", "placeholder", "summary", "title", "aria-label"));
-	
+
 	private Document _document;
 
 	/**
@@ -93,6 +97,18 @@ public class HtmlAnalyzer {
 	private DecimalFormat _idFormat = new DecimalFormat("t0000");
 
 	private Map<String, String> _textById = new HashMap<>();
+
+	/**
+	 * Map from text ID to CRC checksum of the text.
+	 * Used to detect when text has changed and needs re-translation.
+	 */
+	private Map<String, String> _crcById = new HashMap<>();
+
+	/**
+	 * Map from text ID to old CRC checksum that was in the source document.
+	 * Used to detect which texts have changed.
+	 */
+	private Map<String, String> _oldCrcById = new HashMap<>();
 
 	/**
 	 * Set of text IDs that existed in the source document before analysis.
@@ -110,6 +126,39 @@ public class HtmlAnalyzer {
 		assignIds();
 		cleanIds(_document.getDocumentElement());
 		extractText(_document.getDocumentElement());
+		updateCrcs(_document.getDocumentElement());
+	}
+
+	/**
+	 * Updates data-tx attributes to include CRC checksums in "ID:CRC" format.
+	 */
+	private void updateCrcs(Element element) {
+		String id = fetchId(element);
+		if (id != null) {
+			// Get CRC for this ID (could be from content or attributes)
+			String crc = _crcById.get(id);
+			if (crc == null) {
+				// Check if this ID has only attribute texts
+				for (String textId : _crcById.keySet()) {
+					if (textId.startsWith(id + ".")) {
+						// Use CRC of first attribute text found
+						crc = _crcById.get(textId);
+						break;
+					}
+				}
+			}
+
+			// Update attribute with ID:CRC format
+			if (crc != null) {
+				element.setAttribute(ID_ATTR, id + ":" + crc);
+			}
+		}
+
+		for (Node child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
+			if (child instanceof Element sub) {
+				updateCrcs(sub);
+			}
+		}
 	}
 
 	public Map<String, String> getTextById() {
@@ -128,13 +177,36 @@ public class HtmlAnalyzer {
 		return _existingIds;
 	}
 
+	/**
+	 * Returns the map of text IDs to their old CRC checksums (from source document).
+	 */
+	public Map<String, String> getOldCrcById() {
+		return _oldCrcById;
+	}
+
+	/**
+	 * Returns the map of text IDs to their current CRC checksums.
+	 */
+	public Map<String, String> getCrcById() {
+		return _crcById;
+	}
+
+	/**
+	 * Computes CRC32 checksum of a text string.
+	 */
+	public static String computeCrc(String text) {
+		CRC32 crc = new CRC32();
+		crc.update(text.getBytes());
+		return Long.toHexString(crc.getValue());
+	}
+
 	public void inject() {
 		injectText(_document.getDocumentElement());
 	}
 	
 	private void injectText(Element element) {
-		String id = element.getAttribute(ID_ATTR);
-		if (id != null && !id.isEmpty()) {
+		String id = fetchId(element);
+		if (id != null) {
 			NamedNodeMap attributes = element.getAttributes();
 			for (int n = 0, cnt = attributes.getLength(); n < cnt; n ++) {
 				Node attr = attributes.item(n);
@@ -162,15 +234,17 @@ public class HtmlAnalyzer {
 	}
 
 	private void extractText(Element element) {
-		String id = element.getAttribute(ID_ATTR);
-		if (id != null && !id.isEmpty()) {
+		String id = fetchId(element);
+		if (id != null) {
 			NamedNodeMap attributes = element.getAttributes();
 			for (int n = 0, cnt = attributes.getLength(); n < cnt; n ++) {
 				Node attr = attributes.item(n);
 				if (TEXT_ATTRS.contains(attr.getNodeName())) {
 					String attrText = attr.getTextContent();
 					if (!attrText.isBlank()) {
-						_textById.put(id + "." + attr.getNodeName(), attrText);
+						String textId = id + "." + attr.getNodeName();
+						_textById.put(textId, attrText);
+						_crcById.put(textId, computeCrc(attrText));
 					}
 				}
 			}
@@ -178,7 +252,9 @@ public class HtmlAnalyzer {
 			if (!CODE_TAGS.contains(element.getTagName())) {
 				// Note: The element could have an ID assigned, because it only contains text attributes.
 				if (containsText(element)) {
-					_textById.put(id, new TextExtractor(element).extract());
+					String text = new TextExtractor(element).extract();
+					_textById.put(id, text);
+					_crcById.put(id, computeCrc(text));
 				}
 			}
 		}
@@ -239,16 +315,19 @@ public class HtmlAnalyzer {
 
 	/**
 	 * Scans all existing text node IDs in the given document and computes the next free ID to assign.
-	 * Also tracks which IDs existed before analysis.
+	 * Also tracks which IDs existed before analysis and extracts old CRC checksums.
 	 */
 	private void scanExistingIds(Element element) {
-		String id = element.getAttribute(ID_ATTR);
-		if (id != null && !id.isEmpty()) {
+		String id = fetchId(element);
+		if (id != null) {
 			_existingIds.add(id);
-			Matcher matcher = TEXT_ID_PATTERN.matcher(id);
-			if (matcher.matches()) {
-				_nextId = Math.max(_nextId, Integer.parseInt(matcher.group(1)) + 1);
+
+			String crc = fetchCrc(element);
+			if (crc != null) {
+				_oldCrcById.put(id, crc);
 			}
+
+			_nextId = Math.max(_nextId, Integer.parseInt(id.substring(1)) + 1);
 		}
 
 		for (Node child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
@@ -258,6 +337,38 @@ public class HtmlAnalyzer {
 		}
 	}
 
+	/** Extract just the ID part (without CRC) */
+	private String fetchId(Element element) {
+		String id = element.getAttribute(ID_ATTR);
+		if (id == null || id.isEmpty()) {
+			return null;
+		}
+
+		int sepIndex = id.indexOf(':');
+		if (sepIndex > 0) {
+			// Remove checksum from ID.
+			return id.substring(0, sepIndex);
+		} else {
+			return id;
+		}
+	}
+
+	/** Extract old CRC if present */
+	private String fetchCrc(Element element) {
+		String id = element.getAttribute(ID_ATTR);
+		if (id == null || id.isEmpty()) {
+			return null;
+		}
+		
+		int sepIndex = id.indexOf(':');
+		if (sepIndex > 0) {
+			// Extract CRC.
+			return id.substring(sepIndex + 1);
+		} else {
+			return null;
+		}
+	}
+	
 	/**
 	 * Scans the given document for elements that contain text (either in user-facing text attributes, or text content).
 	 */

@@ -10,6 +10,9 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import com.deepl.api.DeepLException;
+import com.deepl.api.TextResult;
+
 import de.haumacher.autotranslate.StubTranslator;
 
 /**
@@ -270,7 +273,12 @@ public class TestHtmlTranslator {
 		// Second translation run (incremental)
 		de.haumacher.autotranslate.html.Translator translator2 =
 			new de.haumacher.autotranslate.html.Translator(
-				new StubTranslator(),
+				new StubTranslator() {
+					@Override
+					protected String translateSingle(String text, String targetLang) {
+						return text + " [" + targetLang + "-new]";
+					}
+				},
 				"en",
 				List.of("de"),
 				templatesDir
@@ -280,6 +288,6 @@ public class TestHtmlTranslator {
 		// Verify incremental translation contains both old and new content
 		String deContent2 = Files.readString(deHtml.toPath(), StandardCharsets.UTF_8);
 		assertTrue(deContent2.contains("Title [de]"), "Old content should remain");
-		assertTrue(deContent2.contains("New paragraph [de]"), "New content should be translated");
+		assertTrue(deContent2.contains("New paragraph [de-new]"), "New content should be translated");
 	}
 }
