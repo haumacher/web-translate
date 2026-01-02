@@ -6,12 +6,8 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import de.haumacher.webtranslate.arb.IcuMessageParser.ComplexParameter;
 import de.haumacher.webtranslate.arb.IcuMessageParser.MessagePart;
 import de.haumacher.webtranslate.arb.IcuMessageParser.ParameterPart;
-import de.haumacher.webtranslate.arb.IcuMessageParser.SelectorCase;
-import de.haumacher.webtranslate.arb.IcuMessageParser.SimpleParameter;
-import de.haumacher.webtranslate.arb.IcuMessageParser.TextPart;
 
 /**
  * Protects ARB parameters from being translated by replacing them with XML-style placeholders.
@@ -122,13 +118,12 @@ public class ParameterProtector {
 		 * @return The text with original structure restored
 		 */
 		public String restore() {
-			if (parts != null) {
-				// Use original parts to reconstruct with proper structure
-				return restoreWithStructure(protectedText, parts, getParameterNames());
-			} else {
-				// Simple parameter restoration
-				return ParameterProtector.restore(protectedText, getParameterNames());
+			// Use original parts to reconstruct with proper structure
+			StringBuilder result = new StringBuilder();
+			for (MessagePart part : parts) {
+				result.append(part.reconstruct());
 			}
+			return result.toString();
 		}
 
 		/**
@@ -216,59 +211,6 @@ public class ParameterProtector {
 		matcher.appendTail(result);
 
 		return result.toString();
-	}
-
-	/**
-	 * Reconstructs the original ICU message structure with translated text.
-	 */
-	private static String restoreWithStructure(String translatedText, List<MessagePart> originalParts, List<String> parameters) {
-		// Check if we have any ComplexFormat parts - if so, reconstruct from original structure
-		boolean hasComplexFormat = originalParts.stream()
-			.anyMatch(part -> part instanceof ComplexParameter);
-
-		if (hasComplexFormat) {
-			// For complex formats, reconstruct the full original structure
-			// (Complex formats don't support translation of nested text yet)
-			StringBuilder result = new StringBuilder();
-			for (MessagePart part : originalParts) {
-				result.append(reconstructPart(part));
-			}
-			return result.toString();
-		} else {
-			// For simple text with placeholders, use standard restore to apply translation
-			return restore(translatedText, parameters);
-		}
-	}
-
-	/**
-	 * Reconstructs a single message part to its original form.
-	 */
-	private static String reconstructPart(MessagePart part) {
-		if (part instanceof TextPart) {
-			return ((TextPart) part).getText();
-		} else if (part instanceof SimpleParameter) {
-			return "{" + ((SimpleParameter) part).getName() + "}";
-		} else if (part instanceof ComplexParameter) {
-			ComplexParameter format = (ComplexParameter) part;
-			StringBuilder result = new StringBuilder();
-			result.append("{");
-			result.append(format.getName());
-			result.append(", ");
-			result.append(format.getFormatType());
-			result.append(",");
-			for (SelectorCase case_ : format.getCases()) {
-				result.append(" ");
-				result.append(case_.getSelector());
-				result.append("{");
-				for (MessagePart casePart : case_.getParts()) {
-					result.append(reconstructPart(casePart));
-				}
-				result.append("}");
-			}
-			result.append("}");
-			return result.toString();
-		}
-		return "";
 	}
 
 	/**

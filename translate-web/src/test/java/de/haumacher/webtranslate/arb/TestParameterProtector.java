@@ -154,7 +154,8 @@ public class TestParameterProtector {
 		// Simulate translation where parameters are reordered
 		String translatedText = "Sie haben <x2>anzahl</x2> Nachrichten, <x1>benutzername</x1>";
 
-		protection = protection.translate(x -> translatedText);
+		protection = protection.translate(x -> x
+			.replace("<x1>username</x1> has <x2>count</x2> messages", translatedText));
 		
 		// Restore
 		String restored = protection.restore();

@@ -59,6 +59,13 @@ public class IcuMessageParser {
 		 * @return A new translated MessagePart
 		 */
 		public abstract MessagePart translate(java.util.function.Function<String, String> translationFunction);
+
+		/**
+		 * Reconstructs this message part to its original ICU message format.
+		 *
+		 * @return The reconstructed ICU message text
+		 */
+		public abstract String reconstruct();
 	}
 
 	/**
@@ -101,6 +108,11 @@ public class IcuMessageParser {
 		}
 
 		@Override
+		public String reconstruct() {
+			throw new UnsupportedOperationException("A text part must not be reconstructed. Instead the translation must be taken from the translated protected text.");
+		}
+
+		@Override
 		public String toString() {
 			return "Text{" + text + "}";
 		}
@@ -125,6 +137,11 @@ public class IcuMessageParser {
 		public MessagePart translate(java.util.function.Function<String, String> translationFunction) {
 			// Placeholders are not translated
 			return this;
+		}
+
+		@Override
+		public String reconstruct() {
+			return "{" + getName() + "}";
 		}
 
 		@Override
@@ -174,6 +191,27 @@ public class IcuMessageParser {
 				translatedCases.add(new SelectorCase(originalCase.getSelector(), translatedCaseParts));
 			}
 			return new ComplexParameter(getName(), getFormatType(), translatedCases);
+		}
+
+		@Override
+		public String reconstruct() {
+			StringBuilder result = new StringBuilder();
+			result.append("{");
+			result.append(getName());
+			result.append(", ");
+			result.append(getFormatType());
+			result.append(",");
+			for (SelectorCase case_ : getCases()) {
+				result.append(" ");
+				result.append(case_.getSelector());
+				result.append("{");
+				for (MessagePart casePart : case_.getParts()) {
+					result.append(casePart.reconstruct());
+				}
+				result.append("}");
+			}
+			result.append("}");
+			return result.toString();
 		}
 
 		@Override
