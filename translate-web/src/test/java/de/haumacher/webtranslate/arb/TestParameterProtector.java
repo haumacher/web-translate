@@ -221,28 +221,28 @@ public class TestParameterProtector {
 	public void testTranslatePluralFormatWithSurroundingText() {
 		String original = "You have {count, plural, =0{no messages} =1{one message} other{{count} messages}}";
 
-		Function<String, String> check = inputTester(
-			"You have <x1>count</x1>",
-			"no messages",
-			"<x1>count</x1> messages");
-		
 		// Translate using dummy function
-		Function<String, String> translator = english -> check.apply(english)
+		Function<String, String> translator = english -> english
 				.replace("You have", "Sie haben")
 				.replace("no messages", "keine Nachrichten")
 				.replace("one message", "eine Nachricht")
 				.replace("messages", "Nachrichten");
-		String result = ParameterProtector.translate(original, translator);
+		String result = ParameterProtector.translate(original, translatorCheck(
+				translator, 
+				"You have <x1>count</x1>",
+				"no messages",
+				"<x1>count</x1> messages"));
 
 		assertEquals(translator.apply(original), result);
 	}
 
-	private Function<String, String> inputTester(String... expectedInputs) {
+	private Function<String, String> translatorCheck(Function<String, String> translator, String... expectedInputs) {
 		Set<String> inputSet = new HashSet<>(Arrays.asList(expectedInputs));
 		
 		return input -> {
 			assertTrue(inputSet.contains(input), () -> "Input not expected: " + input);
-			return input;
+			
+			return translator.apply(input);
 		};
 	}
 
