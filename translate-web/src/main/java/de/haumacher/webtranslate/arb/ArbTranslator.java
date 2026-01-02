@@ -3,7 +3,11 @@ package de.haumacher.webtranslate.arb;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -150,7 +154,6 @@ public class ArbTranslator {
 		}
 
 		// Separate resources into: existing (reuse) and new (translate)
-		List<String> textsToTranslate = new ArrayList<>();
 		List<String> resourceIdsToTranslate = new ArrayList<>();
 		List<ParameterProtector.ProtectedText> protectedTexts = new ArrayList<>();
 		int reusedCount = 0;
@@ -171,37 +174,53 @@ public class ArbTranslator {
 				ParameterProtector.ProtectedText protection =
 					ParameterProtector.protect(sourceResource.getValue());
 
-				textsToTranslate.add(protection.getProtectedText());
 				resourceIdsToTranslate.add(resourceId);
 				protectedTexts.add(protection);
 			}
 		}
 
 		System.out.println("Reusing " + reusedCount + " existing translations");
-		System.out.println("Translating " + textsToTranslate.size() + " new resources...");
+		System.out.println("Translating " + protectedTexts.size() + " new resources...");
 
 		// Translate only new texts in batch
 		int billedChars = 0;
-		if (!textsToTranslate.isEmpty()) {
+		if (!protectedTexts.isEmpty()) {
+			// Phase 1: Collect all texts that need translation (including nested texts in complex parameters)
+			Set<String> textsToTranslate = new LinkedHashSet<>();
+			for (ParameterProtector.ProtectedText protection : protectedTexts) {
+				// Use a dummy translator that just collects all text fragments
+				protection.translate(text -> {
+					textsToTranslate.add(text);
+					return text; // Return original, we're just collecting
+				});
+			}
+
+			System.out.println("Collected " + textsToTranslate.size() + " text fragments to translate");
+
+			// Phase 2: Translate all collected texts using DeepL
 			List<TextResult> results = translator.translateText(
-				textsToTranslate,
+				new ArrayList<>(textsToTranslate),
 				sourceLang,
 				targetLang
 			);
 
-			// Create target resources with translated values
-			for (int i = 0; i < results.size(); i++) {
-				TextResult result = results.get(i);
+			// Build translation map
+			Map<String, String> translationMap = new HashMap<>();
+			int index = 0;
+			for (String original : textsToTranslate) {
+				translationMap.put(original, results.get(index).getText());
+				billedChars += results.get(index).getBilledCharacters();
+				index++;
+			}
+
+			// Phase 3: Apply translations to all protected texts using the map
+			for (int i = 0; i < protectedTexts.size(); i++) {
 				String resourceId = resourceIdsToTranslate.get(i);
 				ParameterProtector.ProtectedText originalProtection = protectedTexts.get(i);
 
-				// Create a new ProtectedText with the translated protected text
-				// and the original parts, then restore to get final translation
+				// Translate using the pre-built translation map
 				ParameterProtector.ProtectedText translatedProtection =
-					new ParameterProtector.ProtectedText(
-						result.getText(),
-						originalProtection.getParts()
-					);
+					originalProtection.translate(text -> translationMap.getOrDefault(text, text));
 
 				// Restore original parameters after translation
 				String translatedText = translatedProtection.restore();
@@ -210,7 +229,6 @@ public class ArbTranslator {
 				ArbResource targetResource = new ArbResource(resourceId, translatedText);
 
 				targetBundle.addResource(targetResource);
-				billedChars += result.getBilledCharacters();
 			}
 		} else {
 			System.out.println("No new resources to translate");
