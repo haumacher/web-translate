@@ -8,13 +8,13 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import de.haumacher.autotranslate.arb.IcuMessageParser;
 import de.haumacher.autotranslate.arb.ParameterProtector;
-import de.haumacher.autotranslate.arb.IcuMessageParser.ComplexParameter;
-import de.haumacher.autotranslate.arb.IcuMessageParser.MessagePart;
-import de.haumacher.autotranslate.arb.IcuMessageParser.SimpleParameter;
-import de.haumacher.autotranslate.arb.IcuMessageParser.TextPart;
 import de.haumacher.autotranslate.arb.ParameterProtector.ProtectedText;
+import de.haumacher.autotranslate.arb.io.IcuMessageParser;
+import de.haumacher.autotranslate.arb.io.IcuMessageParser.ComplexParameter;
+import de.haumacher.autotranslate.arb.io.IcuMessageParser.MessagePart;
+import de.haumacher.autotranslate.arb.io.IcuMessageParser.SimpleParameter;
+import de.haumacher.autotranslate.arb.io.IcuMessageParser.TextPart;
 
 /**
  * Test cases for {@link IcuMessageParser} and complex ICU MessageFormat handling.

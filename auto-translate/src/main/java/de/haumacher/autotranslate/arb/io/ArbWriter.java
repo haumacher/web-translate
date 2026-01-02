@@ -1,4 +1,4 @@
-package de.haumacher.autotranslate.arb;
+package de.haumacher.autotranslate.arb.io;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -9,6 +9,11 @@ import java.util.Map;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
+
+import de.haumacher.autotranslate.arb.model.ArbBundle;
+import de.haumacher.autotranslate.arb.model.ArbPlaceholder;
+import de.haumacher.autotranslate.arb.model.ArbResource;
+import de.haumacher.autotranslate.arb.model.ArbResourceAttributes;
 
 /**
  * Writer for ARB (Application Resource Bundle) files.

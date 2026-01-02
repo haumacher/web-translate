@@ -1,4 +1,4 @@
-package de.haumacher.autotranslate.arb;
+package de.haumacher.autotranslate.arb.io;
 
 import java.io.File;
 import java.io.FileReader;
@@ -12,6 +12,11 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+
+import de.haumacher.autotranslate.arb.model.ArbBundle;
+import de.haumacher.autotranslate.arb.model.ArbPlaceholder;
+import de.haumacher.autotranslate.arb.model.ArbResource;
+import de.haumacher.autotranslate.arb.model.ArbResourceAttributes;
 
 /**
  * Parser for ARB (Application Resource Bundle) files.

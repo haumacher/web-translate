@@ -4,12 +4,12 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.Test;
 
-import de.haumacher.autotranslate.arb.ArbBundle;
-import de.haumacher.autotranslate.arb.ArbParser;
-import de.haumacher.autotranslate.arb.ArbPlaceholder;
-import de.haumacher.autotranslate.arb.ArbResource;
-import de.haumacher.autotranslate.arb.ArbResourceAttributes;
-import de.haumacher.autotranslate.arb.ArbWriter;
+import de.haumacher.autotranslate.arb.io.ArbParser;
+import de.haumacher.autotranslate.arb.io.ArbWriter;
+import de.haumacher.autotranslate.arb.model.ArbBundle;
+import de.haumacher.autotranslate.arb.model.ArbPlaceholder;
+import de.haumacher.autotranslate.arb.model.ArbResource;
+import de.haumacher.autotranslate.arb.model.ArbResourceAttributes;
 
 /**
  * Test cases for {@link ArbParser} and {@link ArbWriter}.

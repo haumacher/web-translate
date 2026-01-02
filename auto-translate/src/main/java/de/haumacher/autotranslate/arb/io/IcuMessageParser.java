@@ -1,9 +1,10 @@
-package de.haumacher.autotranslate.arb;
+package de.haumacher.autotranslate.arb.io;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
+import de.haumacher.autotranslate.arb.ParameterProtector;
 import de.haumacher.autotranslate.arb.ParameterProtector.ProtectedText;
 
 /**

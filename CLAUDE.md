@@ -228,15 +228,17 @@ auto-translate/
 │   │   └── synthesize/
 │   │       └── TranslationSynthesizer.java # .properties → HTML
 │   └── arb/
-│       ├── ArbBundle.java           # ARB file container
-│       ├── ArbResource.java         # ARB resource entry
-│       ├── ArbResourceAttributes.java # ARB metadata
-│       ├── ArbPlaceholder.java      # ARB placeholder metadata
-│       ├── ArbParser.java           # JSON → ArbBundle
-│       ├── ArbWriter.java           # ArbBundle → JSON
 │       ├── ArbTranslator.java       # ARB translation tool
-│       ├── IcuMessageParser.java    # ICU MessageFormat parser
-│       └── ParameterProtector.java  # Parameter protection for translation
+│       ├── ParameterProtector.java  # Parameter protection for translation
+│       ├── io/
+│       │   ├── ArbParser.java           # JSON → ArbBundle
+│       │   ├── ArbWriter.java           # ArbBundle → JSON
+│       │   └── IcuMessageParser.java    # ICU MessageFormat parser
+│       └── model/
+│           ├── ArbBundle.java           # ARB file container
+│           ├── ArbResource.java         # ARB resource entry
+│           ├── ArbResourceAttributes.java # ARB metadata
+│           └── ArbPlaceholder.java      # ARB placeholder metadata
 └── src/test/java/de/haumacher/autotranslate/
     ├── html/
     │   └── extract/
@@ -389,24 +391,30 @@ Note: Target files use compact format (no metadata) since descriptions and place
 
 ### ARB Architecture Components
 
-**ArbParser/ArbWriter:**
+**ArbParser/ArbWriter** (`arb.io` package):
 - Parse ARB JSON to in-memory `ArbBundle` objects
 - Write bundles back to JSON (verbose or compact mode)
 - Preserve resource order using LinkedHashMap
 
-**IcuMessageParser:**
+**IcuMessageParser** (`arb.io` package):
 - Parses ICU MessageFormat syntax
 - Identifies translatable text vs. identifiers
 - Handles nested formats (select within plural, etc.)
 - Supports all ICU format types
 
-**ParameterProtector:**
+**Model Classes** (`arb.model` package):
+- `ArbBundle`: Container for all ARB resources and metadata
+- `ArbResource`: Individual translatable resource entry
+- `ArbResourceAttributes`: Resource metadata (description, placeholders, etc.)
+- `ArbPlaceholder`: Placeholder metadata for parameters
+
+**ParameterProtector** (`arb` package):
 - Protects parameters using XML placeholder tags
 - Uses ICU parser for complex formats
 - Falls back to simple regex for basic parameters
 - Restores original parameter names after translation
 
-**ArbTranslator:**
+**ArbTranslator** (`arb` package):
 - Orchestrates the translation workflow
 - Loads existing translations for incremental updates
 - Batch translates new resources via DeepL

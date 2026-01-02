@@ -1,4 +1,4 @@
-package de.haumacher.autotranslate.arb;
+package de.haumacher.autotranslate.arb.model;
 
 import java.util.LinkedHashMap;
 import java.util.Map;

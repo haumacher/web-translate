@@ -1,4 +1,4 @@
-package de.haumacher.autotranslate.arb;
+package de.haumacher.autotranslate.arb.model;
 
 /**
  * Metadata for a placeholder variable in an ARB resource value.

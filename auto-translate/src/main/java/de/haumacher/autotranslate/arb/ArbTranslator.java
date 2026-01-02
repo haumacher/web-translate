@@ -15,6 +15,13 @@ import java.util.zip.CRC32;
 import com.deepl.api.DeepLException;
 import com.deepl.api.TextResult;
 import com.deepl.api.Translator;
+
+import de.haumacher.autotranslate.arb.io.ArbParser;
+import de.haumacher.autotranslate.arb.io.ArbWriter;
+import de.haumacher.autotranslate.arb.model.ArbBundle;
+import de.haumacher.autotranslate.arb.model.ArbResource;
+import de.haumacher.autotranslate.arb.model.ArbResourceAttributes;
+
 import com.deepl.api.DeepLClient;
 
 /**

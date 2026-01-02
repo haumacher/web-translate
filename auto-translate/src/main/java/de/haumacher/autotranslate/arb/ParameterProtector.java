@@ -6,8 +6,9 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import de.haumacher.autotranslate.arb.IcuMessageParser.MessagePart;
-import de.haumacher.autotranslate.arb.IcuMessageParser.ParameterPart;
+import de.haumacher.autotranslate.arb.io.IcuMessageParser;
+import de.haumacher.autotranslate.arb.io.IcuMessageParser.MessagePart;
+import de.haumacher.autotranslate.arb.io.IcuMessageParser.ParameterPart;
 
 /**
  * Protects ARB parameters from being translated by replacing them with XML-style placeholders.
