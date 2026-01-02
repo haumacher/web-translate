@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.zip.CRC32;
 
 import com.deepl.api.DeepLException;
 import com.deepl.api.TextResult;
@@ -45,6 +46,8 @@ public class ArbTranslator {
 
 	private static final Pattern LANG_PATTERN = Pattern.compile("(.+?)_(\\w{2}(?:_\\w+)?)\\.arb$");
 
+	private static final String X_TRANSLATED_ATTR = "x-translated";
+
 	private final String apiKey;
 	private final Translator translator;
 	private final ArbParser parser;
@@ -53,13 +56,44 @@ public class ArbTranslator {
 	private int totalBilledChars = 0;
 
 	/**
+	 * Tracks checksums for resources that were translated during the current translation session.
+	 *
+	 * <p>
+	 * Maps resource IDs to their CRC32 checksums. This map accumulates entries as resources
+	 * are translated across all target languages, and is used to update the source ARB file
+	 * with {@code x-translated} attributes after all translations are complete.
+	 * </p>
+	 *
+	 * <p>
+	 * By deferring checksum updates until after all target languages are processed, we ensure
+	 * that modified resources are correctly translated to ALL target languages, not just the
+	 * first one.
+	 * </p>
+	 */
+	private Map<String, String> translatedResourceChecksums;
+
+	/**
 	 * Creates a new ARB translator with the given DeepL API key.
 	 *
 	 * @param apiKey DeepL API authentication key
 	 */
 	public ArbTranslator(String apiKey) {
+		this(apiKey, new Translator(apiKey));
+	}
+
+	/**
+	 * Creates a new ARB translator with a custom translator instance.
+	 *
+	 * <p>
+	 * This constructor allows dependency injection for testing purposes.
+	 * </p>
+	 *
+	 * @param apiKey DeepL API authentication key
+	 * @param translator Custom translator instance (can be a test stub)
+	 */
+	public ArbTranslator(String apiKey, Translator translator) {
 		this.apiKey = apiKey;
-		this.translator = new Translator(apiKey);
+		this.translator = translator;
 		this.parser = new ArbParser();
 		this.writer = new ArbWriter();
 	}
@@ -100,11 +134,40 @@ public class ArbTranslator {
 		ArbBundle sourceBundle = parser.parse(sourceFile);
 		System.out.println("Parsed source ARB: " + sourceBundle.getResourceCount() + " resources");
 
+		// Initialize tracking for translated resources
+		translatedResourceChecksums = new HashMap<>();
+
 		// Translate to each target language
 		for (String targetLang : targetLangs) {
 			System.out.println();
 			System.out.println("Translating to: " + targetLang);
 			translateToLanguage(sourceFile, sourceBundle, sourceLang, targetLang);
+		}
+
+		// Update source file with checksums if any resources were translated
+		if (!translatedResourceChecksums.isEmpty()) {
+			System.out.println();
+			System.out.println("Updating source file with translation checksums...");
+
+			// Update checksums for all translated resources
+			for (var entry : translatedResourceChecksums.entrySet()) {
+				String resourceId = entry.getKey();
+				String checksum = entry.getValue();
+
+				ArbResource resource = sourceBundle.getResource(resourceId);
+				if (resource != null) {
+					ArbResourceAttributes attrs = resource.getAttributes();
+					if (attrs == null) {
+						attrs = new ArbResourceAttributes();
+						resource.setAttributes(attrs);
+					}
+					attrs.addCustomAttribute(X_TRANSLATED_ATTR, checksum);
+				}
+			}
+
+			writer.write(sourceBundle, sourceFile, true); // verbose mode to preserve metadata
+			System.out.println("Source file updated: " + sourceFile.getAbsolutePath());
+			System.out.println("Updated checksums for " + translatedResourceChecksums.size() + " resources");
 		}
 
 		System.out.println();
@@ -157,30 +220,64 @@ public class ArbTranslator {
 		List<String> resourceIdsToTranslate = new ArrayList<>();
 		List<ParameterProtector.ProtectedText> protectedTexts = new ArrayList<>();
 		int reusedCount = 0;
+		int updatedCount = 0;
 
 		for (var entry : sourceBundle.getResources().entrySet()) {
 			String resourceId = entry.getKey();
 			ArbResource sourceResource = entry.getValue();
+			String sourceValue = sourceResource.getValue();
 
-			// Check if this resource already exists in target
-			if (existingTargetBundle != null && existingTargetBundle.hasResource(resourceId)) {
+			// Determine if this resource needs translation
+			boolean needsTranslation = false;
+
+			// Check for x-translated checksum
+			String currentChecksum = computeChecksum(sourceValue);
+			String storedChecksum = null;
+
+			if (sourceResource.hasAttributes() && sourceResource.getAttributes().getCustomAttributes().containsKey(X_TRANSLATED_ATTR)) {
+				storedChecksum = sourceResource.getAttributes().getCustomAttributes().get(X_TRANSLATED_ATTR);
+
+				if (!currentChecksum.equals(storedChecksum)) {
+					// Text has changed - force update in all target files
+					needsTranslation = true;
+					updatedCount++;
+					System.out.println("  Resource '" + resourceId + "' has changed (checksum mismatch), will update all translations");
+
+					// Track checksum for update
+					translatedResourceChecksums.put(resourceId, currentChecksum);
+				}
+			} else {
+				// No checksum stored - need to establish baseline
+				// Track checksum even if resource exists in target files
+				translatedResourceChecksums.put(resourceId, currentChecksum);
+
+				if (existingTargetBundle == null || !existingTargetBundle.hasResource(resourceId)) {
+					// Resource doesn't exist in target - translate it
+					needsTranslation = true;
+				}
+			}
+
+			if (needsTranslation) {
+				// Need to translate this resource
+				// Protect parameters before translation
+				ParameterProtector.ProtectedText protection =
+					ParameterProtector.protect(sourceValue);
+
+				resourceIdsToTranslate.add(resourceId);
+				protectedTexts.add(protection);
+			} else if (existingTargetBundle != null && existingTargetBundle.hasResource(resourceId)) {
 				// Reuse existing translation
 				ArbResource existingResource = existingTargetBundle.getResource(resourceId);
 				targetBundle.addResource(new ArbResource(resourceId, existingResource.getValue()));
 				reusedCount++;
-			} else {
-				// Need to translate this resource
-				// Protect parameters before translation
-				ParameterProtector.ProtectedText protection =
-					ParameterProtector.protect(sourceResource.getValue());
-
-				resourceIdsToTranslate.add(resourceId);
-				protectedTexts.add(protection);
 			}
 		}
 
 		System.out.println("Reusing " + reusedCount + " existing translations");
-		System.out.println("Translating " + protectedTexts.size() + " new resources...");
+		if (updatedCount > 0) {
+			System.out.println("Updating " + updatedCount + " modified resources");
+		}
+		System.out.println("Translating " + protectedTexts.size() + " resources...");
 
 		// Translate only new texts in batch
 		int billedChars = 0;
@@ -367,5 +464,17 @@ public class ArbTranslator {
 		System.err.println("Examples:");
 		System.err.println("  ArbTranslator YOUR_KEY app_en.arb de,fr,es");
 		System.err.println("  ArbTranslator YOUR_KEY messages_en_US.arb de_DE,fr_FR");
+	}
+
+	/**
+	 * Computes the CRC32 checksum of a text string.
+	 *
+	 * @param text The text to compute checksum for
+	 * @return The CRC32 checksum as a hexadecimal string
+	 */
+	public static String computeChecksum(String text) {
+		CRC32 crc = new CRC32();
+		crc.update(text.getBytes());
+		return Long.toHexString(crc.getValue());
 	}
 }
