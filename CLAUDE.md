@@ -101,7 +101,7 @@ The Maven goal automatically runs all three phases (extract → translate → sy
 You can also run the translator directly via the main class:
 
 ```bash
-java -cp target/auto-translate-1.0.0-SNAPSHOT.jar de.haumacher.webtranslate.Translator \
+java -cp target/auto-translate-1.0.0-SNAPSHOT.jar de.haumacher.autotranslate.Translator \
   <deepl-api-key> \
   <source-language> \
   <dest-languages-comma-separated> \
@@ -113,7 +113,7 @@ java -cp target/auto-translate-1.0.0-SNAPSHOT.jar de.haumacher.webtranslate.Tran
 Example:
 ```bash
 java -cp target/classes:~/.m2/repository/com/deepl/api/deepl-java/1.9.0/* \
-  de.haumacher.webtranslate.Translator \
+  de.haumacher.autotranslate.Translator \
   "your-api-key" "en" "de,fr" ./properties ./templates UTF-8
 ```
 
@@ -121,18 +121,18 @@ java -cp target/classes:~/.m2/repository/com/deepl/api/deepl-java/1.9.0/* \
 
 **Extract properties from HTML:**
 ```bash
-java de.haumacher.webtranslate.extract.PropertiesExtractor <template-dir> <properties-dir> [charset]
+java de.haumacher.autotranslate.extract.PropertiesExtractor <template-dir> <properties-dir> [charset]
 ```
 
 **Translate properties files:**
 ```bash
-java de.haumacher.webtranslate.translate.PropertiesTranslator \
+java de.haumacher.autotranslate.translate.PropertiesTranslator \
   <api-key> <src-lang> <dest-langs> <properties-dir> [src-file] [name-strategy] [charset]
 ```
 
 **Synthesize translated HTML:**
 ```bash
-java de.haumacher.webtranslate.synthesize.TranslationSynthesizer \
+java de.haumacher.autotranslate.synthesize.TranslationSynthesizer \
   <template-dir> <properties-dir> <src-lang> <dest-langs> [charset]
 ```
 
@@ -209,7 +209,7 @@ t0001=Etwas Text <x1>mit Markup</x1>.
 
 ```
 auto-translate/
-├── src/main/java/de/haumacher/webtranslate/
+├── src/main/java/de/haumacher/autotranslate/
 │   ├── Translator.java              # Main orchestrator (CLI)
 │   ├── maven/
 │   │   └── TranslateMojo.java       # Maven plugin goal
@@ -235,7 +235,7 @@ auto-translate/
 │       ├── ArbTranslator.java       # ARB translation tool
 │       ├── IcuMessageParser.java    # ICU MessageFormat parser
 │       └── ParameterProtector.java  # Parameter protection for translation
-└── src/test/java/de/haumacher/webtranslate/
+└── src/test/java/de/haumacher/autotranslate/
     ├── extract/
     │   └── TestHtmlAnalyzer.java         # HTML analysis tests
     └── arb/
@@ -263,7 +263,7 @@ The ARB translation functionality provides automated translation of Flutter/Dart
 
 **Command-line usage:**
 ```bash
-java de.haumacher.webtranslate.arb.ArbTranslator \
+java de.haumacher.autotranslate.arb.ArbTranslator \
   <deepl-api-key> \
   <source-arb-file> \
   <target-languages>
@@ -271,7 +271,7 @@ java de.haumacher.webtranslate.arb.ArbTranslator \
 
 **Example:**
 ```bash
-java de.haumacher.webtranslate.arb.ArbTranslator \
+java de.haumacher.autotranslate.arb.ArbTranslator \
   YOUR_API_KEY \
   app_en.arb \
   de,fr,es

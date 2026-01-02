@@ -1,4 +1,4 @@
-package de.haumacher.webtranslate.translate;
+package de.haumacher.autotranslate.translate;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -22,7 +22,7 @@ import com.deepl.api.DeepLClient;
 import com.deepl.api.DeepLException;
 import com.deepl.api.TextResult;
 
-import de.haumacher.webtranslate.extract.PropertiesWriter;
+import de.haumacher.autotranslate.extract.PropertiesWriter;
 
 public class PropertiesTranslator {
 

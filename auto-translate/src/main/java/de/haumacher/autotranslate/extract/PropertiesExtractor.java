@@ -1,4 +1,4 @@
-package de.haumacher.webtranslate.extract;
+package de.haumacher.autotranslate.extract;
 
 import java.io.File;
 import java.io.FileNotFoundException;

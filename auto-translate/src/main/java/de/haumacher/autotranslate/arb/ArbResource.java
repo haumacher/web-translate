@@ -1,4 +1,4 @@
-package de.haumacher.webtranslate.arb;
+package de.haumacher.autotranslate.arb;
 
 /**
  * A single resource entry in an ARB bundle.

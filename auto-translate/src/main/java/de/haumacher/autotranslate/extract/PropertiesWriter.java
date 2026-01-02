@@ -1,4 +1,4 @@
-package de.haumacher.webtranslate.extract;
+package de.haumacher.autotranslate.extract;
 
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;

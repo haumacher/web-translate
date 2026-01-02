@@ -1,4 +1,4 @@
-package de.haumacher.webtranslate.maven;
+package de.haumacher.autotranslate.maven;
 
 import java.io.File;
 import java.io.IOException;
@@ -19,10 +19,10 @@ import org.xml.sax.SAXException;
 
 import com.deepl.api.DeepLException;
 
-import de.haumacher.webtranslate.extract.PropertiesExtractor;
-import de.haumacher.webtranslate.synthesize.TranslationSynthesizer;
-import de.haumacher.webtranslate.translate.NameStrategy;
-import de.haumacher.webtranslate.translate.PropertiesTranslator;
+import de.haumacher.autotranslate.extract.PropertiesExtractor;
+import de.haumacher.autotranslate.synthesize.TranslationSynthesizer;
+import de.haumacher.autotranslate.translate.NameStrategy;
+import de.haumacher.autotranslate.translate.PropertiesTranslator;
 
 /**
  * Maven goal to translate HTML templates using DeepL API.

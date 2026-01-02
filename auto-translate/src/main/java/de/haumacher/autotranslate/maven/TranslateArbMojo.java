@@ -1,4 +1,4 @@
-package de.haumacher.webtranslate.maven;
+package de.haumacher.autotranslate.maven;
 
 import java.io.File;
 import java.util.Arrays;
@@ -14,7 +14,7 @@ import org.apache.maven.plugins.annotations.Parameter;
 import com.deepl.api.DeepLClient;
 import com.deepl.api.Translator;
 
-import de.haumacher.webtranslate.arb.ArbTranslator;
+import de.haumacher.autotranslate.arb.ArbTranslator;
 
 /**
  * Maven goal to translate ARB (Application Resource Bundle) files using DeepL API.

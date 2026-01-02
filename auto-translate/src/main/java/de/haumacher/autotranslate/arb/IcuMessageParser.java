@@ -1,10 +1,10 @@
-package de.haumacher.webtranslate.arb;
+package de.haumacher.autotranslate.arb;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
-import de.haumacher.webtranslate.arb.ParameterProtector.ProtectedText;
+import de.haumacher.autotranslate.arb.ParameterProtector.ProtectedText;
 
 /**
  * Parser for ICU MessageFormat syntax used in ARB files.

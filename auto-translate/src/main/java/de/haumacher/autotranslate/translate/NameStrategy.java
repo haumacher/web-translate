@@ -1,10 +1,10 @@
-package de.haumacher.webtranslate.translate;
+package de.haumacher.autotranslate.translate;
 
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import de.haumacher.webtranslate.extract.PropertiesExtractor;
+import de.haumacher.autotranslate.extract.PropertiesExtractor;
 
 public enum NameStrategy {
 	LANG_TAG_DIR() {

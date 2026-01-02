@@ -1,4 +1,4 @@
-package de.haumacher.webtranslate;
+package de.haumacher.autotranslate;
 
 import java.io.File;
 import java.io.IOException;
@@ -13,10 +13,10 @@ import org.xml.sax.SAXException;
 
 import com.deepl.api.DeepLException;
 
-import de.haumacher.webtranslate.extract.PropertiesExtractor;
-import de.haumacher.webtranslate.synthesize.TranslationSynthesizer;
-import de.haumacher.webtranslate.translate.NameStrategy;
-import de.haumacher.webtranslate.translate.PropertiesTranslator;
+import de.haumacher.autotranslate.extract.PropertiesExtractor;
+import de.haumacher.autotranslate.synthesize.TranslationSynthesizer;
+import de.haumacher.autotranslate.translate.NameStrategy;
+import de.haumacher.autotranslate.translate.PropertiesTranslator;
 
 public class Translator {
 

@@ -1,4 +1,4 @@
-package de.haumacher.webtranslate.arb;
+package de.haumacher.autotranslate.arb;
 
 import java.io.File;
 import java.io.FileReader;

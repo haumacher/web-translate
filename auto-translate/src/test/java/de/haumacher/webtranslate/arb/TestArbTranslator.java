@@ -17,6 +17,11 @@ import com.deepl.api.DeepLException;
 import com.deepl.api.TextResult;
 import com.deepl.api.Translator;
 
+import de.haumacher.autotranslate.arb.ArbBundle;
+import de.haumacher.autotranslate.arb.ArbParser;
+import de.haumacher.autotranslate.arb.ArbResource;
+import de.haumacher.autotranslate.arb.ArbTranslator;
+
 /**
  * Test cases for {@link ArbTranslator}.
  */

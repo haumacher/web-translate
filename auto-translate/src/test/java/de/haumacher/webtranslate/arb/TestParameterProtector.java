@@ -10,7 +10,8 @@ import java.util.function.Function;
 
 import org.junit.jupiter.api.Test;
 
-import de.haumacher.webtranslate.arb.ParameterProtector.ProtectedText;
+import de.haumacher.autotranslate.arb.ParameterProtector;
+import de.haumacher.autotranslate.arb.ParameterProtector.ProtectedText;
 
 /**
  * Test cases for {@link ParameterProtector}.

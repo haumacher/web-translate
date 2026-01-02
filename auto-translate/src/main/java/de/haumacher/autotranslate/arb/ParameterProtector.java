@@ -1,4 +1,4 @@
-package de.haumacher.webtranslate.arb;
+package de.haumacher.autotranslate.arb;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -6,8 +6,8 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import de.haumacher.webtranslate.arb.IcuMessageParser.MessagePart;
-import de.haumacher.webtranslate.arb.IcuMessageParser.ParameterPart;
+import de.haumacher.autotranslate.arb.IcuMessageParser.MessagePart;
+import de.haumacher.autotranslate.arb.IcuMessageParser.ParameterPart;
 
 /**
  * Protects ARB parameters from being translated by replacing them with XML-style placeholders.
