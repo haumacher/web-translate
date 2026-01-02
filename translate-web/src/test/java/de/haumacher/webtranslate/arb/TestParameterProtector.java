@@ -173,10 +173,10 @@ public class TestParameterProtector {
 			protection.getProtectedText());
 
 		// Simulate translation (parameter names might change)
-		String translated = "Hallo <x1>benutzername</x1>, Ihr Guthaben ist <x2>betrag</x2>";
+		ProtectedText translated = protection.translate(x -> "Hallo <x1>benutzername</x1>, Ihr Guthaben ist <x2>betrag</x2>");
 
 		// Restore
-		String restored = ParameterProtector.restore(translated, protection.getParameterNames());
+		String restored = translated.restore();
 		assertEquals("Hallo {username}, Ihr Guthaben ist {amount}", restored);
 	}
 
@@ -187,9 +187,9 @@ public class TestParameterProtector {
 		ProtectedText protection =ParameterProtector.protect(original);
 
 		// German might reorder these
-		String translated = "Für <x2>benutzername</x2> gibt es <x1>anzahl</x1> neue Nachrichten";
+		ProtectedText translated = protection.translate(x -> "Für <x2>benutzername</x2> gibt es <x1>anzahl</x1> neue Nachrichten");
 
-		String restored = ParameterProtector.restore(translated, protection.getParameterNames());
+		String restored = translated.restore();
 		assertEquals("Für {username} gibt es {count} neue Nachrichten", restored);
 	}
 
@@ -284,11 +284,12 @@ public class TestParameterProtector {
 		assertEquals("discount", protection.getParameterNames().get(4));
 
 		// Simulate German translation
-		String translated = "Sie haben <x1>anzahl</x1> Einheiten von <x2>produkt</x2> " +
+		ProtectedText translated = protection.translate(x -> 
+			"Sie haben <x1>anzahl</x1> Einheiten von <x2>produkt</x2> " +
 			"für <x3>preis</x3> gekauft. Ihre Gesamtsumme beträgt <x4>gesamt</x4> " +
-			"und Sie haben <x5>rabatt</x5>% Rabatt.";
+			"und Sie haben <x5>rabatt</x5>% Rabatt.");
 
-		String restored = ParameterProtector.restore(translated, protection.getParameterNames());
+		String restored = translated.restore();
 
 		assertEquals("Sie haben {num} Einheiten von {product} " +
 			"für {price} gekauft. Ihre Gesamtsumme beträgt {total} " +
