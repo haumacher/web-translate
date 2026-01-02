@@ -1,5 +1,6 @@
 package de.haumacher.autotranslate.html;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
@@ -323,5 +324,64 @@ public class TestHtmlTranslator {
 		assertTrue(deContent3.contains("Title [updated] [de-new2]"), "Update should be detected");
 		assertTrue(deContent3.contains("Description [updated] [de-new2]"), "Update should be detected");
 		assertTrue(deContent3.contains("New paragraph [de-new]"), "Old content should remain");
+	}
+
+	@Test
+	public void testNoCrcTreatedAsUnchanged(@TempDir File tempDir) throws Exception {
+		// Setup directory structure
+		File templatesDir = new File(tempDir, "templates");
+		File templatesEnDir = new File(templatesDir, "en");
+		templatesEnDir.mkdirs();
+
+		// Create initial HTML file
+		File sourceHtml = new File(templatesEnDir, "page.html");
+		Files.writeString(sourceHtml.toPath(), "<html><body><h1>Original Title</h1></body></html>");
+
+		// First translation run
+		de.haumacher.autotranslate.html.Translator translator1 =
+			new de.haumacher.autotranslate.html.Translator(
+				new StubTranslator(),
+				"en",
+				List.of("de"),
+				templatesDir
+			);
+		translator1.run();
+
+		// Verify first translation
+		File deHtml = new File(templatesDir, "de/page.html");
+		String deContent1 = Files.readString(deHtml.toPath(), StandardCharsets.UTF_8);
+		assertTrue(deContent1.contains("Original Title [de]"), "First translation should work");
+
+		// Manually modify source HTML: change text but remove CRC from data-tx attribute
+		// This simulates external editing where someone updates the text but removes the CRC
+		Files.writeString(sourceHtml.toPath(),
+			"<html><body><h1 data-tx=\"t0001\">Modified Title</h1></body></html>");
+
+		// Second translation run with different translator
+		de.haumacher.autotranslate.html.Translator translator2 =
+			new de.haumacher.autotranslate.html.Translator(
+				new StubTranslator() {
+					@Override
+					protected String translateSingle(String text, String targetLang) {
+						return text + " [" + targetLang + "-new]";
+					}
+				},
+				"en",
+				List.of("de"),
+				templatesDir
+			);
+		translator2.run();
+
+		// Verify that NO re-translation occurred (no CRC = assumed unchanged)
+		String deContent2 = Files.readString(deHtml.toPath(), StandardCharsets.UTF_8);
+		assertTrue(deContent2.contains("Original Title [de]"),
+			"Old translation should remain when CRC is removed (no CRC = unchanged)");
+		assertFalse(deContent2.contains("[de-new]"),
+			"Text should NOT be re-translated when CRC is removed");
+
+		// Verify that source file now has CRC added back
+		String sourceAfterRun = Files.readString(sourceHtml.toPath(), StandardCharsets.UTF_8);
+		assertTrue(sourceAfterRun.contains("data-tx=\"t0001:"),
+			"CRC should be generated for the current content");
 	}
 }
