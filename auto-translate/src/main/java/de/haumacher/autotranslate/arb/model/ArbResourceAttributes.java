@@ -44,7 +44,6 @@ public class ArbResourceAttributes {
 	 */
 	public ArbResourceAttributes() {
 		_placeholders = new HashMap<>();
-		_customAttributes = new HashMap<>();
 	}
 
 	/**
@@ -137,29 +136,64 @@ public class ArbResourceAttributes {
 	}
 
 	/**
-	 * Custom attributes with {@code x-} prefix.
+	 * Gets a custom attribute value by name.
 	 *
 	 * <p>
 	 * ARB specification requires custom attributes to be prefixed with {@code x-}
 	 * (e.g., {@code x-version}, {@code x-priority}).
 	 * </p>
+	 *
+	 * @param name Attribute name
+	 * @return The attribute value, or {@code null} if not set
 	 */
-	public Map<String, String> getCustomAttributes() {
-		return _customAttributes;
-	}
-
-	public void setCustomAttributes(Map<String, String> customAttributes) {
-		_customAttributes = customAttributes != null ? customAttributes : new HashMap<>();
+	public String getCustomAttribute(String name) {
+		return _customAttributes == null ? null : _customAttributes.get(name);
 	}
 
 	/**
-	 * Adds a custom attribute.
+	 * Checks if a custom attribute is present.
+	 *
+	 * @param name Attribute name
+	 * @return {@code true} if the attribute is set
+	 */
+	public boolean hasCustomAttribute(String name) {
+		return _customAttributes != null && _customAttributes.containsKey(name);
+	}
+
+	/**
+	 * Sets a custom attribute.
 	 *
 	 * @param name  Attribute name (should be prefixed with {@code x-})
 	 * @param value Attribute value
 	 */
-	public void addCustomAttribute(String name, String value) {
+	public void setCustomAttribute(String name, String value) {
+		if (_customAttributes == null) {
+			_customAttributes = new HashMap<>();
+		}
 		_customAttributes.put(name, value);
+	}
+
+	/**
+	 * Removes a custom attribute.
+	 *
+	 * @param name Attribute name
+	 * @return The previous value, or {@code null} if not set
+	 */
+	public String removeCustomAttribute(String name) {
+		return _customAttributes == null ? null : _customAttributes.remove(name);
+	}
+
+	/**
+	 * Internal method for iteration over custom attributes.
+	 * Used by {@link de.haumacher.autotranslate.arb.io.ArbWriter} for serialization.
+	 *
+	 * @return Iterator over custom attribute entries, or empty iterator if no custom attributes
+	 */
+	public Iterable<Map.Entry<String, String>> customAttributeEntries() {
+		if (_customAttributes == null || _customAttributes.isEmpty()) {
+			return java.util.Collections.emptyList();
+		}
+		return _customAttributes.entrySet();
 	}
 
 	/**
@@ -173,7 +207,7 @@ public class ArbResourceAttributes {
 			_screenshot == null &&
 			_video == null &&
 			_placeholders.isEmpty() &&
-			_customAttributes.isEmpty();
+			(_customAttributes == null || _customAttributes.isEmpty());
 	}
 
 	@Override
@@ -183,7 +217,7 @@ public class ArbResourceAttributes {
 			", context='" + _context + '\'' +
 			", description='" + _description + '\'' +
 			", placeholders=" + _placeholders.size() +
-			", customAttributes=" + _customAttributes.size() +
+			", customAttributes=" + (_customAttributes == null ? 0 : _customAttributes.size()) +
 			'}';
 	}
 }

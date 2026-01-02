@@ -177,7 +177,7 @@ public class ArbWriter {
 		}
 
 		// Add custom attributes
-		for (Map.Entry<String, String> entry : attributes.getCustomAttributes().entrySet()) {
+		for (Map.Entry<String, String> entry : attributes.customAttributeEntries()) {
 			attrObj.addProperty(entry.getKey(), entry.getValue());
 		}
 

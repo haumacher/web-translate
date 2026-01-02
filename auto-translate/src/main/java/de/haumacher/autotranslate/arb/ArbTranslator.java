@@ -153,7 +153,7 @@ public class ArbTranslator {
 						attrs = new ArbResourceAttributes();
 						resource.setAttributes(attrs);
 					}
-					attrs.addCustomAttribute(X_TRANSLATED_ATTR, checksum);
+					attrs.setCustomAttribute(X_TRANSLATED_ATTR, checksum);
 				}
 			}
 
@@ -226,8 +226,8 @@ public class ArbTranslator {
 			String currentChecksum = computeChecksum(sourceValue);
 			String storedChecksum = null;
 
-			if (sourceResource.hasAttributes() && sourceResource.getAttributes().getCustomAttributes().containsKey(X_TRANSLATED_ATTR)) {
-				storedChecksum = sourceResource.getAttributes().getCustomAttributes().get(X_TRANSLATED_ATTR);
+			if (sourceResource.hasAttributes() && sourceResource.getAttributes().hasCustomAttribute(X_TRANSLATED_ATTR)) {
+				storedChecksum = sourceResource.getAttributes().getCustomAttribute(X_TRANSLATED_ATTR);
 
 				if (!currentChecksum.equals(storedChecksum)) {
 					// Text has changed - force update in all target files

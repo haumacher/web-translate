@@ -106,13 +106,13 @@ public class TestArbTranslator {
 		ArbResource initialGreeting = initialSourceBundle.getResource("greeting");
 		assertNotNull(initialGreeting);
 		assertFalse(initialGreeting.hasAttributes() &&
-			initialGreeting.getAttributes().getCustomAttributes().containsKey("x-translated"),
+			initialGreeting.getAttributes().hasCustomAttribute("x-translated"),
 			"Should not have x-translated attribute initially");
 
 		ArbResource initialWelcome = initialSourceBundle.getResource("welcome");
 		assertNotNull(initialWelcome);
 		assertFalse(initialWelcome.hasAttributes() &&
-			initialWelcome.getAttributes().getCustomAttributes().containsKey("x-translated"),
+			initialWelcome.getAttributes().hasCustomAttribute("x-translated"),
 			"Should not have x-translated attribute initially");
 
 		// Use ArbTranslator - should add checksums for new resources
@@ -125,19 +125,19 @@ public class TestArbTranslator {
 		ArbResource finalGreeting = finalSourceBundle.getResource("greeting");
 		assertTrue(finalGreeting.hasAttributes(),
 			"greeting should have attributes after translation");
-		assertTrue(finalGreeting.getAttributes().getCustomAttributes().containsKey("x-translated"),
+		assertTrue(finalGreeting.getAttributes().hasCustomAttribute("x-translated"),
 			"greeting should have x-translated checksum");
 		assertEquals(ArbTranslator.computeChecksum("Hello {username}!"),
-			finalGreeting.getAttributes().getCustomAttributes().get("x-translated"),
+			finalGreeting.getAttributes().getCustomAttribute("x-translated"),
 			"greeting checksum should match current text");
 
 		ArbResource finalWelcome = finalSourceBundle.getResource("welcome");
 		assertTrue(finalWelcome.hasAttributes(),
 			"welcome should have attributes after translation");
-		assertTrue(finalWelcome.getAttributes().getCustomAttributes().containsKey("x-translated"),
+		assertTrue(finalWelcome.getAttributes().hasCustomAttribute("x-translated"),
 			"welcome should have x-translated checksum");
 		assertEquals(ArbTranslator.computeChecksum("Welcome to our app"),
-			finalWelcome.getAttributes().getCustomAttributes().get("x-translated"),
+			finalWelcome.getAttributes().getCustomAttribute("x-translated"),
 			"welcome checksum should match current text");
 
 		// Verify target file was created with translations
@@ -181,7 +181,7 @@ public class TestArbTranslator {
 		ArbBundle initialSourceBundle = parser.parse(sourceFile);
 
 		ArbResource initialGreeting = initialSourceBundle.getResource("greeting");
-		String storedChecksum = initialGreeting.getAttributes().getCustomAttributes().get("x-translated");
+		String storedChecksum = initialGreeting.getAttributes().getCustomAttribute("x-translated");
 		String currentChecksum = ArbTranslator.computeChecksum(initialGreeting.getValue());
 
 		// Verify checksum mismatch
@@ -195,7 +195,7 @@ public class TestArbTranslator {
 		// Verify source file was updated with new checksum
 		ArbBundle finalSourceBundle = parser.parse(sourceFile);
 		ArbResource finalSourceGreeting = finalSourceBundle.getResource("greeting");
-		String finalChecksum = finalSourceGreeting.getAttributes().getCustomAttributes().get("x-translated");
+		String finalChecksum = finalSourceGreeting.getAttributes().getCustomAttribute("x-translated");
 
 		assertEquals(currentChecksum, finalChecksum,
 			"Source checksum should be updated to match current text");
@@ -246,7 +246,7 @@ public class TestArbTranslator {
 
 		// Verify checksum matches initially
 		ArbResource initialGreeting = initialSourceBundle.getResource("greeting");
-		String storedChecksum = initialGreeting.getAttributes().getCustomAttributes().get("x-translated");
+		String storedChecksum = initialGreeting.getAttributes().getCustomAttribute("x-translated");
 		String currentChecksum = ArbTranslator.computeChecksum(initialGreeting.getValue());
 
 		assertEquals(currentChecksum, storedChecksum,
@@ -268,7 +268,7 @@ public class TestArbTranslator {
 		// Verify source file checksum remains unchanged
 		ArbBundle finalSourceBundle = parser.parse(sourceFile);
 		ArbResource finalSourceGreeting = finalSourceBundle.getResource("greeting");
-		String finalChecksum = finalSourceGreeting.getAttributes().getCustomAttributes().get("x-translated");
+		String finalChecksum = finalSourceGreeting.getAttributes().getCustomAttribute("x-translated");
 
 		assertEquals(greetingChecksum, finalChecksum,
 			"Source checksum should remain unchanged");
@@ -320,7 +320,7 @@ public class TestArbTranslator {
 		ArbBundle initialSourceBundle = parser.parse(sourceFile);
 
 		ArbResource greetingResource = initialSourceBundle.getResource("greeting");
-		String greetingChecksum = greetingResource.getAttributes().getCustomAttributes().get("x-translated");
+		String greetingChecksum = greetingResource.getAttributes().getCustomAttribute("x-translated");
 		String currentGreetingChecksum = ArbTranslator.computeChecksum("Hello {username}!");
 
 		// Verify checksum mismatch exists initially
@@ -334,7 +334,7 @@ public class TestArbTranslator {
 		// Verify the source file was updated with correct checksums
 		ArbBundle finalSourceBundle = parser.parse(sourceFile);
 		ArbResource finalGreeting = finalSourceBundle.getResource("greeting");
-		String finalChecksum = finalGreeting.getAttributes().getCustomAttributes().get("x-translated");
+		String finalChecksum = finalGreeting.getAttributes().getCustomAttribute("x-translated");
 
 		assertEquals(currentGreetingChecksum, finalChecksum,
 			"Source file should have updated checksum after translation");
@@ -390,7 +390,7 @@ public class TestArbTranslator {
 		ArbBundle initialSourceBundle = parser.parse(sourceFile);
 		ArbResource initialGreeting = initialSourceBundle.getResource("greeting");
 		assertFalse(initialGreeting.hasAttributes() &&
-			initialGreeting.getAttributes().getCustomAttributes().containsKey("x-translated"),
+			initialGreeting.getAttributes().hasCustomAttribute("x-translated"),
 			"Should not have x-translated attribute initially");
 
 		// Use ArbTranslator to "translate" (actually just process existing translations)
@@ -409,19 +409,19 @@ public class TestArbTranslator {
 		ArbResource updatedGreeting = updatedSourceBundle.getResource("greeting");
 		assertTrue(updatedGreeting.hasAttributes(),
 			"greeting must have attributes after translation");
-		assertTrue(updatedGreeting.getAttributes().getCustomAttributes().containsKey("x-translated"),
+		assertTrue(updatedGreeting.getAttributes().hasCustomAttribute("x-translated"),
 			"greeting must have x-translated checksum to detect future changes");
 		assertEquals(expectedGreetingChecksum,
-			updatedGreeting.getAttributes().getCustomAttributes().get("x-translated"),
+			updatedGreeting.getAttributes().getCustomAttribute("x-translated"),
 			"greeting checksum should match current text");
 
 		ArbResource updatedWelcome = updatedSourceBundle.getResource("welcome");
 		assertTrue(updatedWelcome.hasAttributes(),
 			"welcome must have attributes after translation");
-		assertTrue(updatedWelcome.getAttributes().getCustomAttributes().containsKey("x-translated"),
+		assertTrue(updatedWelcome.getAttributes().hasCustomAttribute("x-translated"),
 			"welcome must have x-translated checksum to detect future changes");
 		assertEquals(expectedWelcomeChecksum,
-			updatedWelcome.getAttributes().getCustomAttributes().get("x-translated"),
+			updatedWelcome.getAttributes().getCustomAttribute("x-translated"),
 			"welcome checksum should match current text");
 	}
 }

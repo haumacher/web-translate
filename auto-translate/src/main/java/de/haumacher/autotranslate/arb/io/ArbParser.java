@@ -170,7 +170,7 @@ public class ArbParser {
 				default:
 					// Custom attribute
 					if (attrValue.isJsonPrimitive()) {
-						attributes.addCustomAttribute(attrName, attrValue.getAsString());
+						attributes.setCustomAttribute(attrName, attrValue.getAsString());
 					}
 					break;
 			}
