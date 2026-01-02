@@ -6,7 +6,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import de.haumacher.webtranslate.arb.IcuMessageParser.MessagePart;
+import de.haumacher.webtranslate.arb.MessagePart;
 import de.haumacher.webtranslate.arb.ParameterProtector.ProtectedText;
 
 /**
@@ -20,13 +20,13 @@ public class TestIcuMessageParser {
 		List<MessagePart> parts = IcuMessageParser.parse(message);
 
 		assertEquals(3, parts.size());
-		assertTrue(parts.get(0) instanceof IcuMessageParser.TextPart);
-		assertTrue(parts.get(1) instanceof IcuMessageParser.SimplePlaceholder);
-		assertTrue(parts.get(2) instanceof IcuMessageParser.TextPart);
+		assertTrue(parts.get(0) instanceof TextPart);
+		assertTrue(parts.get(1) instanceof SimpleParameter);
+		assertTrue(parts.get(2) instanceof TextPart);
 
-		assertEquals("Hello ", ((IcuMessageParser.TextPart) parts.get(0)).getText());
-		assertEquals("username", ((IcuMessageParser.SimplePlaceholder) parts.get(1)).getName());
-		assertEquals("!", ((IcuMessageParser.TextPart) parts.get(2)).getText());
+		assertEquals("Hello ", ((TextPart) parts.get(0)).getText());
+		assertEquals("username", ((SimpleParameter) parts.get(1)).getName());
+		assertEquals("!", ((TextPart) parts.get(2)).getText());
 	}
 
 	@Test
@@ -35,9 +35,9 @@ public class TestIcuMessageParser {
 		List<MessagePart> parts = IcuMessageParser.parse(message);
 
 		assertEquals(1, parts.size());
-		assertTrue(parts.get(0) instanceof IcuMessageParser.ComplexFormat);
+		assertTrue(parts.get(0) instanceof ComplexParameter);
 
-		IcuMessageParser.ComplexFormat format = (IcuMessageParser.ComplexFormat) parts.get(0);
+		ComplexParameter format = (ComplexParameter) parts.get(0);
 		assertEquals("count", format.getName());
 		assertEquals("plural", format.getFormatType());
 		assertEquals(2, format.getCases().size());
@@ -51,8 +51,8 @@ public class TestIcuMessageParser {
 		List<MessagePart> otherParts = format.getCases().get(1).getParts();
 		assertEquals(2, otherParts.size());
 		
-		assertTrue(otherParts.get(0) instanceof IcuMessageParser.SimplePlaceholder);
-		assertTrue(otherParts.get(1) instanceof IcuMessageParser.TextPart);
+		assertTrue(otherParts.get(0) instanceof SimpleParameter);
+		assertTrue(otherParts.get(1) instanceof TextPart);
 	}
 
 	@Test
@@ -60,14 +60,14 @@ public class TestIcuMessageParser {
 		String message = "{count, plural, one{# item} other{# items}}";
 		List<MessagePart> parts = IcuMessageParser.parse(message);
 
-		IcuMessageParser.ComplexFormat format = (IcuMessageParser.ComplexFormat) parts.get(0);
+		ComplexParameter format = (ComplexParameter) parts.get(0);
 		assertEquals(2, format.getCases().size());
 
 		// Check that # is parsed as a placeholder
 		List<MessagePart> oneParts = format.getCases().get(0).getParts();
 		assertTrue(oneParts.stream().anyMatch(p ->
-			p instanceof IcuMessageParser.SimplePlaceholder &&
-			((IcuMessageParser.SimplePlaceholder) p).getName().equals("#")
+			p instanceof SimpleParameter &&
+			((SimpleParameter) p).getName().equals("#")
 		));
 	}
 
@@ -77,7 +77,7 @@ public class TestIcuMessageParser {
 		List<MessagePart> parts = IcuMessageParser.parse(message);
 
 		assertEquals(1, parts.size());
-		IcuMessageParser.ComplexFormat format = (IcuMessageParser.ComplexFormat) parts.get(0);
+		ComplexParameter format = (ComplexParameter) parts.get(0);
 
 		assertEquals("gender", format.getName());
 		assertEquals("select", format.getFormatType());
@@ -93,13 +93,13 @@ public class TestIcuMessageParser {
 		String message = "{count, plural, =1{1 message from {sender}} other{{count} messages from {sender}}}";
 		List<MessagePart> parts = IcuMessageParser.parse(message);
 
-		IcuMessageParser.ComplexFormat format = (IcuMessageParser.ComplexFormat) parts.get(0);
+		ComplexParameter format = (ComplexParameter) parts.get(0);
 
 		// Check "other" case has nested {sender} placeholder
 		List<MessagePart> otherParts = format.getCases().get(1).getParts();
 		assertTrue(otherParts.stream().anyMatch(p ->
-			p instanceof IcuMessageParser.SimplePlaceholder &&
-			((IcuMessageParser.SimplePlaceholder) p).getName().equals("sender")
+			p instanceof SimpleParameter &&
+			((SimpleParameter) p).getName().equals("sender")
 		));
 	}
 
@@ -159,12 +159,12 @@ public class TestIcuMessageParser {
 
 		// Should have: text + plural format + text
 		assertEquals(3, parts.size());
-		assertTrue(parts.get(0) instanceof IcuMessageParser.TextPart);
-		assertTrue(parts.get(1) instanceof IcuMessageParser.ComplexFormat);
-		assertTrue(parts.get(2) instanceof IcuMessageParser.TextPart);
+		assertTrue(parts.get(0) instanceof TextPart);
+		assertTrue(parts.get(1) instanceof ComplexParameter);
+		assertTrue(parts.get(2) instanceof TextPart);
 
-		assertEquals("You have ", ((IcuMessageParser.TextPart) parts.get(0)).getText());
-		assertEquals(" in your inbox.", ((IcuMessageParser.TextPart) parts.get(2)).getText());
+		assertEquals("You have ", ((TextPart) parts.get(0)).getText());
+		assertEquals(" in your inbox.", ((TextPart) parts.get(2)).getText());
 	}
 
 	@Test
@@ -174,12 +174,12 @@ public class TestIcuMessageParser {
 		List<MessagePart> parts = IcuMessageParser.parse(message);
 
 		assertEquals(1, parts.size());
-		IcuMessageParser.ComplexFormat outerFormat = (IcuMessageParser.ComplexFormat) parts.get(0);
+		ComplexParameter outerFormat = (ComplexParameter) parts.get(0);
 		assertEquals("select", outerFormat.getFormatType());
 
 		// Check male case contains nested plural
 		List<MessagePart> maleParts = outerFormat.getCases().get(0).getParts();
-		assertTrue(maleParts.stream().anyMatch(p -> p instanceof IcuMessageParser.ComplexFormat));
+		assertTrue(maleParts.stream().anyMatch(p -> p instanceof ComplexParameter));
 	}
 
 	@Test

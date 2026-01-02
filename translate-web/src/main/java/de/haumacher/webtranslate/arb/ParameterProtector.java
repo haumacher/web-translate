@@ -6,6 +6,12 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import de.haumacher.webtranslate.arb.IcuMessageParser.ComplexParameter;
+import de.haumacher.webtranslate.arb.IcuMessageParser.MessagePart;
+import de.haumacher.webtranslate.arb.IcuMessageParser.SelectorCase;
+import de.haumacher.webtranslate.arb.IcuMessageParser.SimpleParameter;
+import de.haumacher.webtranslate.arb.IcuMessageParser.TextPart;
+
 /**
  * Protects ARB parameters from being translated by replacing them with XML-style placeholders.
  *
@@ -48,9 +54,9 @@ public class ParameterProtector {
 	 */
 	public static class ProtectedText {
 		private final String protectedText;
-		private final List<IcuMessageParser.MessagePart> originalParts; // Store original structure
+		private final List<MessagePart> originalParts; // Store original structure
 
-		public ProtectedText(String protectedText, List<IcuMessageParser.MessagePart> originalParts) {
+		public ProtectedText(String protectedText, List<MessagePart> originalParts) {
 			this.protectedText = protectedText;
 			this.originalParts = originalParts;
 		}
@@ -72,7 +78,7 @@ public class ParameterProtector {
 		/**
 		 * The original parsed ICU message parts (null for simple parameters).
 		 */
-		public List<IcuMessageParser.MessagePart> getOriginalParts() {
+		public List<MessagePart> getOriginalParts() {
 			return originalParts;
 		}
 
@@ -103,7 +109,7 @@ public class ParameterProtector {
 
 			if (originalParts != null) {
 				// Translate inner parts recursively
-				List<IcuMessageParser.MessagePart> translatedParts = translateParts(originalParts, translationFunction);
+				List<MessagePart> translatedParts = translateParts(originalParts, translationFunction);
 
 				return new ProtectedText(translatedProtectedText, translatedParts);
 			} else {
@@ -135,7 +141,7 @@ public class ParameterProtector {
 	public static ProtectedText protect(String text) {
 		// Try to parse as ICU MessageFormat
 		try {
-			List<IcuMessageParser.MessagePart> parts = IcuMessageParser.parse(text);
+			List<MessagePart> parts = IcuMessageParser.parse(text);
 			String protectedText = IcuMessageParser.toProtectedText(parts);
 
 			// Store original parts for reconstruction during restore
@@ -150,7 +156,7 @@ public class ParameterProtector {
 	 * Simple regex-based protection (fallback for non-ICU messages).
 	 */
 	private static ProtectedText protectSimple(String text) {
-		List<IcuMessageParser.MessagePart> parts = new ArrayList<>();
+		List<MessagePart> parts = new ArrayList<>();
 		Matcher matcher = PARAMETER_PATTERN.matcher(text);
 		StringBuffer result = new StringBuffer();
 
@@ -159,11 +165,11 @@ public class ParameterProtector {
 		while (matcher.find()) {
 			// Add text before parameter
 			if (matcher.start() > lastEnd) {
-				parts.add(new IcuMessageParser.TextPart(text.substring(lastEnd, matcher.start())));
+				parts.add(new TextPart(text.substring(lastEnd, matcher.start())));
 			}
 
 			String paramName = matcher.group(1);
-			parts.add(new IcuMessageParser.SimplePlaceholder(paramName));
+			parts.add(new SimpleParameter(paramName));
 
 			// Replace {paramName} with <xN>paramName</xN>
 			String replacement = "<x" + paramIndex + ">" + paramName + "</x" + paramIndex + ">";
@@ -176,7 +182,7 @@ public class ParameterProtector {
 
 		// Add remaining text
 		if (lastEnd < text.length()) {
-			parts.add(new IcuMessageParser.TextPart(text.substring(lastEnd)));
+			parts.add(new TextPart(text.substring(lastEnd)));
 		}
 
 		return new ProtectedText(result.toString(), parts);
@@ -185,7 +191,7 @@ public class ParameterProtector {
 	/**
 	 * Extracts parameter names from message parts.
 	 */
-	private static List<String> extractParameterNames(List<IcuMessageParser.MessagePart> parts) {
+	private static List<String> extractParameterNames(List<MessagePart> parts) {
 		List<String> parameters = new ArrayList<>();
 		if (parts != null) {
 			extractParameterNamesFromParts(parts, parameters);
@@ -196,8 +202,8 @@ public class ParameterProtector {
 	/**
 	 * Recursively extracts parameter names from message parts.
 	 */
-	private static void extractParameterNamesFromParts(List<IcuMessageParser.MessagePart> parts, List<String> parameters) {
-		for (IcuMessageParser.MessagePart part : parts) {
+	private static void extractParameterNamesFromParts(List<MessagePart> parts, List<String> parameters) {
+		for (MessagePart part : parts) {
 			if (part instanceof IcuMessageParser.ParameterPart) {
 				parameters.add(((IcuMessageParser.ParameterPart) part).getName());
 			}
@@ -252,16 +258,16 @@ public class ParameterProtector {
 	/**
 	 * Reconstructs the original ICU message structure with translated text.
 	 */
-	private static String restoreWithStructure(String translatedText, List<IcuMessageParser.MessagePart> originalParts, List<String> parameters) {
+	private static String restoreWithStructure(String translatedText, List<MessagePart> originalParts, List<String> parameters) {
 		// Check if we have any ComplexFormat parts - if so, reconstruct from original structure
 		boolean hasComplexFormat = originalParts.stream()
-			.anyMatch(part -> part instanceof IcuMessageParser.ComplexFormat);
+			.anyMatch(part -> part instanceof ComplexParameter);
 
 		if (hasComplexFormat) {
 			// For complex formats, reconstruct the full original structure
 			// (Complex formats don't support translation of nested text yet)
 			StringBuilder result = new StringBuilder();
-			for (IcuMessageParser.MessagePart part : originalParts) {
+			for (MessagePart part : originalParts) {
 				result.append(reconstructPart(part));
 			}
 			return result.toString();
@@ -274,24 +280,24 @@ public class ParameterProtector {
 	/**
 	 * Reconstructs a single message part to its original form.
 	 */
-	private static String reconstructPart(IcuMessageParser.MessagePart part) {
-		if (part instanceof IcuMessageParser.TextPart) {
-			return ((IcuMessageParser.TextPart) part).getText();
-		} else if (part instanceof IcuMessageParser.SimplePlaceholder) {
-			return "{" + ((IcuMessageParser.SimplePlaceholder) part).getName() + "}";
-		} else if (part instanceof IcuMessageParser.ComplexFormat) {
-			IcuMessageParser.ComplexFormat format = (IcuMessageParser.ComplexFormat) part;
+	private static String reconstructPart(MessagePart part) {
+		if (part instanceof TextPart) {
+			return ((TextPart) part).getText();
+		} else if (part instanceof SimpleParameter) {
+			return "{" + ((SimpleParameter) part).getName() + "}";
+		} else if (part instanceof ComplexParameter) {
+			ComplexParameter format = (ComplexParameter) part;
 			StringBuilder result = new StringBuilder();
 			result.append("{");
 			result.append(format.getName());
 			result.append(", ");
 			result.append(format.getFormatType());
 			result.append(",");
-			for (IcuMessageParser.SelectorCase case_ : format.getCases()) {
+			for (SelectorCase case_ : format.getCases()) {
 				result.append(" ");
 				result.append(case_.getSelector());
 				result.append("{");
-				for (IcuMessageParser.MessagePart casePart : case_.getParts()) {
+				for (MessagePart casePart : case_.getParts()) {
 					result.append(reconstructPart(casePart));
 				}
 				result.append("}");
@@ -305,9 +311,9 @@ public class ParameterProtector {
 	/**
 	 * Translates all parts recursively.
 	 */
-	private static List<IcuMessageParser.MessagePart> translateParts(List<IcuMessageParser.MessagePart> parts, java.util.function.Function<String, String> translationFunction) {
-		List<IcuMessageParser.MessagePart> result = new ArrayList<>();
-		for (IcuMessageParser.MessagePart part : parts) {
+	private static List<MessagePart> translateParts(List<MessagePart> parts, java.util.function.Function<String, String> translationFunction) {
+		List<MessagePart> result = new ArrayList<>();
+		for (MessagePart part : parts) {
 			result.add(translatePart(part, translationFunction));
 		}
 		return result;
@@ -316,23 +322,23 @@ public class ParameterProtector {
 	/**
 	 * Translates a single message part recursively.
 	 */
-	private static IcuMessageParser.MessagePart translatePart(IcuMessageParser.MessagePart part, java.util.function.Function<String, String> translationFunction) {
-		if (part instanceof IcuMessageParser.TextPart) {
-			String originalText = ((IcuMessageParser.TextPart) part).getText();
+	private static MessagePart translatePart(MessagePart part, java.util.function.Function<String, String> translationFunction) {
+		if (part instanceof TextPart) {
+			String originalText = ((TextPart) part).getText();
 			String translatedText = translationFunction.apply(originalText);
-			return new IcuMessageParser.TextPart(translatedText);
-		} else if (part instanceof IcuMessageParser.SimplePlaceholder) {
+			return new TextPart(translatedText);
+		} else if (part instanceof SimpleParameter) {
 			// Placeholders are not translated
 			return part;
-		} else if (part instanceof IcuMessageParser.ComplexFormat) {
-			IcuMessageParser.ComplexFormat format = (IcuMessageParser.ComplexFormat) part;
+		} else if (part instanceof ComplexParameter) {
+			ComplexParameter format = (ComplexParameter) part;
 			// Translate all cases recursively
-			List<IcuMessageParser.SelectorCase> translatedCases = new ArrayList<>();
-			for (IcuMessageParser.SelectorCase case_ : format.getCases()) {
-				List<IcuMessageParser.MessagePart> translatedCaseParts = translateParts(case_.getParts(), translationFunction);
-				translatedCases.add(new IcuMessageParser.SelectorCase(case_.getSelector(), translatedCaseParts));
+			List<SelectorCase> translatedCases = new ArrayList<>();
+			for (SelectorCase case_ : format.getCases()) {
+				List<MessagePart> translatedCaseParts = translateParts(case_.getParts(), translationFunction);
+				translatedCases.add(new SelectorCase(case_.getSelector(), translatedCaseParts));
 			}
-			return new IcuMessageParser.ComplexFormat(format.getName(), format.getFormatType(), translatedCases);
+			return new ComplexParameter(format.getName(), format.getFormatType(), translatedCases);
 		}
 		return part;
 	}

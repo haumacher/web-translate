@@ -96,9 +96,9 @@ public class IcuMessageParser {
 	/**
 	 * A simple placeholder: {@code {name}} or {@code {0}}.
 	 */
-	public static class SimplePlaceholder extends ParameterPart {
+	public static class SimpleParameter extends ParameterPart {
 
-		public SimplePlaceholder(String name) {
+		public SimpleParameter(String name) {
 			super(name);
 		}
 
@@ -117,11 +117,11 @@ public class IcuMessageParser {
 	/**
 	 * A complex format with type and style: {@code {count, plural, ...}}.
 	 */
-	public static class ComplexFormat extends ParameterPart {
+	public static class ComplexParameter extends ParameterPart {
 		private final String formatType;
 		private final List<SelectorCase> cases;
 
-		public ComplexFormat(String argumentName, String formatType, List<SelectorCase> cases) {
+		public ComplexParameter(String argumentName, String formatType, List<SelectorCase> cases) {
 			super(argumentName);
 			this.formatType = formatType;
 			this.cases = cases;
@@ -295,7 +295,7 @@ public class IcuMessageParser {
 					return new TextPart("{" + argumentName + "}");
 				}
 				pos++; // skip closing }
-				return new SimplePlaceholder(argumentName.trim());
+				return new SimpleParameter(argumentName.trim());
 			}
 
 			// Complex format: {name, type, ...}
@@ -307,7 +307,7 @@ public class IcuMessageParser {
 				// Format with type but no style: {count, number}
 				// Treat as simple placeholder for now
 				pos++; // skip closing }
-				return new SimplePlaceholder(argumentName.trim());
+				return new SimpleParameter(argumentName.trim());
 			}
 
 			pos++; // skip comma
@@ -315,7 +315,7 @@ public class IcuMessageParser {
 			// Check if this is a select/plural format
 			if (formatType.equals("plural") || formatType.equals("select") || formatType.equals("selectordinal")) {
 				List<SelectorCase> cases = parseSelectorCases();
-				return new ComplexFormat(argumentName.trim(), formatType, cases);
+				return new ComplexParameter(argumentName.trim(), formatType, cases);
 			} else {
 				// Other format types (number, date, time with styles)
 				// Skip to end of placeholder for now
@@ -323,7 +323,7 @@ public class IcuMessageParser {
 				if (pos < input.length()) {
 					pos++; // skip closing }
 				}
-				return new SimplePlaceholder(argumentName.trim());
+				return new SimpleParameter(argumentName.trim());
 			}
 		}
 
@@ -402,7 +402,7 @@ public class IcuMessageParser {
 						parts.add(new TextPart(text.toString()));
 						text.setLength(0);
 					}
-					parts.add(new SimplePlaceholder("#"));
+					parts.add(new SimpleParameter("#"));
 					pos++;
 				} else {
 					text.append(ch);
