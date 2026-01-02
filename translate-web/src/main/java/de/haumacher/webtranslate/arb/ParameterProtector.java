@@ -57,6 +57,7 @@ public class ParameterProtector {
 		private final List<MessagePart> originalParts; // Store original structure
 
 		public ProtectedText(String protectedText, List<MessagePart> originalParts) {
+			assert originalParts != null;
 			this.protectedText = protectedText;
 			this.originalParts = originalParts;
 		}
@@ -107,15 +108,10 @@ public class ParameterProtector {
 			// Translate the protected text itself
 			String translatedProtectedText = translationFunction.apply(protectedText);
 
-			if (originalParts != null) {
-				// Translate inner parts recursively
-				List<MessagePart> translatedParts = translateParts(originalParts, translationFunction);
-
-				return new ProtectedText(translatedProtectedText, translatedParts);
-			} else {
-				// For simple parameters, just translate the protected text
-				return new ProtectedText(translatedProtectedText, originalParts);
-			}
+			// Translate inner parts recursively
+			List<MessagePart> translatedParts = translateParts(originalParts, translationFunction);
+			
+			return new ProtectedText(translatedProtectedText, translatedParts);
 		}
 	}
 
