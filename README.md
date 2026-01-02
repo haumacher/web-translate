@@ -1,88 +1,204 @@
-# web-translate - Automatic translation of web-applications based on Thymeleaf templates
+# auto-translate - Automatic translation of HTML templates and ARB files using DeepL
 
-When using the [Thymeleaf template engine](https://www.thymeleaf.org) for rendering pages of a web-application, 
-the official recommendation for internationalizing pages is to convert text on pages to resource keys referencing 
-text snippes in resource bundles. 
+The `auto-translate` Maven plugin provides automated translation for:
+- **HTML templates** (Thymeleaf or any HTML-based templates)
+- **ARB files** (Application Resource Bundle for Flutter/Dart localization)
 
-Here is an example: `/WEB-INF/templates/chart.html`:
+It uses the [DeepL API](https://www.deepl.com/pro-api) to automatically translate content while preserving markup structure and supporting incremental updates.
+
+## Quick Start
+
+Add the plugin to your `pom.xml`:
+
+```xml
+<plugin>
+  <groupId>de.haumacher</groupId>
+  <artifactId>auto-translate</artifactId>
+  <version>1.0.0</version>
+  <configuration>
+    <apiKey>${env.DEEPL_API_KEY}</apiKey>
+    <sourceLang>en</sourceLang>
+    <targetLangs>de,fr,es</targetLangs>
+  </configuration>
+</plugin>
 ```
+
+Run translation:
+```bash
+mvn auto-translate:translate
+```
+
+## HTML Translation
+
+### Problem with Standard Approaches
+
+When using the [Thymeleaf template engine](https://www.thymeleaf.org) for rendering pages, the official recommendation is to convert text to resource keys. This becomes cumbersome for complex content.
+
+Example - original template `/WEB-INF/templates/chart.html`:
+```html
 <h1>Your shopping cart</h1>
 <p>The following items are ready for checkout:</p>
 ```
 
-When internationalizing, this template becomes: `/WEB-INF/templates/chart.html`:
-```
+Standard internationalization requires: `/WEB-INF/templates/chart.html`:
+```html
 <h1 th:text="#{chart.title}"></h1>
 <p th:text="#{chart.heading}"></p>
 ```
+
 With properties `/WEB-INF/templates/chart_en.properties`:
-```
+```properties
 chart.title=Your shopping cart
 chart.heading=The following items are ready for checkout:
 ```
-## Problems with the standard approch
-This approach is perfectly valid for pages with few text elements that contain no intrinsic structure and 
-formatting. However, when the application is more like a web site with many text elements, that contain links, 
-buttons, formatting and so on, writing templates get cumbersome.
 
-Even in the trivial case of a simple text with an embedded link, things get complicated:
-```
+### Problems with the Standard Approach
+
+This works for simple cases but becomes unmanageable for text with embedded links, formatting, or complex structure:
+
+```html
 <p>To install PhoneBlock, you need a <a th:href="@{/link/fritzbox}">FRITZ!Box Internet router from AVM</a> and a PhoneBlock account.</p>
 ```
-To internationalize this with simple resource keys, you have to split the sentence into three different keys and translate them separately:
-```
+
+You'd have to split into multiple keys:
+```properties
 instruction.1=To install PhoneBlock, you need a
 instruction.2=FRITZ!Box Internet router from AVM
 instruction.3=and a PhoneBlock account.
 ```
-This approach produces hard to maintain templates and resource properties. Translating those properties is difficult. And automatic 
-translation of those property files result in unaccepatble results, since the texts are not complete sentences with no useful 
-context.
 
-## Automatic translation with `web-translate`
+This produces:
+- Hard-to-maintain templates
+- Fragmented sentences that translate poorly
+- Loss of context for translators
 
-With `web-translate` you write your application templates without caring about internationalization and let `web-translate` do the rest.
-Templates are written in the native language of the application, which makes writing, reading and maintaining templates much more easy. 
-The `web-translate` tools then extract resource properties from your templates, automatically translate properties into other languages
-and synthesize additional templates for all languages you want to support.
+### Automatic Translation with auto-translate
 
-While processing templates, `web-translate` assigns "translate IDs" to all HTML elements of your templates that contain text content 
-that requires translation. But the text is not replaced with resource identifiers in your templates, which keeps them readable and 
-understandable. Instead, text contents from your templates is automatically copied into property files for translation. However, those 
-property files are only transient resources. After the properties are translated, `web-translate` synthesizes new versions of your 
-templates in all supported languages of your application. Those generated templates need never be touched manually. If you change our
-original template (in your native application language), you can repeat the transformation process to update all generated templates.
+With `auto-translate`, write templates in your native language without worrying about internationalization. The plugin:
 
-## Example process with `web-translate`
-Let's have a look at the process considering the example from above. 
+1. Assigns translation IDs (`data-tx`) to HTML elements with translatable content
+2. Extracts text while preserving markup structure
+3. Translates using DeepL API
+4. Generates locale-specific templates automatically
+5. Supports incremental updates (only translates changed content)
 
-Assume the original template `/WEB-INF/templates/en-US/home.html`:
-```
+### Example Process
+
+Original template `/WEB-INF/templates/en/home.html`:
+```html
 <p>To install PhoneBlock, you need a <a th:href="@{/link/fritzbox}">FRITZ!Box Internet router from AVM</a> and a PhoneBlock account.</p>
 ```
-When invoking `web-translate` for the source language `en-US` and the target languages `de` and `es`, this produces the following:
 
-First of all, translate identifiers (`data-tx`) are assigned to text elements of your source template: 
+**Step 1:** The plugin assigns translation IDs with CRC checksums:
+```html
+<p data-tx="t0001:a1b2c3d4">To install PhoneBlock, you need a <a th:href="@{/link/fritzbox}">FRITZ!Box Internet router from AVM</a> and a PhoneBlock account.</p>
 ```
-<p data-tx="t0001">To install PhoneBlock, you need a <a th:href="@{/link/fritzbox}">FRITZ!Box Internet router from AVM</a> and a PhoneBlock account.</p>
-```
-Then, a properties file is extracted from this template: `/WEB-INF/properties/en-US/home.properties`:
+
+**Step 2:** Text is extracted (in-memory, no intermediate files) with markup converted to placeholders:
 ```
 t0001=To install PhoneBlock, you need a <x1>FRITZ!Box Internet router from AVM</x1> and a PhoneBlock account.
 ```
-In this resource file, the whole text is kept in a single property preserving the sentence structure. However, the technical 
-content such as the link element and the `href` attribute is converted to an identifier tag `<x1>`. Such tag easily survives
-automatic translation while minimizing the input to and potential erros during the translation process.
 
-The properties are now translated to German and Spanish, e.g. `/WEB-INF/properties/de/home.properties`:
+The `<a>` tag becomes `<x1>` - preserving sentence structure while protecting technical markup.
+
+**Step 3:** Text is translated via DeepL API to German:
 ```
 t0001=Um PhoneBlock zu installieren, benötigst Du einen <x1>FRITZ!Box Internet-Router von AVM</x1> und einen PhoneBlock-Account.
 ```
-Afterwards, locale specific template variants are synthesized from your original template and the translation result. These
-generated properties are to be served by your application, if a resource is requested in a specific language.
 
-For German, the follwing template is produced: `/WEB-INF/templates/de/home.html`
+**Step 4:** German template is generated at `/WEB-INF/templates/de/home.html`:
+```html
+<p data-tx="t0001:a1b2c3d4">Um PhoneBlock zu installieren, benötigst Du einen <a th:href="@{/link/fritzbox}">FRITZ!Box Internet-Router von AVM</a> und einen PhoneBlock-Account.</p>
 ```
-<p>Um PhoneBlock zu installieren, benötigst Du einen <a th:href="@{/link/fritzbox}">FRITZ!Box Internet-Router von AVM</a> und einen PhoneBlock-Account.
+
+The `<x1>` placeholder is replaced with the original `<a>` tag, preserving all technical attributes.
+
+### Incremental Translation
+
+The plugin uses CRC checksums to detect changes:
+
+- **Unchanged text**: Reuses existing translations (saves API costs)
+- **New content**: Automatically translates
+- **Modified content**: Detects via CRC mismatch and re-translates
+- **No CRC**: Treats as unchanged (backward compatibility)
+
+### Configuration
+
+Directory structure:
 ```
-During this synthetization process, the identifier tags `<x1>` are replaced by the technical variants from the original template. 
+templates/
+  en/              # Source language templates
+    index.html
+    about.html
+  de/              # Generated German templates
+  fr/              # Generated French templates
+```
+
+Maven plugin configuration:
+```xml
+<plugin>
+  <groupId>de.haumacher</groupId>
+  <artifactId>auto-translate</artifactId>
+  <version>1.0.0</version>
+  <configuration>
+    <apiKey>${env.DEEPL_API_KEY}</apiKey>
+    <sourceLang>en</sourceLang>
+    <targetLangs>de,fr,es</targetLangs>
+    <templateDirectory>${project.basedir}/templates</templateDirectory>
+  </configuration>
+</plugin>
+```
+
+## ARB Translation
+
+The plugin also supports ARB (Application Resource Bundle) files used in Flutter/Dart applications.
+
+### Features
+
+- **Incremental translation**: Only translates new or modified resources
+- **Parameter protection**: Preserves `{username}`, `{count}`, etc.
+- **ICU MessageFormat support**: Handles plurals, select, gender, nested formats
+- **Compact output**: Target files contain only translations (no metadata)
+
+### Example
+
+Source file `app_en.arb`:
+```json
+{
+  "@@locale": "en",
+  "greeting": "Hello {username}!",
+  "messages": "{count, plural, =0{no messages} =1{1 message} other{{count} messages}}"
+}
+```
+
+Run translation:
+```bash
+java -jar auto-translate.jar YOUR_API_KEY app_en.arb de,fr
+```
+
+Generated `app_de.arb`:
+```json
+{
+  "@@locale": "de",
+  "greeting": "Hallo {username}!",
+  "messages": "{count, plural, =0{keine Nachrichten} =1{1 Nachricht} other{{count} Nachrichten}}"
+}
+```
+
+Parameters and format identifiers are preserved, only the actual text is translated.
+
+## Building from Source
+
+```bash
+cd auto-translate
+mvn clean install
+```
+
+## Documentation
+
+- [HOWTO-RELEASE.md](auto-translate/HOWTO-RELEASE.md) - Guide for releasing to Maven Central
+- [CLAUDE.md](CLAUDE.md) - Development guide for Claude Code
+
+## License
+
+Apache License 2.0 
