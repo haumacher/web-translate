@@ -7,9 +7,15 @@ import java.util.List;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.settings.Server;
+import org.apache.maven.settings.Settings;
+import org.apache.maven.settings.crypto.DefaultSettingsDecryptionRequest;
+import org.apache.maven.settings.crypto.SettingsDecrypter;
+import org.apache.maven.settings.crypto.SettingsDecryptionResult;
 
 /**
  * Maven goal to translate HTML templates using DeepL API.
@@ -26,9 +32,9 @@ import org.apache.maven.plugins.annotations.Parameter;
  * </p>
  *
  * <p>
- * Usage example:
+ * Usage example with server credentials:
  * <pre>
- * mvn auto-translate:translate -Dtranslate.apiKey=YOUR_DEEPL_API_KEY
+ * mvn auto-translate:translate -Dtranslate.serverId=deepl
  * </pre>
  * </p>
  */
@@ -36,29 +42,61 @@ import org.apache.maven.plugins.annotations.Parameter;
 public class TranslateMojo extends AbstractMojo {
 
 	/**
+	 * Server ID for retrieving DeepL API key from Maven settings.xml.
+	 *
+	 * <p>
+	 * The API key should be stored in the password field of the server configuration.
+	 * Example settings.xml:
+	 * <pre>{@code
+	 * <settings>
+	 *   <servers>
+	 *     <server>
+	 *       <id>deepl</id>
+	 *       <password>YOUR_DEEPL_API_KEY</password>
+	 *     </server>
+	 *   </servers>
+	 * </settings>
+	 * }</pre>
+	 * </p>
+	 */
+	@Parameter(property = "translate.serverId", defaultValue = "deepl")
+	private String serverId;
+
+	/**
 	 * DeepL API key for authentication.
 	 *
 	 * <p>
-	 * This parameter is required. You can pass it via command line:
-	 * <code>-Dtranslate.apiKey=YOUR_KEY</code> or configure it in the plugin configuration.
-	 * For security, consider using environment variables:
-	 * <code>${env.DEEPL_API_KEY}</code>
+	 * This parameter is optional and can be used to directly provide the API key
+	 * instead of using server credentials. If both serverId and apiKey are provided,
+	 * apiKey takes precedence.
 	 * </p>
 	 */
-	@Parameter(name = "apiKey", property = "translate.apiKey", required = true)
-	private String _apiKey;
+	@Parameter(property = "translate.apiKey")
+	private String apiKey;
+
+	/**
+	 * Maven settings, injected by Maven.
+	 */
+	@Parameter(defaultValue = "${settings}", readonly = true, required = true)
+	private Settings settings;
+
+	/**
+	 * Settings decrypter component for decrypting passwords from settings.xml.
+	 */
+	@Component
+	private SettingsDecrypter settingsDecrypter;
 
 	/**
 	 * Source language code (e.g., "en", "de", "fr").
 	 */
-	@Parameter(name = "sourceLang", property = "translate.sourceLang", defaultValue = "en")
-	private String _sourceLang;
+	@Parameter(property = "translate.sourceLang", defaultValue = "en")
+	private String sourceLang;
 
 	/**
 	 * Comma-separated list of target language codes (e.g., "de,fr,es").
 	 */
-	@Parameter(name = "targetLangs", property = "translate.targetLangs", defaultValue = "de")
-	private String _targetLangs;
+	@Parameter(property = "translate.targetLangs", defaultValue = "de")
+	private String targetLangs;
 
 	/**
 	 * Directory containing the HTML templates.
@@ -70,8 +108,8 @@ public class TranslateMojo extends AbstractMojo {
 	 * <code>templates/de/index.html</code>, <code>templates/fr/index.html</code>, etc.
 	 * </p>
 	 */
-	@Parameter(name = "templateDirectory", property = "translate.templateDirectory", defaultValue = "${project.basedir}/templates")
-	private File _templateDirectory;
+	@Parameter(property = "translate.templateDirectory", defaultValue = "${project.basedir}/templates")
+	private File templateDirectory;
 
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
@@ -79,20 +117,23 @@ public class TranslateMojo extends AbstractMojo {
 			getLog().info("========================================");
 			getLog().info("Starting HTML translation");
 			getLog().info("========================================");
-			getLog().info("Source language: " + _sourceLang);
-			getLog().info("Target languages: " + _targetLangs);
-			getLog().info("Template directory: " + _templateDirectory.getAbsolutePath());
+			getLog().info("Source language: " + sourceLang);
+			getLog().info("Target languages: " + targetLangs);
+			getLog().info("Template directory: " + templateDirectory.getAbsolutePath());
 			getLog().info("");
+
+			// Resolve API key from server credentials if not directly provided
+			String resolvedApiKey = resolveApiKey();
 
 			List<String> destLangs = parseTargetLanguages();
 
 			// Create and run translator
 			de.haumacher.autotranslate.html.Translator translator =
 				new de.haumacher.autotranslate.html.Translator(
-					_apiKey,
-					_sourceLang,
+					resolvedApiKey,
+					sourceLang,
 					destLangs,
-					_templateDirectory
+					templateDirectory
 				);
 			translator.run();
 
@@ -106,8 +147,49 @@ public class TranslateMojo extends AbstractMojo {
 		}
 	}
 
+	/**
+	 * Resolves the DeepL API key from either direct configuration or server credentials.
+	 *
+	 * @return The resolved API key
+	 * @throws MojoExecutionException If API key cannot be resolved
+	 */
+	private String resolveApiKey() throws MojoExecutionException {
+		// If apiKey is directly provided, use it
+		if (apiKey != null && !apiKey.trim().isEmpty()) {
+			getLog().debug("Using directly configured API key");
+			return apiKey;
+		}
+
+		// Otherwise, retrieve from server credentials
+		getLog().debug("Retrieving API key from server: " + serverId);
+
+		Server server = settings.getServer(serverId);
+		if (server == null) {
+			throw new MojoExecutionException(
+				"Server '" + serverId + "' not found in settings.xml. " +
+				"Please configure the server with your DeepL API key in the password field, " +
+				"or provide the API key directly using -Dtranslate.apiKey=YOUR_KEY"
+			);
+		}
+
+		// Decrypt the password (API key)
+		SettingsDecryptionResult decryptionResult = settingsDecrypter.decrypt(
+			new DefaultSettingsDecryptionRequest(server)
+		);
+
+		Server decryptedServer = decryptionResult.getServer();
+		if (decryptedServer == null || decryptedServer.getPassphrase() == null || decryptedServer.getPassphrase().trim().isEmpty()) {
+			throw new MojoExecutionException(
+				"No passphrase found for server '" + serverId + "' in settings.xml. " +
+				"Please configure the DeepL API key in the passphrase field."
+			);
+		}
+
+		return decryptedServer.getPassphrase();
+	}
+
 	private List<String> parseTargetLanguages() {
-		return Arrays.stream(_targetLangs.split(","))
+		return Arrays.stream(targetLangs.split(","))
 			.map(String::strip)
 			.filter(s -> !s.isEmpty())
 			.toList();

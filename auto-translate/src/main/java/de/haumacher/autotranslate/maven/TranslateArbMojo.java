@@ -7,9 +7,15 @@ import java.util.List;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.settings.Server;
+import org.apache.maven.settings.Settings;
+import org.apache.maven.settings.crypto.DefaultSettingsDecryptionRequest;
+import org.apache.maven.settings.crypto.SettingsDecrypter;
+import org.apache.maven.settings.crypto.SettingsDecryptionResult;
 
 import com.deepl.api.DeepLClient;
 import com.deepl.api.Translator;
@@ -44,17 +50,49 @@ import de.haumacher.autotranslate.arb.ArbTranslator;
 public class TranslateArbMojo extends AbstractMojo {
 
 	/**
+	 * Server ID for retrieving DeepL API key from Maven settings.xml.
+	 *
+	 * <p>
+	 * The API key should be stored in the password field of the server configuration.
+	 * Example settings.xml:
+	 * <pre>{@code
+	 * <settings>
+	 *   <servers>
+	 *     <server>
+	 *       <id>deepl</id>
+	 *       <password>YOUR_DEEPL_API_KEY</password>
+	 *     </server>
+	 *   </servers>
+	 * </settings>
+	 * }</pre>
+	 * </p>
+	 */
+	@Parameter(property = "translate.arb.serverId", defaultValue = "deepl")
+	private String serverId;
+
+	/**
 	 * DeepL API key for authentication.
 	 *
 	 * <p>
-	 * This parameter is required. You can pass it via command line:
-	 * <code>-Dtranslate.arb.apiKey=YOUR_KEY</code> or configure it in the plugin configuration.
-	 * For security, consider using environment variables:
-	 * <code>${env.DEEPL_API_KEY}</code>
+	 * This parameter is optional and can be used to directly provide the API key
+	 * instead of using server credentials. If both serverId and apiKey are provided,
+	 * apiKey takes precedence.
 	 * </p>
 	 */
-	@Parameter(name = "apiKey", property = "translate.arb.apiKey", required = true)
-	private String _apiKey;
+	@Parameter(property = "translate.arb.apiKey")
+	private String apiKey;
+
+	/**
+	 * Maven settings, injected by Maven.
+	 */
+	@Parameter(defaultValue = "${settings}", readonly = true, required = true)
+	private Settings settings;
+
+	/**
+	 * Settings decrypter component for decrypting passwords from settings.xml.
+	 */
+	@Component
+	private SettingsDecrypter settingsDecrypter;
 
 	/**
 	 * Source ARB file to translate.
@@ -65,8 +103,8 @@ public class TranslateArbMojo extends AbstractMojo {
 	 * The source language is automatically extracted from the filename.
 	 * </p>
 	 */
-	@Parameter(name = "sourceFile", property = "translate.arb.sourceFile", required = true)
-	private File _sourceFile;
+	@Parameter(property = "translate.arb.sourceFile", required = true)
+	private File sourceFile;
 
 	/**
 	 * Comma-separated list of target language codes (e.g., "de,fr,es").
@@ -76,8 +114,8 @@ public class TranslateArbMojo extends AbstractMojo {
 	 * with the appropriate language suffix (e.g., {@code app_de.arb}, {@code app_fr.arb}).
 	 * </p>
 	 */
-	@Parameter(name = "targetLangs", property = "translate.arb.targetLangs", required = true)
-	private String _targetLangs;
+	@Parameter(property = "translate.arb.targetLangs", required = true)
+	private String targetLangs;
 
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
@@ -87,34 +125,37 @@ public class TranslateArbMojo extends AbstractMojo {
 			getLog().info("========================================");
 
 			// Validate source file
-			if (!_sourceFile.exists()) {
+			if (!sourceFile.exists()) {
 				throw new MojoExecutionException(
-					"Source file not found: " + _sourceFile.getAbsolutePath()
+					"Source file not found: " + sourceFile.getAbsolutePath()
 				);
 			}
 
 			// Extract source language from filename
-			String sourceLang = ArbTranslator.extractLanguage(_sourceFile);
+			String sourceLang = ArbTranslator.extractLanguage(sourceFile);
 			if (sourceLang == null) {
 				throw new MojoExecutionException(
-					"Cannot determine source language from filename: " + _sourceFile.getName() +
+					"Cannot determine source language from filename: " + sourceFile.getName() +
 					". Expected format: basename_lang.arb (e.g., app_en.arb)"
 				);
 			}
 
 			List<String> targetLangsList = parseTargetLanguages();
 
-			getLog().info("Source file: " + _sourceFile.getAbsolutePath());
+			getLog().info("Source file: " + sourceFile.getAbsolutePath());
 			getLog().info("Source language: " + sourceLang);
 			getLog().info("Target languages: " + targetLangsList);
 			getLog().info("");
 
+			// Resolve API key from server credentials if not directly provided
+			String resolvedApiKey = resolveApiKey();
+
 			// Create DeepL translator
-			Translator deeplTranslator = new DeepLClient(_apiKey);
+			Translator deeplTranslator = new DeepLClient(resolvedApiKey);
 
 			// Create and run ARB translator
 			ArbTranslator arbTranslator = new ArbTranslator(deeplTranslator);
-			arbTranslator.translate(_sourceFile, targetLangsList);
+			arbTranslator.translate(sourceFile, targetLangsList);
 
 			getLog().info("");
 			getLog().info("========================================");
@@ -127,8 +168,49 @@ public class TranslateArbMojo extends AbstractMojo {
 		}
 	}
 
+	/**
+	 * Resolves the DeepL API key from either direct configuration or server credentials.
+	 *
+	 * @return The resolved API key
+	 * @throws MojoExecutionException If API key cannot be resolved
+	 */
+	private String resolveApiKey() throws MojoExecutionException {
+		// If apiKey is directly provided, use it
+		if (apiKey != null && !apiKey.trim().isEmpty()) {
+			getLog().debug("Using directly configured API key");
+			return apiKey;
+		}
+
+		// Otherwise, retrieve from server credentials
+		getLog().debug("Retrieving API key from server: " + serverId);
+
+		Server server = settings.getServer(serverId);
+		if (server == null) {
+			throw new MojoExecutionException(
+				"Server '" + serverId + "' not found in settings.xml. " +
+				"Please configure the server with your DeepL API key in the password field, " +
+				"or provide the API key directly using -Dtranslate.arb.apiKey=YOUR_KEY"
+			);
+		}
+
+		// Decrypt the password (API key)
+		SettingsDecryptionResult decryptionResult = settingsDecrypter.decrypt(
+			new DefaultSettingsDecryptionRequest(server)
+		);
+
+		Server decryptedServer = decryptionResult.getServer();
+		if (decryptedServer == null || decryptedServer.getPassphrase() == null || decryptedServer.getPassphrase().trim().isEmpty()) {
+			throw new MojoExecutionException(
+				"No passphrase found for server '" + serverId + "' in settings.xml. " +
+				"Please configure the DeepL API key in the passphrase field."
+			);
+		}
+
+		return decryptedServer.getPassphrase();
+	}
+
 	private List<String> parseTargetLanguages() {
-		return Arrays.stream(_targetLangs.split(","))
+		return Arrays.stream(targetLangs.split(","))
 			.map(String::strip)
 			.filter(s -> !s.isEmpty())
 			.toList();

@@ -24,51 +24,51 @@ import org.w3c.dom.Text;
  * translation, a new structurally identical template must be created containing
  * the translated text. Things get tricky, if the text contains interleaving
  * markup such as:
- * 
- * <xmp>
+ *
+ * <pre>{@code
  * <p data-tx="t0001">
  * Some text <a th:href="@{/some-url}">with markup</a>.
  * <p>
- * </xmp>
- * 
+ * }</pre>
+ *
  * Such markup should not be extracted and should not be part of the
  * translation. In the above example, the extracted properties file should look
  * like as follows:
- * 
- * <xmp>t0001=Some text <x1>with markup</x1>.</xmp>
- * 
+ *
+ * <pre>{@code t0001=Some text <x1>with markup</x1>.}</pre>
+ *
  * The translation service should produce a translation (e.g. for German) in the
  * following form:
- * 
- * <xmp> t0001=Etwas Text <x1>mit Markup</x1>. </xmp>
- * 
+ *
+ * <pre>{@code t0001=Etwas Text <x1>mit Markup</x1>. }</pre>
+ *
  * <p>
  * This can now be transformed back to a translated template by identifying the
- * nth internal tag with the tag <code>xn</code> in the translated text.
+ * nth internal tag with the tag {@code <xn>} in the translated text.
  * </p>
- * 
+ *
  * <p>
- * In the example above, the internal tag (<code>a</code>) directly contained
+ * In the example above, the internal tag ({@code <a>}) directly contained
  * some text. Things get even more complicated, if there is a deeply nested
  * structure of sub-tags, only some of them containing text.
  * </p>
- * 
- * <xmp>
+ *
+ * <pre>{@code
  * <p data-tx="t0002">
  * An example <b>with <th:block th:if="..."><i>considerable</i></th:block>
  * nesting</b>.
  * </p>
- * </xmp>
- * 
+ * }</pre>
+ *
  * When text contains markup with deeply nested structure as in the example
  * above, each tag that has text siblings and each tag that directly contains
  * text is mapped to an identifying tag in the text to translate:
- * 
- * <xmp> t0002=An example <x1>with <x2>considerable</x2> nesting</x1>. </xmp>
- * 
- * Here, the original tag <code>b</code> is represented by <code>x1</code> and
- * <code>i</code> is represented by <code>x2</code>, while the tag
- * <code>th:block</code> has no representation in the text to translate, since
+ *
+ * <pre>{@code t0002=An example <x1>with <x2>considerable</x2> nesting</x1>. }</pre>
+ *
+ * Here, the original tag {@code <b>} is represented by {@code <x1>} and
+ * {@code <i>} is represented by {@code <x2>}, while the tag
+ * {@code <th:block>} has no representation in the text to translate, since
  * it neither directly contains text nor is it adjacent to translated text. This
  * approach considerably reduces structure in translated text, reducing size of
  * translation input and output and reduces potential errors during translation.
