@@ -89,7 +89,7 @@ With `auto-translate`, write templates in your native language without worrying 
 4. Generates locale-specific templates automatically
 5. Supports incremental updates (only translates changed content)
 
-### Example Process
+### How It Works
 
 Original template `/WEB-INF/templates/en/home.html`:
 ```html
@@ -101,16 +101,16 @@ Original template `/WEB-INF/templates/en/home.html`:
 <p data-tx="t0001:a1b2c3d4">To install PhoneBlock, you need a <a th:href="@{/link/fritzbox}">FRITZ!Box Internet router from AVM</a> and a PhoneBlock account.</p>
 ```
 
-**Step 2:** Text is extracted (in-memory, no intermediate files) with markup converted to placeholders:
+**Step 2:** Text is extracted in-memory with markup converted to placeholders:
 ```
-t0001=To install PhoneBlock, you need a <x1>FRITZ!Box Internet router from AVM</x1> and a PhoneBlock account.
+To install PhoneBlock, you need a <x1>FRITZ!Box Internet router from AVM</x1> and a PhoneBlock account.
 ```
 
 The `<a>` tag becomes `<x1>` - preserving sentence structure while protecting technical markup.
 
 **Step 3:** Text is translated via DeepL API to German:
 ```
-t0001=Um PhoneBlock zu installieren, benötigst Du einen <x1>FRITZ!Box Internet-Router von AVM</x1> und einen PhoneBlock-Account.
+Um PhoneBlock zu installieren, benötigst Du einen <x1>FRITZ!Box Internet-Router von AVM</x1> und einen PhoneBlock-Account.
 ```
 
 **Step 4:** German template is generated at `/WEB-INF/templates/de/home.html`:
@@ -119,6 +119,8 @@ t0001=Um PhoneBlock zu installieren, benötigst Du einen <x1>FRITZ!Box Internet-
 ```
 
 The `<x1>` placeholder is replaced with the original `<a>` tag, preserving all technical attributes.
+
+**All processing happens in-memory - no intermediate properties files are created.**
 
 ### Incremental Translation
 

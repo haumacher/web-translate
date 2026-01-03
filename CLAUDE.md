@@ -52,9 +52,7 @@ mvn auto-translate:translate \
   -Dtranslate.apiKey=YOUR_DEEPL_API_KEY \
   -Dtranslate.sourceLang=en \
   -Dtranslate.targetLangs=de,fr,es \
-  -Dtranslate.templateDirectory=./templates \
-  -Dtranslate.propertiesDirectory=./properties \
-  -Dtranslate.propertiesCharset=UTF-8
+  -Dtranslate.templateDirectory=./templates
 ```
 
 Or in your `pom.xml` (requires `<executions>` block to run automatically):
@@ -74,8 +72,6 @@ Or in your `pom.xml` (requires `<executions>` block to run automatically):
         <sourceLang>en</sourceLang>
         <targetLangs>de,fr</targetLangs>
         <templateDirectory>${project.basedir}/templates</templateDirectory>
-        <propertiesDirectory>${project.basedir}/properties</propertiesDirectory>
-        <propertiesCharset>UTF-8</propertiesCharset>
       </configuration>
     </execution>
   </executions>
@@ -86,8 +82,6 @@ Or in your `pom.xml` (requires `<executions>` block to run automatically):
 - `sourceLang`: `en`
 - `targetLangs`: `de`
 - `templateDirectory`: `${project.basedir}/templates`
-- `propertiesDirectory`: `${project.basedir}/properties`
-- `propertiesCharset`: `UTF-8`
 
 **Directory Structure Expected:**
 ```
@@ -95,13 +89,11 @@ templates/
   en/              # Source language templates
     index.html
     about.html
-properties/
-  en/              # Generated source properties
-  de/              # Generated target properties
-  fr/              # Generated target properties
+  de/              # Generated German templates
+  fr/              # Generated French templates
 ```
 
-The Maven goal automatically runs all three phases (extract → translate → synthesize) in sequence.
+The Maven goal translates HTML files directly without creating intermediate properties files. It uses CRC checksums in `data-tx` attributes for incremental translation.
 
 ### Java Main Class (Alternative)
 
