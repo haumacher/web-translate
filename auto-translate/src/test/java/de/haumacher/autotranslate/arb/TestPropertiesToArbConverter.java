@@ -62,10 +62,11 @@ public class TestPropertiesToArbConverter {
 			writer.write("special=Kostet €10,00\n");
 		}
 
-		// Convert to ARB
+		// Convert to ARB using configured charset
 		File arbFile = new File(_tempDir, "app_de.arb");
 		PropertiesToArbConverter converter = new PropertiesToArbConverter();
-		converter.convert(propertiesFile, arbFile, "de", StandardCharsets.UTF_8);
+		converter.setCharset(StandardCharsets.UTF_8);
+		converter.convert(propertiesFile, arbFile, "de");
 
 		// Verify the ARB file
 		assertTrue(arbFile.exists(), "ARB file should be created");
@@ -158,5 +159,58 @@ public class TestPropertiesToArbConverter {
 		assertEquals("Column1\tColumn2\tColumn3", bundle.getResource("tab").getValue());
 		assertEquals("Key: Value", bundle.getResource("colon").getValue());
 		assertEquals("A = B", bundle.getResource("equals").getValue());
+	}
+
+	@Test
+	public void testLocaleExtractionFromFilename() throws IOException {
+		// Create a test properties file with locale in filename
+		File propertiesFile = new File(_tempDir, "messages_fr.properties");
+		try (FileWriter writer = new FileWriter(propertiesFile)) {
+			writer.write("greeting=Bonjour!\n");
+		}
+
+		// Convert to ARB without specifying locale (should extract from filename)
+		File arbFile = new File(_tempDir, "app_fr.arb");
+		PropertiesToArbConverter converter = new PropertiesToArbConverter();
+		converter.convert(propertiesFile, arbFile); // No locale parameter
+
+		// Verify the ARB file
+		ArbParser parser = new ArbParser();
+		ArbBundle bundle = parser.parse(arbFile);
+
+		assertEquals("fr", bundle.getLocale(), "Locale should be extracted from filename");
+		assertEquals("Bonjour!", bundle.getResource("greeting").getValue());
+	}
+
+	@Test
+	public void testLocaleExtractionWithRegion() throws IOException {
+		// Create a test properties file with locale and region in filename
+		File propertiesFile = new File(_tempDir, "strings_en_US.properties");
+		try (FileWriter writer = new FileWriter(propertiesFile)) {
+			writer.write("color=Color\n");
+		}
+
+		// Convert to ARB without specifying locale
+		File arbFile = new File(_tempDir, "app_en_US.arb");
+		PropertiesToArbConverter converter = new PropertiesToArbConverter();
+		converter.convert(propertiesFile, arbFile);
+
+		// Verify the ARB file
+		ArbParser parser = new ArbParser();
+		ArbBundle bundle = parser.parse(arbFile);
+
+		assertEquals("en_US", bundle.getLocale(), "Locale with region should be extracted");
+		assertEquals("Color", bundle.getResource("color").getValue());
+	}
+
+	@Test
+	public void testExtractLanguageStaticMethod() {
+		// Test the static extractLanguage method
+		assertEquals("en", PropertiesToArbConverter.extractLanguage(new File("messages_en.properties")));
+		assertEquals("de", PropertiesToArbConverter.extractLanguage(new File("strings_de.properties")));
+		assertEquals("fr_FR", PropertiesToArbConverter.extractLanguage(new File("app_fr_FR.properties")));
+		assertEquals("en_US", PropertiesToArbConverter.extractLanguage(new File("labels_en_US.properties")));
+		assertEquals(null, PropertiesToArbConverter.extractLanguage(new File("messages.properties")));
+		assertEquals(null, PropertiesToArbConverter.extractLanguage(new File("nolocale.properties")));
 	}
 }
