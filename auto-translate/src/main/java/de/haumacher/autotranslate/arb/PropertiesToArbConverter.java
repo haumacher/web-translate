@@ -278,71 +278,132 @@ public class PropertiesToArbConverter {
 	 * Command-line interface for converting properties files to ARB format.
 	 *
 	 * <p>
-	 * Usage: {@code java PropertiesToArbConverter <properties-file> [arb-file] [locale] [charset]}
+	 * Usage: {@code java PropertiesToArbConverter [--charset CHARSET] [--locale LOCALE] <properties-file>...}
 	 * </p>
 	 *
 	 * <p>
-	 * If arb-file is omitted, the output filename will be automatically generated from the
-	 * input filename by replacing the .properties extension with .arb.
-	 * If locale is omitted, it will be extracted from the filename.
-	 * If charset is omitted, the default Properties.load() behavior is used (ISO-8859-1 with Unicode escapes).
+	 * Options:
+	 * <ul>
+	 *   <li>{@code --charset CHARSET} - Charset to use for reading properties files (default: ISO-8859-1 with Unicode escapes)</li>
+	 *   <li>{@code --locale LOCALE} - Locale identifier to use for all files (default: extract from filename)</li>
+	 * </ul>
+	 * </p>
+	 *
+	 * <p>
+	 * All non-option arguments are treated as properties files to convert.
+	 * Output files are automatically generated with .arb extension in the same directory.
 	 * </p>
 	 *
 	 * @param args Command-line arguments
 	 */
 	public static void main(String[] args) {
 		if (args.length < 1) {
-			System.err.println("Usage: PropertiesToArbConverter <properties-file> [arb-file] [locale] [charset]");
-			System.err.println();
-			System.err.println("Examples:");
-			System.err.println("  PropertiesToArbConverter messages_en.properties");
-			System.err.println("  PropertiesToArbConverter messages_en.properties app_en.arb");
-			System.err.println("  PropertiesToArbConverter messages_en.properties app_en.arb en");
-			System.err.println("  PropertiesToArbConverter messages_en.properties app_en.arb en UTF-8");
-			System.err.println("  PropertiesToArbConverter messages_en.properties app_en.arb en ISO-8859-1");
-			System.err.println();
-			System.err.println("If arb-file is omitted, output will be <basename>.arb in the same directory.");
-			System.err.println("If locale is omitted, it will be extracted from the properties filename.");
-			System.err.println("If charset is omitted, default Properties.load() is used (ISO-8859-1 + Unicode escapes).");
+			printUsage();
 			System.exit(1);
 		}
 
-		File propertiesFile = new File(args[0]);
-		File arbFile = args.length > 1 ? new File(args[1]) : null;
-		String locale = args.length > 2 ? args[2] : null;
-		Charset charset = args.length > 3 ? Charset.forName(args[3]) : null;
+		// Parse options
+		String locale = null;
+		Charset charset = null;
+		java.util.List<String> files = new java.util.ArrayList<>();
 
-		if (!propertiesFile.exists()) {
-			System.err.println("Error: Properties file not found: " + propertiesFile);
-			System.exit(1);
-		}
-
-		try {
-			PropertiesToArbConverter converter = new PropertiesToArbConverter();
-			if (charset != null) {
-				converter.setCharset(charset);
-			}
-
-			File effectiveArbFile;
-			if (arbFile != null) {
-				converter.convert(propertiesFile, arbFile, locale);
-				effectiveArbFile = arbFile;
+		for (int i = 0; i < args.length; i++) {
+			String arg = args[i];
+			if (arg.equals("--charset")) {
+				if (i + 1 >= args.length) {
+					System.err.println("Error: --charset option requires a value");
+					printUsage();
+					System.exit(1);
+				}
+				try {
+					charset = Charset.forName(args[++i]);
+				} catch (IllegalArgumentException e) {
+					System.err.println("Error: Invalid charset: " + args[i]);
+					System.exit(1);
+				}
+			} else if (arg.equals("--locale")) {
+				if (i + 1 >= args.length) {
+					System.err.println("Error: --locale option requires a value");
+					printUsage();
+					System.exit(1);
+				}
+				locale = args[++i];
+			} else if (arg.startsWith("--")) {
+				System.err.println("Error: Unknown option: " + arg);
+				printUsage();
+				System.exit(1);
 			} else {
-				converter.convert(propertiesFile);
-				effectiveArbFile = createArbFileName(propertiesFile);
+				files.add(arg);
 			}
+		}
 
-			String effectiveLocale = locale != null ? locale : extractLanguage(propertiesFile);
-			System.out.println("Successfully converted " + propertiesFile + " to " + effectiveArbFile);
-			System.out.println("Locale: " + effectiveLocale);
-			System.out.println("Charset: " + (charset != null ? charset.toString() : "default (ISO-8859-1 + Unicode escapes)"));
-		} catch (IllegalArgumentException e) {
-			System.err.println("Error: " + e.getMessage());
-			System.exit(1);
-		} catch (IOException e) {
-			System.err.println("Error during conversion: " + e.getMessage());
-			e.printStackTrace();
+		if (files.isEmpty()) {
+			System.err.println("Error: No properties files specified");
+			printUsage();
 			System.exit(1);
 		}
+
+		// Create converter with configured options
+		PropertiesToArbConverter converter = new PropertiesToArbConverter();
+		if (charset != null) {
+			converter.setCharset(charset);
+		}
+
+		// Convert all files
+		int successCount = 0;
+		int failCount = 0;
+
+		for (String filename : files) {
+			File propertiesFile = new File(filename);
+
+			if (!propertiesFile.exists()) {
+				System.err.println("Error: Properties file not found: " + propertiesFile);
+				failCount++;
+				continue;
+			}
+
+			try {
+				File arbFile = createArbFileName(propertiesFile);
+				converter.convert(propertiesFile, arbFile, locale);
+				String effectiveLocale = locale != null ? locale : extractLanguage(propertiesFile);
+
+				System.out.println("Successfully converted " + propertiesFile + " to " + arbFile);
+				System.out.println("  Locale: " + effectiveLocale);
+				System.out.println("  Charset: " + (charset != null ? charset.toString() : "default (ISO-8859-1 + Unicode escapes)"));
+				successCount++;
+			} catch (IllegalArgumentException e) {
+				System.err.println("Error converting " + propertiesFile + ": " + e.getMessage());
+				failCount++;
+			} catch (IOException e) {
+				System.err.println("Error converting " + propertiesFile + ": " + e.getMessage());
+				e.printStackTrace();
+				failCount++;
+			}
+		}
+
+		// Print summary
+		System.out.println();
+		System.out.println("Conversion complete: " + successCount + " succeeded, " + failCount + " failed");
+
+		if (failCount > 0) {
+			System.exit(1);
+		}
+	}
+
+	private static void printUsage() {
+		System.err.println("Usage: PropertiesToArbConverter [OPTIONS] <properties-file>...");
+		System.err.println();
+		System.err.println("Options:");
+		System.err.println("  --charset CHARSET   Charset for reading properties files (default: ISO-8859-1 with Unicode escapes)");
+		System.err.println("  --locale LOCALE     Locale identifier for all files (default: extract from filename)");
+		System.err.println();
+		System.err.println("Examples:");
+		System.err.println("  PropertiesToArbConverter app_en.properties");
+		System.err.println("  PropertiesToArbConverter app_*.properties");
+		System.err.println("  PropertiesToArbConverter --charset UTF-8 app_en.properties app_de.properties app_fr.properties");
+		System.err.println("  PropertiesToArbConverter --locale en --charset UTF-8 application.properties");
+		System.err.println();
+		System.err.println("Output files are automatically generated with .arb extension in the same directory.");
+		System.err.println("Locale is extracted from filename (e.g., app_en.properties -> locale 'en').");
 	}
 }
