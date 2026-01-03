@@ -213,4 +213,73 @@ public class TestPropertiesToArbConverter {
 		assertEquals(null, PropertiesToArbConverter.extractLanguage(new File("messages.properties")));
 		assertEquals(null, PropertiesToArbConverter.extractLanguage(new File("nolocale.properties")));
 	}
+
+	@Test
+	public void testAutomaticOutputFilename() throws IOException {
+		// Create a test properties file
+		File propertiesFile = new File(_tempDir, "app_es.properties");
+		try (FileWriter writer = new FileWriter(propertiesFile)) {
+			writer.write("greeting=¡Hola!\n");
+			writer.write("farewell=¡Adiós!\n");
+		}
+
+		// Convert without specifying output file (should auto-generate)
+		PropertiesToArbConverter converter = new PropertiesToArbConverter();
+		converter.convert(propertiesFile);
+
+		// Verify the ARB file was created with automatic filename
+		File expectedArbFile = new File(_tempDir, "app_es.arb");
+		assertTrue(expectedArbFile.exists(), "ARB file should be created with automatic filename");
+
+		// Parse and verify contents
+		ArbParser parser = new ArbParser();
+		ArbBundle bundle = parser.parse(expectedArbFile);
+
+		assertEquals("es", bundle.getLocale(), "Locale should be extracted from filename");
+		assertEquals("¡Hola!", bundle.getResource("greeting").getValue());
+		assertEquals("¡Adiós!", bundle.getResource("farewell").getValue());
+	}
+
+	@Test
+	public void testCreateArbFileNameStaticMethod() {
+		// Test the static createArbFileName method
+		assertEquals("messages_en.arb",
+			PropertiesToArbConverter.createArbFileName(new File("messages_en.properties")).getName());
+		assertEquals("app_de.arb",
+			PropertiesToArbConverter.createArbFileName(new File("app_de.properties")).getName());
+		assertEquals("strings_fr_FR.arb",
+			PropertiesToArbConverter.createArbFileName(new File("strings_fr_FR.properties")).getName());
+
+		// Test with path
+		File fileWithPath = new File("/path/to/messages_en.properties");
+		File result = PropertiesToArbConverter.createArbFileName(fileWithPath);
+		assertEquals("messages_en.arb", result.getName());
+		assertEquals("/path/to", result.getParent());
+	}
+
+	@Test
+	public void testAutomaticOutputFilenameWithCharsetConfiguration() throws IOException {
+		// Create a test properties file with special characters
+		File propertiesFile = new File(_tempDir, "messages_pt.properties");
+		try (FileWriter writer = new FileWriter(propertiesFile, StandardCharsets.UTF_8)) {
+			writer.write("greeting=Olá!\n");
+			writer.write("farewell=Tchau!\n");
+		}
+
+		// Convert with configured charset but automatic filename
+		PropertiesToArbConverter converter = new PropertiesToArbConverter();
+		converter.setCharset(StandardCharsets.UTF_8);
+		converter.convert(propertiesFile);
+
+		// Verify the ARB file
+		File expectedArbFile = new File(_tempDir, "messages_pt.arb");
+		assertTrue(expectedArbFile.exists(), "ARB file should be created");
+
+		ArbParser parser = new ArbParser();
+		ArbBundle bundle = parser.parse(expectedArbFile);
+
+		assertEquals("pt", bundle.getLocale());
+		assertEquals("Olá!", bundle.getResource("greeting").getValue());
+		assertEquals("Tchau!", bundle.getResource("farewell").getValue());
+	}
 }

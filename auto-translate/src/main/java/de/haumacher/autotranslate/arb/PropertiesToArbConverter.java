@@ -23,6 +23,15 @@ import de.haumacher.autotranslate.arb.model.ArbResource;
  * </p>
  *
  * <p>
+ * Example usage with minimal configuration:
+ * <pre>
+ * PropertiesToArbConverter converter = new PropertiesToArbConverter();
+ * converter.convert(new File("messages_en.properties"));
+ * // Creates messages_en.arb in the same directory
+ * </pre>
+ * </p>
+ *
+ * <p>
  * Example usage with explicit configuration:
  * <pre>
  * PropertiesToArbConverter converter = new PropertiesToArbConverter();
@@ -35,8 +44,11 @@ import de.haumacher.autotranslate.arb.model.ArbResource;
  * </p>
  *
  * <p>
- * The converter can automatically extract the locale from the filename if not explicitly specified.
- * For example, {@code messages_en.properties} will use locale "en".
+ * The converter can automatically:
+ * <ul>
+ *   <li>Extract the locale from the filename (e.g., {@code messages_en.properties} → locale "en")</li>
+ *   <li>Generate the output filename (e.g., {@code messages_en.properties} → {@code messages_en.arb})</li>
+ * </ul>
  * </p>
  *
  * <p>
@@ -127,6 +139,23 @@ public class PropertiesToArbConverter {
 	}
 
 	/**
+	 * Converts a properties file to ARB format with automatic output filename and locale detection.
+	 *
+	 * <p>
+	 * The output file will be created in the same directory as the input file with the .arb extension.
+	 * For example, {@code messages_en.properties} → {@code messages_en.arb}.
+	 * </p>
+	 *
+	 * @param propertiesFile The source properties file
+	 * @throws IOException If reading or writing fails
+	 * @throws IllegalArgumentException If locale cannot be extracted from filename
+	 */
+	public void convert(File propertiesFile) throws IOException {
+		File arbFile = createArbFileName(propertiesFile);
+		convert(propertiesFile, arbFile, null);
+	}
+
+	/**
 	 * Loads a properties file using the specified charset.
 	 *
 	 * @param file    The properties file to load
@@ -196,13 +225,42 @@ public class PropertiesToArbConverter {
 	}
 
 	/**
+	 * Creates an ARB filename from a properties filename by replacing the extension.
+	 *
+	 * <p>
+	 * Examples:
+	 * <ul>
+	 *   <li>{@code messages_en.properties} → {@code messages_en.arb}</li>
+	 *   <li>{@code /path/to/app_de.properties} → {@code /path/to/app_de.arb}</li>
+	 * </ul>
+	 * </p>
+	 *
+	 * @param propertiesFile The source properties file
+	 * @return The ARB file with the same basename but .arb extension
+	 */
+	public static File createArbFileName(File propertiesFile) {
+		String filename = propertiesFile.getName();
+		String baseName = filename.replaceFirst("\\.properties$", "");
+		String arbFileName = baseName + ".arb";
+
+		File parentDir = propertiesFile.getParentFile();
+		if (parentDir != null) {
+			return new File(parentDir, arbFileName);
+		} else {
+			return new File(arbFileName);
+		}
+	}
+
+	/**
 	 * Command-line interface for converting properties files to ARB format.
 	 *
 	 * <p>
-	 * Usage: {@code java PropertiesToArbConverter <properties-file> <arb-file> [locale] [charset]}
+	 * Usage: {@code java PropertiesToArbConverter <properties-file> [arb-file] [locale] [charset]}
 	 * </p>
 	 *
 	 * <p>
+	 * If arb-file is omitted, the output filename will be automatically generated from the
+	 * input filename by replacing the .properties extension with .arb.
 	 * If locale is omitted, it will be extracted from the filename.
 	 * If charset is omitted, UTF-8 will be used.
 	 * </p>
@@ -210,21 +268,23 @@ public class PropertiesToArbConverter {
 	 * @param args Command-line arguments
 	 */
 	public static void main(String[] args) {
-		if (args.length < 2) {
-			System.err.println("Usage: PropertiesToArbConverter <properties-file> <arb-file> [locale] [charset]");
+		if (args.length < 1) {
+			System.err.println("Usage: PropertiesToArbConverter <properties-file> [arb-file] [locale] [charset]");
 			System.err.println();
 			System.err.println("Examples:");
+			System.err.println("  PropertiesToArbConverter messages_en.properties");
 			System.err.println("  PropertiesToArbConverter messages_en.properties app_en.arb");
 			System.err.println("  PropertiesToArbConverter messages_en.properties app_en.arb en");
 			System.err.println("  PropertiesToArbConverter messages_en.properties app_en.arb en UTF-8");
 			System.err.println("  PropertiesToArbConverter messages_en.properties app_en.arb en ISO-8859-1");
 			System.err.println();
+			System.err.println("If arb-file is omitted, output will be <basename>.arb in the same directory.");
 			System.err.println("If locale is omitted, it will be extracted from the properties filename.");
 			System.exit(1);
 		}
 
 		File propertiesFile = new File(args[0]);
-		File arbFile = new File(args[1]);
+		File arbFile = args.length > 1 ? new File(args[1]) : null;
 		String locale = args.length > 2 ? args[2] : null;
 		Charset charset = args.length > 3 ? Charset.forName(args[3]) : StandardCharsets.UTF_8;
 
@@ -236,10 +296,18 @@ public class PropertiesToArbConverter {
 		try {
 			PropertiesToArbConverter converter = new PropertiesToArbConverter();
 			converter.setCharset(charset);
-			converter.convert(propertiesFile, arbFile, locale);
+
+			File effectiveArbFile;
+			if (arbFile != null) {
+				converter.convert(propertiesFile, arbFile, locale);
+				effectiveArbFile = arbFile;
+			} else {
+				converter.convert(propertiesFile);
+				effectiveArbFile = createArbFileName(propertiesFile);
+			}
 
 			String effectiveLocale = locale != null ? locale : extractLanguage(propertiesFile);
-			System.out.println("Successfully converted " + propertiesFile + " to " + arbFile);
+			System.out.println("Successfully converted " + propertiesFile + " to " + effectiveArbFile);
 			System.out.println("Locale: " + effectiveLocale);
 			System.out.println("Charset: " + charset);
 		} catch (IllegalArgumentException e) {
