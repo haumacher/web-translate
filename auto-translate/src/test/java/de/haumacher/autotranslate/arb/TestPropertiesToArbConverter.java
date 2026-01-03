@@ -26,7 +26,7 @@ public class TestPropertiesToArbConverter {
 	public void testBasicConversion() throws IOException {
 		// Create a test properties file
 		File propertiesFile = new File(_tempDir, "messages_en.properties");
-		try (FileWriter writer = new FileWriter(propertiesFile)) {
+		try (FileWriter writer = new FileWriter(propertiesFile, StandardCharsets.UTF_8)) {
 			writer.write("greeting=Hello, World!\n");
 			writer.write("farewell=Goodbye!\n");
 			writer.write("welcome=Welcome {username}!\n");
@@ -35,6 +35,7 @@ public class TestPropertiesToArbConverter {
 		// Convert to ARB
 		File arbFile = new File(_tempDir, "app_en.arb");
 		PropertiesToArbConverter converter = new PropertiesToArbConverter();
+		converter.setCharset(StandardCharsets.UTF_8);
 		converter.convert(propertiesFile, arbFile, "en");
 
 		// Verify the ARB file was created
@@ -85,7 +86,7 @@ public class TestPropertiesToArbConverter {
 	public void testConversionWithComplexKeys() throws IOException {
 		// Create a test properties file with complex keys
 		File propertiesFile = new File(_tempDir, "messages_en.properties");
-		try (FileWriter writer = new FileWriter(propertiesFile)) {
+		try (FileWriter writer = new FileWriter(propertiesFile, StandardCharsets.UTF_8)) {
 			writer.write("user.profile.name=Name\n");
 			writer.write("user.profile.email=Email Address\n");
 			writer.write("messages.count={count, plural, =0{no messages} =1{1 message} other{{count} messages}}\n");
@@ -94,6 +95,7 @@ public class TestPropertiesToArbConverter {
 		// Convert to ARB
 		File arbFile = new File(_tempDir, "app_en.arb");
 		PropertiesToArbConverter converter = new PropertiesToArbConverter();
+		converter.setCharset(StandardCharsets.UTF_8);
 		converter.convert(propertiesFile, arbFile, "en");
 
 		// Verify the ARB file
@@ -113,13 +115,14 @@ public class TestPropertiesToArbConverter {
 	public void testEmptyPropertiesFile() throws IOException {
 		// Create an empty properties file
 		File propertiesFile = new File(_tempDir, "empty.properties");
-		try (FileWriter writer = new FileWriter(propertiesFile)) {
+		try (FileWriter writer = new FileWriter(propertiesFile, StandardCharsets.UTF_8)) {
 			// Write nothing
 		}
 
 		// Convert to ARB
 		File arbFile = new File(_tempDir, "empty.arb");
 		PropertiesToArbConverter converter = new PropertiesToArbConverter();
+		converter.setCharset(StandardCharsets.UTF_8);
 		converter.convert(propertiesFile, arbFile, "en");
 
 		// Verify the ARB file
@@ -136,7 +139,7 @@ public class TestPropertiesToArbConverter {
 	public void testConversionWithEscapedCharacters() throws IOException {
 		// Create a test properties file with escaped characters
 		File propertiesFile = new File(_tempDir, "messages_en.properties");
-		try (FileWriter writer = new FileWriter(propertiesFile)) {
+		try (FileWriter writer = new FileWriter(propertiesFile, StandardCharsets.UTF_8)) {
 			writer.write("multiline=Line 1\\nLine 2\\nLine 3\n");
 			writer.write("tab=Column1\\tColumn2\\tColumn3\n");
 			writer.write("colon=Key\\: Value\n");
@@ -146,6 +149,7 @@ public class TestPropertiesToArbConverter {
 		// Convert to ARB
 		File arbFile = new File(_tempDir, "app_en.arb");
 		PropertiesToArbConverter converter = new PropertiesToArbConverter();
+		converter.setCharset(StandardCharsets.UTF_8);
 		converter.convert(propertiesFile, arbFile, "en");
 
 		// Verify the ARB file
@@ -165,13 +169,14 @@ public class TestPropertiesToArbConverter {
 	public void testLocaleExtractionFromFilename() throws IOException {
 		// Create a test properties file with locale in filename
 		File propertiesFile = new File(_tempDir, "messages_fr.properties");
-		try (FileWriter writer = new FileWriter(propertiesFile)) {
+		try (FileWriter writer = new FileWriter(propertiesFile, StandardCharsets.UTF_8)) {
 			writer.write("greeting=Bonjour!\n");
 		}
 
 		// Convert to ARB without specifying locale (should extract from filename)
 		File arbFile = new File(_tempDir, "app_fr.arb");
 		PropertiesToArbConverter converter = new PropertiesToArbConverter();
+		converter.setCharset(StandardCharsets.UTF_8);
 		converter.convert(propertiesFile, arbFile); // No locale parameter
 
 		// Verify the ARB file
@@ -186,13 +191,14 @@ public class TestPropertiesToArbConverter {
 	public void testLocaleExtractionWithRegion() throws IOException {
 		// Create a test properties file with locale and region in filename
 		File propertiesFile = new File(_tempDir, "strings_en_US.properties");
-		try (FileWriter writer = new FileWriter(propertiesFile)) {
+		try (FileWriter writer = new FileWriter(propertiesFile, StandardCharsets.UTF_8)) {
 			writer.write("color=Color\n");
 		}
 
 		// Convert to ARB without specifying locale
 		File arbFile = new File(_tempDir, "app_en_US.arb");
 		PropertiesToArbConverter converter = new PropertiesToArbConverter();
+		converter.setCharset(StandardCharsets.UTF_8);
 		converter.convert(propertiesFile, arbFile);
 
 		// Verify the ARB file
@@ -218,13 +224,15 @@ public class TestPropertiesToArbConverter {
 	public void testAutomaticOutputFilename() throws IOException {
 		// Create a test properties file
 		File propertiesFile = new File(_tempDir, "app_es.properties");
-		try (FileWriter writer = new FileWriter(propertiesFile)) {
+		try (FileWriter writer = new FileWriter(propertiesFile, StandardCharsets.ISO_8859_1)) {
 			writer.write("greeting=¡Hola!\n");
 			writer.write("farewell=¡Adiós!\n");
 		}
 
 		// Convert without specifying output file (should auto-generate)
 		PropertiesToArbConverter converter = new PropertiesToArbConverter();
+		// No charset meanse ISO.
+		// converter.setCharset(StandardCharsets.UTF_8);
 		converter.convert(propertiesFile);
 
 		// Verify the ARB file was created with automatic filename
@@ -281,5 +289,51 @@ public class TestPropertiesToArbConverter {
 		assertEquals("pt", bundle.getLocale());
 		assertEquals("Olá!", bundle.getResource("greeting").getValue());
 		assertEquals("Tchau!", bundle.getResource("farewell").getValue());
+	}
+
+	@Test
+	public void testDefaultCharsetBehavior() throws IOException {
+		// Create a test properties file using standard properties format (ISO-8859-1 with Unicode escapes)
+		File propertiesFile = new File(_tempDir, "messages_ja.properties");
+		try (FileWriter writer = new FileWriter(propertiesFile, StandardCharsets.ISO_8859_1)) {
+			// Write using Unicode escapes (standard Java properties format)
+			writer.write("greeting=\\u3053\\u3093\\u306b\\u3061\\u306f\n"); // "こんにちは" in Unicode escapes
+			writer.write("simple=Hello\n");
+		}
+
+		// Convert without setting charset (should use default Properties.load())
+		PropertiesToArbConverter converter = new PropertiesToArbConverter();
+		File arbFile = new File(_tempDir, "messages_ja.arb");
+		converter.convert(propertiesFile, arbFile, "ja");
+
+		// Verify the ARB file
+		assertTrue(arbFile.exists(), "ARB file should be created");
+
+		ArbParser parser = new ArbParser();
+		ArbBundle bundle = parser.parse(arbFile);
+
+		assertEquals("ja", bundle.getLocale());
+		assertEquals("こんにちは", bundle.getResource("greeting").getValue(),
+			"Unicode escapes should be decoded by default Properties.load()");
+		assertEquals("Hello", bundle.getResource("simple").getValue());
+	}
+
+	@Test
+	public void testCharsetNull() throws IOException {
+		// Test that explicitly setting charset to null uses default behavior
+		File propertiesFile = new File(_tempDir, "test_en.properties");
+		try (FileWriter writer = new FileWriter(propertiesFile, StandardCharsets.ISO_8859_1)) {
+			writer.write("key=\\u00E4\\u00F6\\u00FC\n"); // äöü in Unicode escapes
+		}
+
+		PropertiesToArbConverter converter = new PropertiesToArbConverter();
+		converter.setCharset(null); // Explicitly set to null
+		File arbFile = new File(_tempDir, "test_en.arb");
+		converter.convert(propertiesFile, arbFile, "en");
+
+		ArbParser parser = new ArbParser();
+		ArbBundle bundle = parser.parse(arbFile);
+
+		assertEquals("äöü", bundle.getResource("key").getValue());
 	}
 }

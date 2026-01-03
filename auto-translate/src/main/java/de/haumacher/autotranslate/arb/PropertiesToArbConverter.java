@@ -28,11 +28,12 @@ import de.haumacher.autotranslate.arb.model.ArbResource;
  * PropertiesToArbConverter converter = new PropertiesToArbConverter();
  * converter.convert(new File("messages_en.properties"));
  * // Creates messages_en.arb in the same directory
+ * // Uses default Properties.load() (ISO-8859-1 with Unicode escapes)
  * </pre>
  * </p>
  *
  * <p>
- * Example usage with explicit configuration:
+ * Example usage with UTF-8 properties files:
  * <pre>
  * PropertiesToArbConverter converter = new PropertiesToArbConverter();
  * converter.setCharset(StandardCharsets.UTF_8);
@@ -52,6 +53,14 @@ import de.haumacher.autotranslate.arb.model.ArbResource;
  * </p>
  *
  * <p>
+ * <b>Charset Handling:</b><br>
+ * By default (when no charset is set), the converter uses the standard {@link java.util.Properties#load(java.io.InputStream)}
+ * method which expects ISO-8859-1 encoding with Unicode escapes (e.g., {@code \u00E4} for ä).
+ * When a charset is explicitly configured via {@link #setCharset(Charset)}, the converter uses
+ * {@link java.util.Properties#load(java.io.Reader)} with that charset.
+ * </p>
+ *
+ * <p>
  * The converter creates compact ARB files without metadata, containing only the locale
  * and the key-value pairs from the properties file.
  * </p>
@@ -62,13 +71,15 @@ public class PropertiesToArbConverter {
 
 	private final ArbWriter _writer;
 
-	private Charset _charset = StandardCharsets.UTF_8;
+	private Charset _charset = null;
 
 	/**
 	 * Creates a new properties to ARB converter with default settings.
 	 *
 	 * <p>
-	 * Default charset: UTF-8
+	 * By default, no charset is specified, which causes the converter to use the standard
+	 * {@link Properties#load(InputStream)} method that expects ISO-8859-1 encoding with
+	 * Unicode escapes.
 	 * </p>
 	 */
 	public PropertiesToArbConverter() {
@@ -78,7 +89,13 @@ public class PropertiesToArbConverter {
 	/**
 	 * Sets the charset to use when reading properties files.
 	 *
-	 * @param charset The charset (defaults to UTF-8)
+	 * <p>
+	 * When a charset is explicitly set, the converter uses {@link Properties#load(java.io.Reader)}
+	 * with an InputStreamReader configured for that charset. When no charset is set (null),
+	 * the converter uses the default {@link Properties#load(InputStream)} method.
+	 * </p>
+	 *
+	 * @param charset The charset to use, or {@code null} to use the default Properties.load() behavior
 	 * @return This converter for method chaining
 	 */
 	public PropertiesToArbConverter setCharset(Charset charset) {
@@ -89,7 +106,7 @@ public class PropertiesToArbConverter {
 	/**
 	 * Gets the currently configured charset.
 	 *
-	 * @return The charset used for reading properties files
+	 * @return The charset used for reading properties files, or {@code null} if using default behavior
 	 */
 	public Charset getCharset() {
 		return _charset;
@@ -158,19 +175,25 @@ public class PropertiesToArbConverter {
 	/**
 	 * Loads a properties file using the specified charset.
 	 *
+	 * <p>
+	 * When charset is {@code null}, uses the default {@link Properties#load(InputStream)} method
+	 * which expects ISO-8859-1 encoding with Unicode escapes. When a charset is specified,
+	 * uses {@link Properties#load(java.io.Reader)} with an InputStreamReader.
+	 * </p>
+	 *
 	 * @param file    The properties file to load
-	 * @param charset The charset to use for reading
+	 * @param charset The charset to use for reading, or {@code null} for default behavior
 	 * @return The loaded properties
 	 * @throws IOException If reading fails
 	 */
 	private Properties loadProperties(File file, Charset charset) throws IOException {
 		Properties properties = new Properties();
 		try (InputStream in = new FileInputStream(file)) {
-			if (charset.equals(StandardCharsets.ISO_8859_1)) {
-				// Use the default Properties.load() which expects ISO-8859-1
+			if (charset == null) {
+				// Use the default Properties.load() which expects ISO-8859-1 with Unicode escapes
 				properties.load(in);
 			} else {
-				// Use the reader-based load for other charsets
+				// Use the reader-based load for explicit charsets
 				try (java.io.InputStreamReader reader = new java.io.InputStreamReader(in, charset)) {
 					properties.load(reader);
 				}
@@ -262,7 +285,7 @@ public class PropertiesToArbConverter {
 	 * If arb-file is omitted, the output filename will be automatically generated from the
 	 * input filename by replacing the .properties extension with .arb.
 	 * If locale is omitted, it will be extracted from the filename.
-	 * If charset is omitted, UTF-8 will be used.
+	 * If charset is omitted, the default Properties.load() behavior is used (ISO-8859-1 with Unicode escapes).
 	 * </p>
 	 *
 	 * @param args Command-line arguments
@@ -280,13 +303,14 @@ public class PropertiesToArbConverter {
 			System.err.println();
 			System.err.println("If arb-file is omitted, output will be <basename>.arb in the same directory.");
 			System.err.println("If locale is omitted, it will be extracted from the properties filename.");
+			System.err.println("If charset is omitted, default Properties.load() is used (ISO-8859-1 + Unicode escapes).");
 			System.exit(1);
 		}
 
 		File propertiesFile = new File(args[0]);
 		File arbFile = args.length > 1 ? new File(args[1]) : null;
 		String locale = args.length > 2 ? args[2] : null;
-		Charset charset = args.length > 3 ? Charset.forName(args[3]) : StandardCharsets.UTF_8;
+		Charset charset = args.length > 3 ? Charset.forName(args[3]) : null;
 
 		if (!propertiesFile.exists()) {
 			System.err.println("Error: Properties file not found: " + propertiesFile);
@@ -295,7 +319,9 @@ public class PropertiesToArbConverter {
 
 		try {
 			PropertiesToArbConverter converter = new PropertiesToArbConverter();
-			converter.setCharset(charset);
+			if (charset != null) {
+				converter.setCharset(charset);
+			}
 
 			File effectiveArbFile;
 			if (arbFile != null) {
@@ -309,7 +335,7 @@ public class PropertiesToArbConverter {
 			String effectiveLocale = locale != null ? locale : extractLanguage(propertiesFile);
 			System.out.println("Successfully converted " + propertiesFile + " to " + effectiveArbFile);
 			System.out.println("Locale: " + effectiveLocale);
-			System.out.println("Charset: " + charset);
+			System.out.println("Charset: " + (charset != null ? charset.toString() : "default (ISO-8859-1 + Unicode escapes)"));
 		} catch (IllegalArgumentException e) {
 			System.err.println("Error: " + e.getMessage());
 			System.exit(1);
