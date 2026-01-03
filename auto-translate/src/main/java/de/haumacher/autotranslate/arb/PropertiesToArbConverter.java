@@ -285,13 +285,15 @@ public class PropertiesToArbConverter {
 	 * Options:
 	 * <ul>
 	 *   <li>{@code --charset CHARSET} - Charset to use for reading properties files (default: ISO-8859-1 with Unicode escapes)</li>
-	 *   <li>{@code --locale LOCALE} - Locale identifier to use for all files (default: extract from filename)</li>
+	 *   <li>{@code --locale LOCALE} - Fallback locale identifier when locale cannot be extracted from filename</li>
 	 * </ul>
 	 * </p>
 	 *
 	 * <p>
 	 * All non-option arguments are treated as properties files to convert.
 	 * Output files are automatically generated with .arb extension in the same directory.
+	 * The locale is extracted from the filename (e.g., {@code app_en.properties} → "en").
+	 * If extraction fails, the {@code --locale} value is used as fallback.
 	 * </p>
 	 *
 	 * @param args Command-line arguments
@@ -364,11 +366,15 @@ public class PropertiesToArbConverter {
 
 			try {
 				File arbFile = createArbFileName(propertiesFile);
-				converter.convert(propertiesFile, arbFile, locale);
-				String effectiveLocale = locale != null ? locale : extractLanguage(propertiesFile);
+
+				// Try to extract locale from filename first, use --locale as fallback
+				String extractedLocale = extractLanguage(propertiesFile);
+				String effectiveLocale = extractedLocale != null ? extractedLocale : locale;
+
+				converter.convert(propertiesFile, arbFile, effectiveLocale);
 
 				System.out.println("Successfully converted " + propertiesFile + " to " + arbFile);
-				System.out.println("  Locale: " + effectiveLocale);
+				System.out.println("  Locale: " + effectiveLocale + (extractedLocale == null ? " (from --locale)" : " (from filename)"));
 				System.out.println("  Charset: " + (charset != null ? charset.toString() : "default (ISO-8859-1 + Unicode escapes)"));
 				successCount++;
 			} catch (IllegalArgumentException e) {
@@ -395,7 +401,7 @@ public class PropertiesToArbConverter {
 		System.err.println();
 		System.err.println("Options:");
 		System.err.println("  --charset CHARSET   Charset for reading properties files (default: ISO-8859-1 with Unicode escapes)");
-		System.err.println("  --locale LOCALE     Locale identifier for all files (default: extract from filename)");
+		System.err.println("  --locale LOCALE     Fallback locale when it cannot be extracted from filename");
 		System.err.println();
 		System.err.println("Examples:");
 		System.err.println("  PropertiesToArbConverter app_en.properties");
@@ -404,6 +410,7 @@ public class PropertiesToArbConverter {
 		System.err.println("  PropertiesToArbConverter --locale en --charset UTF-8 application.properties");
 		System.err.println();
 		System.err.println("Output files are automatically generated with .arb extension in the same directory.");
-		System.err.println("Locale is extracted from filename (e.g., app_en.properties -> locale 'en').");
+		System.err.println("Locale is primarily extracted from filename (e.g., app_en.properties -> 'en').");
+		System.err.println("Use --locale as fallback for files without locale in their name.");
 	}
 }
