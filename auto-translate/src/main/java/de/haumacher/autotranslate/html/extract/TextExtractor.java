@@ -50,12 +50,27 @@ public class TextExtractor {
 	public static boolean containsText(Element element) {
 		for (Node child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
 			if (child instanceof Text text) {
-				if (HtmlAnalyzer.hasText(text)) {
+				if (hasAnyText(text)) {
 					return true;
 				}
 			}
 		}
 		return false;
+	}
+
+	private static boolean hasAnyText(Text s) {
+		String textContent = s.getTextContent();
+		return hasAnyText(textContent);
+	}
+
+	private static boolean hasAnyText(String s) {
+		if (s == null) {
+			return false;
+		}
+		if (s.isBlank()) {
+			return false;
+		}
+		return true;
 	}
 
 }

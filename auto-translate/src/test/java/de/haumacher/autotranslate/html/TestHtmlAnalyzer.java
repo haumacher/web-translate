@@ -96,4 +96,45 @@ public class TestHtmlAnalyzer {
 		new PropertiesWriter(buffer, StandardCharsets.ISO_8859_1).write(analyzer.getTextById());
 		return new String(buffer.toByteArray(), StandardCharsets.ISO_8859_1);
 	}
+
+	@Test
+	public void testComplexNestedStructure() throws SAXException, IOException, ParserConfigurationException {
+		// Create an HTML structure that will produce the protected text pattern:
+		// "Text A <x1> Text B <x2> Text C <x3> <x4></x4><x5></x5> Text D </x3></x2></x1>"
+		String html = """
+			<html><body>
+				<li data-tx="t0001:e8cdfbe5">
+					Das Passwort<a>, \
+					das Du bei der <b>Registrierung</b> erhalten \
+					hast, </a><c> <d></d><e></e>,</c> muss Du jetzt noch in das Feld \
+					<f>Passwort</f> eintragen werden.
+				</li>
+			</body></html>""";
+
+		Document document = parse(html);
+		HtmlAnalyzer analyzer = new HtmlAnalyzer(document);
+		analyzer.analyze();
+
+		// Extract the text - should contain nested placeholders
+		String extractedText = analyzer.getTextById().get("t0001");
+		assertEquals("""
+			Das Passwort<x1>, \
+			das Du bei der <x2>Registrierung</x2> erhalten \
+			hast, </x1><x3> <x4></x4><x5></x5>,</x3> muss Du jetzt noch in das Feld \
+			<x6>Passwort</x6> eintragen werden.""",
+				extractedText);
+
+		// Now inject the same text back (simulating translation that preserved structure)
+		analyzer.getTextById().put("t0001", "Text A1 <x1> Text B1 <x2> Text C1 <x3> <x4></x4><x5></x5> Text D1 </x3></x2></x1>");
+		analyzer.inject();
+
+		// Verify the HTML structure was correctly reconstructed
+		String result = html(document);
+		assertEquals("""
+			<!DOCTYPE html>
+			<html><body>
+				<li data-tx="t0001:21a0ad48">Text A1 <a> Text B1 <b> Text C1 <c> <d></d><e></e> Text D1 </c></b></a></li>
+			</body></html>""",
+			result);
+	}
 }
