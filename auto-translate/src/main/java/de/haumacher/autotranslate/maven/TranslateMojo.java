@@ -3,7 +3,6 @@ package de.haumacher.autotranslate.maven;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 
@@ -51,24 +50,24 @@ public class TranslateMojo extends AbstractMojo {
 	 *
 	 * <p>
 	 * This parameter is required. You can pass it via command line:
-	 * <code>-DapiKey=YOUR_KEY</code> or configure it in the plugin configuration.
+	 * <code>-Dtranslate.apiKey=YOUR_KEY</code> or configure it in the plugin configuration.
 	 * For security, consider using environment variables:
 	 * <code>${env.DEEPL_API_KEY}</code>
 	 * </p>
 	 */
-	@Parameter(property = "apiKey", required = true)
+	@Parameter(name = "apiKey", property = "translate.apiKey", required = true)
 	private String _apiKey;
 
 	/**
 	 * Source language code (e.g., "en", "de", "fr").
 	 */
-	@Parameter(property = "sourceLang", defaultValue = "en")
+	@Parameter(name = "sourceLang", property = "translate.sourceLang", defaultValue = "en")
 	private String _sourceLang;
 
 	/**
 	 * Comma-separated list of target language codes (e.g., "de,fr,es").
 	 */
-	@Parameter(property = "targetLangs", defaultValue = "de")
+	@Parameter(name = "targetLangs", property = "translate.targetLangs", defaultValue = "de")
 	private String _targetLangs;
 
 	/**
@@ -79,7 +78,7 @@ public class TranslateMojo extends AbstractMojo {
 	 * For example: <code>templates/en/index.html</code>
 	 * </p>
 	 */
-	@Parameter(property = "templateDirectory", defaultValue = "${project.basedir}/templates")
+	@Parameter(name = "templateDirectory", property = "translate.templateDirectory", defaultValue = "${project.basedir}/templates")
 	private File _templateDirectory;
 
 	/**
@@ -90,13 +89,13 @@ public class TranslateMojo extends AbstractMojo {
 	 * For example: <code>properties/en/index.properties</code>
 	 * </p>
 	 */
-	@Parameter(property = "propertiesDirectory", defaultValue = "${project.basedir}/properties")
+	@Parameter(name = "propertiesDirectory", property = "translate.propertiesDirectory", defaultValue = "${project.basedir}/properties")
 	private File _propertiesDirectory;
 
 	/**
 	 * Character encoding for properties files.
 	 */
-	@Parameter(property = "propertiesCharset", defaultValue = "UTF-8")
+	@Parameter(name = "propertiesCharset", property = "translate.propertiesCharset", defaultValue = "UTF-8")
 	private String _propertiesCharset;
 
 	@Override

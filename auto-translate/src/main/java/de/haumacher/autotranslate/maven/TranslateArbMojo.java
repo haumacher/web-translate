@@ -48,12 +48,12 @@ public class TranslateArbMojo extends AbstractMojo {
 	 *
 	 * <p>
 	 * This parameter is required. You can pass it via command line:
-	 * <code>-DapiKey=YOUR_KEY</code> or configure it in the plugin configuration.
+	 * <code>-Dtranslate.arb.apiKey=YOUR_KEY</code> or configure it in the plugin configuration.
 	 * For security, consider using environment variables:
 	 * <code>${env.DEEPL_API_KEY}</code>
 	 * </p>
 	 */
-	@Parameter(property = "apiKey", required = true)
+	@Parameter(name = "apiKey", property = "translate.arb.apiKey", required = true)
 	private String _apiKey;
 
 	/**
@@ -65,7 +65,7 @@ public class TranslateArbMojo extends AbstractMojo {
 	 * The source language is automatically extracted from the filename.
 	 * </p>
 	 */
-	@Parameter(property = "sourceFile", required = true)
+	@Parameter(name = "sourceFile", property = "translate.arb.sourceFile", required = true)
 	private File _sourceFile;
 
 	/**
@@ -76,7 +76,7 @@ public class TranslateArbMojo extends AbstractMojo {
 	 * with the appropriate language suffix (e.g., {@code app_de.arb}, {@code app_fr.arb}).
 	 * </p>
 	 */
-	@Parameter(property = "targetLangs", required = true)
+	@Parameter(name = "targetLangs", property = "translate.arb.targetLangs", required = true)
 	private String _targetLangs;
 
 	@Override
