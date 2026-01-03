@@ -217,7 +217,17 @@ public class HtmlFileTranslator {
 		HtmlAnalyzer targetAnalyzer = new HtmlAnalyzer(targetDoc);
 		targetAnalyzer.analyze();
 		targetAnalyzer.setTextById(targetTexts);
-		targetAnalyzer.inject();
+
+		try {
+			targetAnalyzer.inject();
+		} catch (Exception ex) {
+			throw new RuntimeException(
+				"Failed to inject translations into target file: " + targetFile.getAbsolutePath() +
+				"\nSource file: " + sourceFile.getAbsolutePath() +
+				"\nTarget language: " + destLang,
+				ex
+			);
+		}
 
 		// Write target file
 		targetFile.getParentFile().mkdirs();

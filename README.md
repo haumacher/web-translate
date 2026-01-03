@@ -8,7 +8,20 @@ It uses the [DeepL API](https://www.deepl.com/pro-api) to automatically translat
 
 ## Quick Start
 
-Add the plugin to your `pom.xml`:
+**Step 1:** Add your DeepL API key to Maven settings (`~/.m2/settings.xml`):
+
+```xml
+<settings>
+  <servers>
+    <server>
+      <id>deepl</id>
+      <passphrase>YOUR_DEEPL_API_KEY</passphrase>
+    </server>
+  </servers>
+</settings>
+```
+
+**Step 2:** Add the plugin to your `pom.xml`:
 
 ```xml
 <plugin>
@@ -21,7 +34,7 @@ Add the plugin to your `pom.xml`:
         <goal>translate</goal>
       </goals>
       <configuration>
-        <apiKey>${env.DEEPL_API_KEY}</apiKey>
+        <!-- serverId defaults to "deepl", can be omitted if you use that ID -->
         <sourceLang>en</sourceLang>
         <targetLangs>de,fr,es</targetLangs>
       </configuration>
@@ -30,9 +43,19 @@ Add the plugin to your `pom.xml`:
 </plugin>
 ```
 
-The plugin will run automatically during the `process-resources` phase. You can also invoke it manually:
+The plugin will run automatically during the `process-resources` phase:
 ```bash
-mvn auto-translate:translate -Dtranslate.apiKey=${DEEPL_API_KEY}
+mvn process-resources
+```
+
+You can also invoke it manually:
+```bash
+mvn auto-translate:translate
+```
+
+**Alternative:** Direct API key (less secure):
+```bash
+mvn auto-translate:translate -Dtranslate.apiKey=YOUR_DEEPL_API_KEY
 ```
 
 ## HTML Translation
@@ -155,7 +178,7 @@ Maven plugin configuration:
         <goal>translate</goal>
       </goals>
       <configuration>
-        <apiKey>${env.DEEPL_API_KEY}</apiKey>
+        <!-- API key retrieved from server "deepl" in settings.xml -->
         <sourceLang>en</sourceLang>
         <targetLangs>de,fr,es</targetLangs>
         <templateDirectory>${project.basedir}/templates</templateDirectory>
@@ -163,6 +186,18 @@ Maven plugin configuration:
     </execution>
   </executions>
 </plugin>
+```
+
+Don't forget to configure the DeepL API key in `~/.m2/settings.xml`:
+```xml
+<settings>
+  <servers>
+    <server>
+      <id>deepl</id>
+      <passphrase>YOUR_DEEPL_API_KEY</passphrase>
+    </server>
+  </servers>
+</settings>
 ```
 
 ## ARB Translation

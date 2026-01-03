@@ -40,23 +40,26 @@ The recommended way to run the translator is using the Maven goal:
 
 ```bash
 cd auto-translate
-mvn auto-translate:translate -DapiKey=YOUR_DEEPL_API_KEY
+mvn auto-translate:translate
 ```
 
 **Configuration Options:**
 
-All parameters can be configured via command-line properties (using the `translate.` prefix):
+**Recommended: Using Maven Server Credentials (Secure)**
 
-```bash
-mvn auto-translate:translate \
-  -Dtranslate.apiKey=YOUR_DEEPL_API_KEY \
-  -Dtranslate.sourceLang=en \
-  -Dtranslate.targetLangs=de,fr,es \
-  -Dtranslate.templateDirectory=./templates
+Add your DeepL API key to `~/.m2/settings.xml`:
+```xml
+<settings>
+  <servers>
+    <server>
+      <id>deepl</id>
+      <passphrase>YOUR_DEEPL_API_KEY</passphrase>
+    </server>
+  </servers>
+</settings>
 ```
 
-Or in your `pom.xml` (requires `<executions>` block to run automatically):
-
+Then configure the plugin in your `pom.xml`:
 ```xml
 <plugin>
   <groupId>de.haumacher</groupId>
@@ -68,7 +71,7 @@ Or in your `pom.xml` (requires `<executions>` block to run automatically):
         <goal>translate</goal>
       </goals>
       <configuration>
-        <apiKey>${env.DEEPL_API_KEY}</apiKey>
+        <!-- serverId defaults to "deepl", can be omitted -->
         <sourceLang>en</sourceLang>
         <targetLangs>de,fr</targetLangs>
         <templateDirectory>${project.basedir}/templates</templateDirectory>
@@ -78,10 +81,33 @@ Or in your `pom.xml` (requires `<executions>` block to run automatically):
 </plugin>
 ```
 
-**Default Values:**
-- `sourceLang`: `en`
-- `targetLangs`: `de`
-- `templateDirectory`: `${project.basedir}/templates`
+**Alternative: Direct API Key (Less Secure)**
+
+Via command-line properties:
+```bash
+mvn auto-translate:translate \
+  -Dtranslate.apiKey=YOUR_DEEPL_API_KEY \
+  -Dtranslate.sourceLang=en \
+  -Dtranslate.targetLangs=de,fr,es \
+  -Dtranslate.templateDirectory=./templates
+```
+
+Or in `pom.xml` configuration:
+```xml
+<configuration>
+  <apiKey>${env.DEEPL_API_KEY}</apiKey>
+  <sourceLang>en</sourceLang>
+  <targetLangs>de,fr</targetLangs>
+</configuration>
+```
+
+**Parameters:**
+
+- `serverId` (default: `"deepl"`): Server ID in settings.xml containing the API key
+- `apiKey` (optional): Direct API key (overrides serverId if provided)
+- `sourceLang` (default: `"en"`): Source language code
+- `targetLangs` (default: `"de"`): Comma-separated target language codes
+- `templateDirectory` (default: `${project.basedir}/templates`): Template directory
 
 **Directory Structure Expected:**
 ```

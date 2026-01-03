@@ -213,7 +213,16 @@ public class HtmlAnalyzer {
 				if (TEXT_ATTRS.contains(attr.getNodeName())) {
 					String text = _textById.get(id + "." + attr.getNodeName());
 					if (text != null) {
-						attr.setNodeValue(text);
+						try {
+							attr.setNodeValue(text);
+						} catch (Exception ex) {
+							String elementInfo = getElementContext(element);
+							throw new IllegalArgumentException(
+								"Failed to inject attribute '" + attr.getNodeName() + "' for ID '" + id + "' at " + elementInfo +
+								"\nTranslated text: " + text,
+								ex
+							);
+						}
 					}
 				}
 			}
@@ -221,7 +230,16 @@ public class HtmlAnalyzer {
 			if (!CODE_TAGS.contains(element.getTagName())) {
 				String text = _textById.get(id);
 				if (text != null) {
-					new TextInjector(element).inject(text);
+					try {
+						new TextInjector(element).inject(text);
+					} catch (Exception ex) {
+						String elementInfo = getElementContext(element);
+						throw new IllegalArgumentException(
+							"Failed to inject content for ID '" + id + "' at " + elementInfo +
+							"\nTranslated text: " + text,
+							ex
+						);
+					}
 				}
 			}
 		}
@@ -231,6 +249,27 @@ public class HtmlAnalyzer {
 				injectText(sub);
 			}
 		}
+	}
+
+	/**
+	 * Gets a human-readable context for an element (tag name, identifying attributes, etc.)
+	 */
+	private String getElementContext(Element element) {
+		StringBuilder context = new StringBuilder();
+		context.append("<").append(element.getTagName()).append(">");
+
+		// Try to get some identifying attributes
+		if (element.hasAttribute("id")) {
+			context.append(" id=\"").append(element.getAttribute("id")).append("\"");
+		}
+		if (element.hasAttribute("class")) {
+			context.append(" class=\"").append(element.getAttribute("class")).append("\"");
+		}
+		if (element.hasAttribute("data-tx")) {
+			context.append(" data-tx=\"").append(element.getAttribute("data-tx")).append("\"");
+		}
+
+		return context.toString();
 	}
 
 	private void extractText(Element element) {
