@@ -1,10 +1,13 @@
 package de.haumacher.autotranslate.html.extract;
 
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -278,17 +281,28 @@ public class HtmlAnalyzer {
 			// Collect all texts for this element to compute combined CRC
 			StringBuilder combinedText = new StringBuilder();
 
+			// Collect text attributes in sorted order to ensure stable CRC
+			List<String> attrNames = new ArrayList<>();
 			NamedNodeMap attributes = element.getAttributes();
 			for (int n = 0, cnt = attributes.getLength(); n < cnt; n ++) {
 				Node attr = attributes.item(n);
 				if (TEXT_ATTRS.contains(attr.getNodeName())) {
 					String attrText = attr.getTextContent();
 					if (!attrText.isBlank()) {
-						String textId = id + "." + attr.getNodeName();
-						_textById.put(textId, attrText);
-						combinedText.append(attr.getNodeName()).append("=").append(attrText).append("\n");
+						attrNames.add(attr.getNodeName());
 					}
 				}
+			}
+
+			// Sort attribute names to ensure consistent CRC calculation
+			Collections.sort(attrNames);
+
+			// Extract texts in sorted order
+			for (String attrName : attrNames) {
+				String attrText = element.getAttribute(attrName);
+				String textId = id + "." + attrName;
+				_textById.put(textId, attrText);
+				combinedText.append(attrName).append("=").append(attrText).append("\n");
 			}
 
 			if (!CODE_TAGS.contains(element.getTagName())) {
