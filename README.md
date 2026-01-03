@@ -15,17 +15,24 @@ Add the plugin to your `pom.xml`:
   <groupId>de.haumacher</groupId>
   <artifactId>auto-translate</artifactId>
   <version>1.0.0</version>
-  <configuration>
-    <apiKey>${env.DEEPL_API_KEY}</apiKey>
-    <sourceLang>en</sourceLang>
-    <targetLangs>de,fr,es</targetLangs>
-  </configuration>
+  <executions>
+    <execution>
+      <goals>
+        <goal>translate</goal>
+      </goals>
+      <configuration>
+        <apiKey>${env.DEEPL_API_KEY}</apiKey>
+        <sourceLang>en</sourceLang>
+        <targetLangs>de,fr,es</targetLangs>
+      </configuration>
+    </execution>
+  </executions>
 </plugin>
 ```
 
-Run translation:
+The plugin will run automatically during the `process-resources` phase. You can also invoke it manually:
 ```bash
-mvn auto-translate:translate
+mvn auto-translate:translate -Dtranslate.apiKey=${DEEPL_API_KEY}
 ```
 
 ## HTML Translation
@@ -140,12 +147,19 @@ Maven plugin configuration:
   <groupId>de.haumacher</groupId>
   <artifactId>auto-translate</artifactId>
   <version>1.0.0</version>
-  <configuration>
-    <apiKey>${env.DEEPL_API_KEY}</apiKey>
-    <sourceLang>en</sourceLang>
-    <targetLangs>de,fr,es</targetLangs>
-    <templateDirectory>${project.basedir}/templates</templateDirectory>
-  </configuration>
+  <executions>
+    <execution>
+      <goals>
+        <goal>translate</goal>
+      </goals>
+      <configuration>
+        <apiKey>${env.DEEPL_API_KEY}</apiKey>
+        <sourceLang>en</sourceLang>
+        <targetLangs>de,fr,es</targetLangs>
+        <templateDirectory>${project.basedir}/templates</templateDirectory>
+      </configuration>
+    </execution>
+  </executions>
 </plugin>
 ```
 

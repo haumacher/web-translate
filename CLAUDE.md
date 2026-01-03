@@ -45,33 +45,40 @@ mvn auto-translate:translate -DapiKey=YOUR_DEEPL_API_KEY
 
 **Configuration Options:**
 
-All parameters can be configured via command-line properties:
+All parameters can be configured via command-line properties (using the `translate.` prefix):
 
 ```bash
 mvn auto-translate:translate \
-  -DapiKey=YOUR_DEEPL_API_KEY \
-  -DsourceLang=en \
-  -DtargetLangs=de,fr,es \
-  -DtemplateDirectory=./templates \
-  -DpropertiesDirectory=./properties \
-  -DpropertiesCharset=UTF-8
+  -Dtranslate.apiKey=YOUR_DEEPL_API_KEY \
+  -Dtranslate.sourceLang=en \
+  -Dtranslate.targetLangs=de,fr,es \
+  -Dtranslate.templateDirectory=./templates \
+  -Dtranslate.propertiesDirectory=./properties \
+  -Dtranslate.propertiesCharset=UTF-8
 ```
 
-Or in your `pom.xml`:
+Or in your `pom.xml` (requires `<executions>` block to run automatically):
 
 ```xml
 <plugin>
   <groupId>de.haumacher</groupId>
   <artifactId>auto-translate</artifactId>
   <version>1.0.0-SNAPSHOT</version>
-  <configuration>
-    <apiKey>${env.DEEPL_API_KEY}</apiKey>
-    <sourceLang>en</sourceLang>
-    <targetLangs>de,fr</targetLangs>
-    <templateDirectory>${project.basedir}/templates</templateDirectory>
-    <propertiesDirectory>${project.basedir}/properties</propertiesDirectory>
-    <propertiesCharset>UTF-8</propertiesCharset>
-  </configuration>
+  <executions>
+    <execution>
+      <goals>
+        <goal>translate</goal>
+      </goals>
+      <configuration>
+        <apiKey>${env.DEEPL_API_KEY}</apiKey>
+        <sourceLang>en</sourceLang>
+        <targetLangs>de,fr</targetLangs>
+        <templateDirectory>${project.basedir}/templates</templateDirectory>
+        <propertiesDirectory>${project.basedir}/properties</propertiesDirectory>
+        <propertiesCharset>UTF-8</propertiesCharset>
+      </configuration>
+    </execution>
+  </executions>
 </plugin>
 ```
 
