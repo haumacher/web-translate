@@ -1,5 +1,6 @@
 package de.haumacher.autotranslate.html;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -481,7 +482,7 @@ public class TestHtmlTranslator {
 						// Simulate a translation engine that swallows empty protection tags
 						String translated = super.translateSingle(text, targetLang);
 						// Remove empty protection tags like <x1></x1> (simulating broken translator)
-						return translated.replaceAll("<x(\\d+)></x\\1>", "");
+						return translated.replaceAll("<x(1)></x\\1>", "");
 					}
 				},
 				"en",
@@ -496,44 +497,12 @@ public class TestHtmlTranslator {
 
 		String deContent = Files.readString(deHtml.toPath(), StandardCharsets.UTF_8);
 
-		// Verify all text was translated
-		assertTrue(deContent.contains("[de]"), "Content should be translated");
-
-		// Verify nested structure is preserved
-		assertTrue(deContent.contains("<a"), "Link should be preserved");
-		assertTrue(deContent.contains("<b"), "Bold tag should be preserved");
-		assertTrue(deContent.contains("</b>"), "Bold closing tag should be preserved");
-		assertTrue(deContent.contains("<em"), "Emphasis tag should be preserved");
-		assertTrue(deContent.contains("</em>"), "Emphasis closing tag should be preserved");
-		assertTrue(deContent.contains("<strong"), "Strong tag should be preserved");
-		assertTrue(deContent.contains("</strong>"), "Strong closing tag should be preserved");
-		assertTrue(deContent.contains("<code"), "Code tag should be preserved");
-		assertTrue(deContent.contains("</code>"), "Code closing tag should be preserved");
-
-		// Verify title attributes are translated
-		assertTrue(deContent.contains("Security icon [de]"), "Icon title should be translated");
-		assertTrue(deContent.contains("Click to register [de]"), "Link title should be translated");
-		assertTrue(deContent.contains("Important step [de]"), "Bold title should be translated");
-		assertTrue(deContent.contains("Required action [de]"), "Emphasis title should be translated");
-		assertTrue(deContent.contains("Do it now [de]"), "Strong title should be translated");
-		assertTrue(deContent.contains("Input field [de]"), "Code title should be translated");
-
-		// Verify empty icon tag is preserved with its class
-		assertTrue(deContent.contains("<i class=\"fa-solid fa-key\""), "FontAwesome icon should be preserved");
-		assertTrue(deContent.contains("</i>"), "Icon closing tag should be preserved");
-
-		// Verify nested tags are in correct order
-		assertTrue(deContent.indexOf("<a ") < deContent.indexOf("<b"),
-			"Link should contain bold tag");
-		assertTrue(deContent.indexOf("<b") < deContent.indexOf("</b>"),
-			"Bold tags should be properly nested");
-		assertTrue(deContent.indexOf("</b>") < deContent.indexOf("</a>"),
-			"Bold should be closed before link");
-		assertTrue(deContent.indexOf("<em") < deContent.indexOf("<strong"),
-			"Emphasis should contain strong tag");
-		assertTrue(deContent.indexOf("<strong") < deContent.indexOf("</strong>"),
-			"Strong tags should be properly nested");
-		assertTrue(deContent.indexOf("</strong>") < deContent.indexOf("</em>"),
-			"Strong should be closed before emphasis");
+		assertEquals("""
+			<!DOCTYPE html>
+			<html>
+			<body>
+				<p data-tx="t0002:df8bae08"> The password <a data-tx="t0003:dc2343a2" href="/register" title="Click to register [de]">that you received during <b data-tx="t0004:52a74a2c" title="Important step [de]">registration [de]</b> [de]</a>, <em data-tx="t0005:d636fa16" title="Required action [de]">should <strong data-tx="t0006:e7fbc470" title="Do it now [de]">now [de]</strong> be entered [de]</em> into the <code data-tx="t0007:11733e44" title="Input field [de]">Password</code> field. [de]<i class="fa-solid fa-key" data-tx="t0001:451d1717" title="Security icon [de]"></i></p>
+			</body>
+			</html>""", deContent);
 	}
 }

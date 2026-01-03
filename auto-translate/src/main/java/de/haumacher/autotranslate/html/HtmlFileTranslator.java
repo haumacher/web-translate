@@ -187,10 +187,12 @@ public class HtmlFileTranslator {
 				String sourceText = textsToTranslate.get(i);
 				String translatedText = results.get(i).getText();
 				if (translatedText.isEmpty()) {
-					// Safety: Sometimes the translation creates no result (empty string). 
+					// Safety: Sometimes the translation creates no result (empty string).
 					// When using this empty string, the translation is repeated for each run.
 					translatedText = sourceText;
 				}
+				// Ensure all tags from original are present in translation
+				translatedText = ensureAllTags(sourceText, translatedText);
 				translatedTexts.put(sourceText, translatedText);
 				billedChars += results.get(i).getBilledCharacters();
 			}
@@ -247,5 +249,79 @@ public class HtmlFileTranslator {
 	 */
 	public int getTotalBilledChars() {
 		return _totalBilledChars;
+	}
+
+	/**
+	 * Ensures all protection tags from the original text are present in the translated text.
+	 * If the translation engine swallowed some tags, this method appends them at the end.
+	 * The method preserves the complete nested structure of missing tags.
+	 *
+	 * @param originalText The original source text with protection tags
+	 * @param translatedText The translated text (may be missing some tags)
+	 * @return The repaired translated text with all tags present
+	 */
+	static String ensureAllTags(String originalText, String translatedText) {
+		// Find all tag numbers in the translated text
+		Set<Integer> tagsInTranslation = findAllTagNumbers(translatedText);
+
+		// Find all tag numbers in the original text
+		Set<Integer> tagsInOriginal = findAllTagNumbers(originalText);
+
+		// Find missing tags
+		Set<Integer> missingTags = new HashSet<>(tagsInOriginal);
+		missingTags.removeAll(tagsInTranslation);
+
+		if (missingTags.isEmpty()) {
+			// All tags present, no repair needed
+			return translatedText;
+		}
+
+		// Strip original text to get only the missing tag structure
+		String missingStructure = stripTextAndPresentTags(originalText, tagsInTranslation);
+
+		// Append missing structure to translation
+		return translatedText + missingStructure;
+	}
+
+	/**
+	 * Finds all tag numbers present in the text (both opening and closing tags).
+	 */
+	private static Set<Integer> findAllTagNumbers(String text) {
+		Set<Integer> tagNumbers = new HashSet<>();
+		java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("<(?:/)?x(\\d+)>");
+		java.util.regex.Matcher matcher = pattern.matcher(text);
+
+		while (matcher.find()) {
+			int tagNum = Integer.parseInt(matcher.group(1));
+			tagNumbers.add(tagNum);
+		}
+
+		return tagNumbers;
+	}
+
+	/**
+	 * Removes all text content and all tags that are present in the translation.
+	 * Returns only the missing tag structure.
+	 *
+	 * @param originalText The original text with all tags
+	 * @param presentTags Set of tag numbers that are already in the translation
+	 * @return The structure containing only missing tags
+	 */
+	private static String stripTextAndPresentTags(String originalText, Set<Integer> presentTags) {
+		StringBuilder result = new StringBuilder();
+		java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("<(?:/)?x(\\d+)>");
+		java.util.regex.Matcher matcher = pattern.matcher(originalText);
+
+		while (matcher.find()) {
+			// Skip text content between tags
+			int tagNum = Integer.parseInt(matcher.group(1));
+
+			if (!presentTags.contains(tagNum)) {
+				// This tag is missing, include it
+				result.append(matcher.group());
+			}
+		}
+
+		return result.toString();
 	}
 }
