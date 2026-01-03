@@ -450,4 +450,90 @@ public class TestHtmlTranslator {
 		String nlContent = Files.readString(targetHtml.toPath(), StandardCharsets.UTF_8);
 		assertFalse(nlContent.contains("[nl]"), "No new translations should have been added");
 	}
+
+	@Test
+	public void testComplexNestedFormatting(@TempDir File tempDir) throws Exception {
+		// Setup directory structure
+		File templatesDir = new File(tempDir, "templates");
+		File templatesEnDir = new File(templatesDir, "en");
+		templatesEnDir.mkdirs();
+
+		// Create HTML file with complex nested formatting (bold, italics, links) with title attributes
+		File sourceHtml = new File(templatesEnDir, "page.html");
+		String sourceContent = """
+			<html>
+			<body>
+				<p>
+					<i class="fa-solid fa-key" title="Security icon"></i>
+					The password <a href="/register" title="Click to register">that you received during <b title="Important step">registration</b></a>,
+					<em title="Required action">should <strong title="Do it now">now</strong> be entered</em> into the <code title="Input field">Password</code> field.
+				</p>
+			</body>
+			</html>""";
+		Files.writeString(sourceHtml.toPath(), sourceContent);
+
+		// Run the HTML translator with a translator that simulates swallowing empty protection tags
+		de.haumacher.autotranslate.html.Translator translator =
+			new de.haumacher.autotranslate.html.Translator(
+				new StubTranslator() {
+					@Override
+					protected String translateSingle(String text, String targetLang) {
+						// Simulate a translation engine that swallows empty protection tags
+						String translated = super.translateSingle(text, targetLang);
+						// Remove empty protection tags like <x1></x1> (simulating broken translator)
+						return translated.replaceAll("<x(\\d+)></x\\1>", "");
+					}
+				},
+				"en",
+				List.of("de"),
+				templatesDir
+			);
+		translator.run();
+
+		// Verify German translation was created
+		File deHtml = new File(templatesDir, "de/page.html");
+		assertTrue(deHtml.exists(), "German HTML should be created");
+
+		String deContent = Files.readString(deHtml.toPath(), StandardCharsets.UTF_8);
+
+		// Verify all text was translated
+		assertTrue(deContent.contains("[de]"), "Content should be translated");
+
+		// Verify nested structure is preserved
+		assertTrue(deContent.contains("<a"), "Link should be preserved");
+		assertTrue(deContent.contains("<b"), "Bold tag should be preserved");
+		assertTrue(deContent.contains("</b>"), "Bold closing tag should be preserved");
+		assertTrue(deContent.contains("<em"), "Emphasis tag should be preserved");
+		assertTrue(deContent.contains("</em>"), "Emphasis closing tag should be preserved");
+		assertTrue(deContent.contains("<strong"), "Strong tag should be preserved");
+		assertTrue(deContent.contains("</strong>"), "Strong closing tag should be preserved");
+		assertTrue(deContent.contains("<code"), "Code tag should be preserved");
+		assertTrue(deContent.contains("</code>"), "Code closing tag should be preserved");
+
+		// Verify title attributes are translated
+		assertTrue(deContent.contains("Security icon [de]"), "Icon title should be translated");
+		assertTrue(deContent.contains("Click to register [de]"), "Link title should be translated");
+		assertTrue(deContent.contains("Important step [de]"), "Bold title should be translated");
+		assertTrue(deContent.contains("Required action [de]"), "Emphasis title should be translated");
+		assertTrue(deContent.contains("Do it now [de]"), "Strong title should be translated");
+		assertTrue(deContent.contains("Input field [de]"), "Code title should be translated");
+
+		// Verify empty icon tag is preserved with its class
+		assertTrue(deContent.contains("<i class=\"fa-solid fa-key\""), "FontAwesome icon should be preserved");
+		assertTrue(deContent.contains("</i>"), "Icon closing tag should be preserved");
+
+		// Verify nested tags are in correct order
+		assertTrue(deContent.indexOf("<a ") < deContent.indexOf("<b"),
+			"Link should contain bold tag");
+		assertTrue(deContent.indexOf("<b") < deContent.indexOf("</b>"),
+			"Bold tags should be properly nested");
+		assertTrue(deContent.indexOf("</b>") < deContent.indexOf("</a>"),
+			"Bold should be closed before link");
+		assertTrue(deContent.indexOf("<em") < deContent.indexOf("<strong"),
+			"Emphasis should contain strong tag");
+		assertTrue(deContent.indexOf("<strong") < deContent.indexOf("</strong>"),
+			"Strong tags should be properly nested");
+		assertTrue(deContent.indexOf("</strong>") < deContent.indexOf("</em>"),
+			"Strong should be closed before emphasis");
+	}
 }
