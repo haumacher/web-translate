@@ -288,7 +288,7 @@ public class HtmlAnalyzer {
 				Node attr = attributes.item(n);
 				if (TEXT_ATTRS.contains(attr.getNodeName())) {
 					String attrText = attr.getTextContent();
-					if (!attrText.isBlank()) {
+					if (hasText(attrText)) {
 						attrNames.add(attr.getNodeName());
 					}
 				}
@@ -478,8 +478,10 @@ public class HtmlAnalyzer {
 	}
 
 	public static boolean hasText(Text text) {
-		String s = text.getTextContent();
+		return hasText(text.getTextContent());
+	}
 
+	private static boolean hasText(String s) {
 		if (s == null) {
 			return false;
 		}
@@ -494,6 +496,6 @@ public class HtmlAnalyzer {
 			}
 		}
 
-		return true;
+		return false;
 	}
 }

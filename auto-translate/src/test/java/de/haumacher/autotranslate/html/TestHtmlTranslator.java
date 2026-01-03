@@ -384,4 +384,70 @@ public class TestHtmlTranslator {
 		assertTrue(sourceAfterRun.contains("data-tx=\"t0001:"),
 			"CRC should be generated for the current content");
 	}
+
+	@Test
+	public void testNoTranslationWithoutTextDate(@TempDir File tempDir) throws Exception {
+		// Setup directory structure
+		File templatesDir = new File(tempDir, "templates");
+		File templatesDeDir = new File(templatesDir, "de");
+		File templatesNlDir = new File(templatesDir, "nl");
+		templatesDeDir.mkdirs();
+		templatesNlDir.mkdirs();
+
+		// Create source HTML file with data-tx attribute and CRC (already translated once)
+		File sourceHtml = new File(templatesDeDir, "page.html");
+		String sourceContent = """
+			<html>
+			<body>
+				<a data-onclick="showNumber" th:href="@{/nums/{other}(other=${related})}">☎ <th:block th:text="${related}"></th:block></a>
+			</body>
+			</html>""";
+		Files.writeString(sourceHtml.toPath(), sourceContent);
+
+		// Create matching target HTML file (already translated, with same CRC)
+		File targetHtml = new File(templatesNlDir, "page.html");
+		String targetContent = """
+			<html>
+			<body>
+				<a data-onclick="showNumber" th:href="@{/nums/{other}(other=${related})}">☎ <th:block th:text="${related}"></th:block></a>
+			</body>
+			</html>""";
+		Files.writeString(targetHtml.toPath(), targetContent);
+
+		// Create a translator that tracks whether any translation requests were made
+		class TrackingTranslator extends StubTranslator {
+			int translationCount = 0;
+
+			@Override
+			public List<TextResult> translateText(List<String> texts, String sourceLang, String targetLang)
+					throws DeepLException, InterruptedException {
+				translationCount += texts.size();
+				return super.translateText(texts, sourceLang, targetLang);
+			}
+		}
+
+		TrackingTranslator trackingTranslator = new TrackingTranslator();
+
+		// Run translation
+		de.haumacher.autotranslate.html.Translator translator =
+			new de.haumacher.autotranslate.html.Translator(
+				trackingTranslator,
+				"de",
+				List.of("nl"),
+				templatesDir
+			);
+		translator.run();
+
+		// Verify NO translations were performed (files are already up-to-date with matching CRCs)
+		assertTrue(trackingTranslator.translationCount == 0,
+			"No translations should be performed when files are already up-to-date, but " +
+			trackingTranslator.translationCount + " translations were made");
+
+		// Verify target file still exists
+		assertTrue(targetHtml.exists(), "Target file should still exist");
+
+		// Verify target file content was not modified
+		String nlContent = Files.readString(targetHtml.toPath(), StandardCharsets.UTF_8);
+		assertFalse(nlContent.contains("[nl]"), "No new translations should have been added");
+	}
 }
