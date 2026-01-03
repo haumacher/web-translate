@@ -186,6 +186,11 @@ public class HtmlFileTranslator {
 			for (int i = 0; i < textsToTranslate.size(); i++) {
 				String sourceText = textsToTranslate.get(i);
 				String translatedText = results.get(i).getText();
+				if (translatedText.isEmpty()) {
+					// Safety: Sometimes the translation creates no result (empty string). 
+					// When using this empty string, the translation is repeated for each run.
+					translatedText = sourceText;
+				}
 				translatedTexts.put(sourceText, translatedText);
 				billedChars += results.get(i).getBilledCharacters();
 			}
