@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -146,7 +147,7 @@ public class HtmlFileTranslator {
 		if (targetFile.exists()) {
 			try {
 				Document targetDoc = PropertiesExtractor.parseHtml(targetFile);
-				HtmlAnalyzer targetAnalyzer = new HtmlAnalyzer(targetDoc);
+				HtmlAnalyzer targetAnalyzer = new HtmlAnalyzer(targetDoc).setExtractOnly(true);
 				targetAnalyzer.analyze();
 				existingTargetTexts.putAll(targetAnalyzer.getTextById());
 			} catch (Exception e) {
@@ -178,7 +179,7 @@ public class HtmlFileTranslator {
 		// Translate missing texts in batch
 		Map<String, String> translatedTexts = new HashMap<>();
 		if (!textsToTranslate.isEmpty()) {
-			System.out.println("Translating " + textsToTranslate.size() + " texts to " + destLang);
+			System.out.println("Translating " + textsToTranslate.size() + " texts from " + sourceFile + " to " + destLang + ": " + sorted(textIdToSourceText.keySet()));
 
 			List<TextResult> results = _translator.translateText(textsToTranslate, _srcLang, destLang);
 
@@ -242,6 +243,12 @@ public class HtmlFileTranslator {
 			PropertiesExtractor.serializeDocument(out, targetDoc);
 		}
 		System.out.println("Written to: " + targetFile.getAbsolutePath());
+	}
+
+	private static List<String> sorted(Set<String> set) {
+		ArrayList<String> result = new ArrayList<>(set);
+		Collections.sort(result);
+		return result;
 	}
 
 	/**

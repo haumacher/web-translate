@@ -15,7 +15,7 @@ public class TextExtractor {
 	}
 
 	public String extract() {
-		extractText(_root, true);
+		extractText(_root);
 		return normalizeWhitespace(_buffer.toString().trim());
 	}
 
@@ -23,54 +23,23 @@ public class TextExtractor {
 		return text.replaceAll("\\s\\s+", " ");
 	}
 
-	private void extractText(Element element, boolean hasTextSibbling) {
+	private void extractText(Element element) {
 		for (Node child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
 			if (child instanceof Text text) {
 				_buffer.append(text.getTextContent());
 			}
 			else if (child instanceof Element sub) {
-				boolean subText = containsText(sub);
-				if (hasTextSibbling || subText) {
-					int id = _nextId++;
+				int id = _nextId++;
 
-					_buffer.append("<x");
-					_buffer.append(id);
-					_buffer.append(">");
-					extractText(sub, subText);
-					_buffer.append("</x");
-					_buffer.append(id);
-					_buffer.append(">");
-				} else {
-					extractText(sub, false);
-				}
+				_buffer.append("<x");
+				_buffer.append(id);
+				_buffer.append(">");
+				extractText(sub);
+				_buffer.append("</x");
+				_buffer.append(id);
+				_buffer.append(">");
 			}
 		}
-	}
-
-	public static boolean containsText(Element element) {
-		for (Node child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
-			if (child instanceof Text text) {
-				if (hasAnyText(text)) {
-					return true;
-				}
-			}
-		}
-		return false;
-	}
-
-	private static boolean hasAnyText(Text s) {
-		String textContent = s.getTextContent();
-		return hasAnyText(textContent);
-	}
-
-	private static boolean hasAnyText(String s) {
-		if (s == null) {
-			return false;
-		}
-		if (s.isBlank()) {
-			return false;
-		}
-		return true;
 	}
 
 }

@@ -119,6 +119,8 @@ public class HtmlAnalyzer {
 	 */
 	private Set<String> _existingIds = new HashSet<>();
 
+	private boolean _extractOnly;
+
 	public HtmlAnalyzer(Document document) {
 		_document = document;
 	}
@@ -126,12 +128,31 @@ public class HtmlAnalyzer {
 	public void analyze() {
 		scanExistingIds(_document.getDocumentElement());
 		scanText(_document.getDocumentElement());
-		assignIds();
-		cleanIds(_document.getDocumentElement());
+		if (!_extractOnly) {
+			assignIds();
+			cleanIds(_document.getDocumentElement());
+		}
 		extractText(_document.getDocumentElement());
-		updateCrcs(_document.getDocumentElement());
+		if (!_extractOnly) {
+			updateCrcs(_document.getDocumentElement());
+		}
+	}
+	
+	/**
+	 * Whether the analysis run is performed only for extracting an I18N properties from a document.
+	 */
+	public boolean isExtractOnly() {
+		return _extractOnly;
 	}
 
+	/**
+	 * @see #isExtractOnly()
+	 */
+	public HtmlAnalyzer setExtractOnly(boolean extractOnly) {
+		_extractOnly = extractOnly;
+		return this;
+	}
+	
 	/**
 	 * Updates data-tx attributes to include CRC checksums in "ID:CRC" format.
 	 */
@@ -406,7 +427,7 @@ public class HtmlAnalyzer {
 		}
 
 		int sepIndex = id.indexOf(':');
-		if (sepIndex > 0) {
+		if (sepIndex >= 0) {
 			// Remove checksum from ID.
 			return id.substring(0, sepIndex);
 		} else {
@@ -422,7 +443,7 @@ public class HtmlAnalyzer {
 		}
 		
 		int sepIndex = id.indexOf(':');
-		if (sepIndex > 0) {
+		if (sepIndex >= 0) {
 			// Extract CRC.
 			return id.substring(sepIndex + 1);
 		} else {
@@ -457,7 +478,15 @@ public class HtmlAnalyzer {
 
 	private boolean containsText(Element element) {
 		for (Node child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
-			if (child instanceof Text text) {
+			if (child instanceof Element sub) {
+				String subId = sub.getAttribute(ID_ATTR);
+				if (subId == null || subId.isEmpty()) {
+					if (containsText(sub)) {
+						return true;
+					}
+				}
+			}
+			else if (child instanceof Text text) {
 				if (hasText(text)) {
 					return true;
 				}

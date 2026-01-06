@@ -42,16 +42,17 @@ public class TestHtmlAnalyzer {
 			<html><body data-tx="t0001:68ea8b3c">Some <a>funny <b><c>new</c><d>ly</d></b> generated <e>awesome</e></a> text</body></html>""",
 			html(document));
 		
+		// Set text with missing <x4> tag (must be inserted at the end).
 		analyzer.getTextById().put("t0001", "<x1>Lustiger <x2><x3>neu</x3></x2> generierter Text, der <x5>wunderbar</x5></x1> ist");
 		analyzer.inject();
 
 		assertEquals("""
 			<!DOCTYPE html>
-			<html><body data-tx="t0001:68ea8b3c"><a>Lustiger <b><c>neu</c><d></d></b> generierter Text, der <e>wunderbar</e></a> ist</body></html>""",
+			<html><body data-tx="t0001:68ea8b3c"><a>Lustiger <b><c>neu</c></b> generierter Text, der <e>wunderbar</e></a> ist<d></d></body></html>""",
 			html(document));
 	}
 
-	private Document parse(String html) throws SAXException, IOException, ParserConfigurationException {
+	static Document parse(String html) throws SAXException, IOException, ParserConfigurationException {
 		return DocumentBuilderFactory.newDefaultInstance().newDocumentBuilder().parse(new InputSource(new StringReader(html)));
 	}
 
@@ -85,7 +86,7 @@ public class TestHtmlAnalyzer {
 			html(document));
 	}
 	
-	private String html(Document document) {
+	static String html(Document document) {
 		ByteArrayOutputStream buffer = new ByteArrayOutputStream();
 		PropertiesExtractor.serializeDocument(buffer, document);
 		return new String(buffer.toByteArray(), StandardCharsets.UTF_8);
@@ -133,7 +134,7 @@ public class TestHtmlAnalyzer {
 		assertEquals("""
 			<!DOCTYPE html>
 			<html><body>
-				<li data-tx="t0001:21a0ad48">Text A1 <a> Text B1 <b> Text C1 <c> <d></d><e></e> Text D1 </c></b></a></li>
+				<li data-tx="t0001:21a0ad48">Text A1 <a> Text B1 <b> Text C1 <c> <d></d><e></e> Text D1 </c></b></a><f></f></li>
 			</body></html>""",
 			result);
 	}

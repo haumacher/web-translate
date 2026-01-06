@@ -31,23 +31,16 @@ public class TextInjector {
 	 * @param hasTextSibblings Whether direct children of the given element have
 	 *                         text siblings and therefore need to be indexed.
 	 */
-	private void analyze(Element element, boolean hasTextSibblings) {
+	private void analyze(Element element) {
 		for (Node child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
 			if (child instanceof Element sub) {
-				boolean containsText = TextExtractor.containsText(sub);
-
-				if (hasTextSibblings || containsText) {
-					_children.add(sub);
-				}
-
-				analyze(sub, containsText);
+				_children.add(sub);
+				analyze(sub);
 			}
 		}
 
-		if (hasTextSibblings) {
-			clear(element);
-			_contentElements.add(element);
-		}
+		clear(element);
+		_contentElements.add(element);
 	}
 
 	private void clear(Element element) {
@@ -66,7 +59,7 @@ public class TextInjector {
 	}
 	
 	private void doInject(String text) {
-		analyze(_element, true);
+		analyze(_element);
 		clear(_element);
 		Document doc = _element.getOwnerDocument();
 
@@ -82,29 +75,37 @@ public class TextInjector {
 			}
 
 			boolean startTag = matcher.group(1) == null;
-			int index = Integer.parseInt(matcher.group(2));
+			int id = Integer.parseInt(matcher.group(2));
 
 			if (startTag) {
-				Element child = _children.get(index - 1);
+				int index = id - 1;
+				Element child = _children.get(index);
 				if (child != null) {
-					// Never use twice.
-					_children.set(index - 1, null);
-
 					Element top = elements.top();
-					if (_contentElements.contains(top)) {
-						top.appendChild(child);
+					while (!_contentElements.contains(top)) {
+						// Pop.
+						elements.pop();
+						ids.pop();
+						
+						top = elements.top();
 					}
-					ids.push(index);
+					
+					// Never use twice.
+					_children.set(index, null);
+					top.appendChild(child);
+
+					// Push
+					ids.push(id);
 					elements.push(child);
 				}
 			} else {
-				if (ids.hasTop() && ids.top().equals(index)) {
+				if (ids.hasTop() && ids.top().equals(id)) {
 					// Pop.
 					elements.pop();
 					ids.pop();
-				} else if (ids.contains(index)) {
+				} else if (ids.contains(id)) {
 					// Missing end tags, pop them all.
-					while (!ids.top().equals(index)) {
+					while (!ids.top().equals(id)) {
 						System.err.println("WARN: Missing end tag for start tag '<x" + ids.top() + ">' in: " + text);
 						elements.pop();
 						ids.pop();
@@ -120,6 +121,17 @@ public class TextInjector {
 		}
 		if (text.length() > pos) {
 			elements.top().appendChild(doc.createTextNode(text.substring(pos)));
+		}
+		
+		// Safety: Do not loose contents: Add unused element to root.
+		Element top = elements.pop();
+		while (!elements.isEmpty()) {
+			top = elements.pop();
+		}
+		for (Element leftOver : _children) {
+			if (leftOver != null) {
+				top.appendChild(leftOver);
+			}
 		}
 	}
 
