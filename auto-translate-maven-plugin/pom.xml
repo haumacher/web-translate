@@ -6,7 +6,7 @@
 
   <groupId>de.haumacher</groupId>
   <artifactId>auto-translate-maven-plugin</artifactId>
-  <version>1.0.2</version>
+  <version>1.0.3-SNAPSHOT</version>
   <packaging>maven-plugin</packaging>
 
   <name>Auto Translate Maven Plugin</name>
