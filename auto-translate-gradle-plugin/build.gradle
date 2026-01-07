@@ -1,0 +1,65 @@
+plugins {
+    id 'java-gradle-plugin'
+    id 'maven-publish'
+}
+
+group = 'de.haumacher'
+version = '1.0.0-SNAPSHOT'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Core auto-translate library (ARB translator)
+    implementation project(':auto-translate')
+
+    // DeepL API client
+    implementation 'com.deepl.api:deepl-java:1.9.0'
+
+    // Gson for JSON parsing
+    implementation 'com.google.code.gson:gson:2.10.1'
+}
+
+gradlePlugin {
+    plugins {
+        autoTranslateArb {
+            id = 'de.haumacher.auto-translate-arb'
+            implementationClass = 'de.haumacher.autotranslate.gradle.TranslateArbPlugin'
+            displayName = 'ARB Auto-Translation Plugin'
+            description = 'Gradle plugin for automatic translation of ARB (Application Resource Bundle) files using DeepL API'
+        }
+    }
+}
+
+// Optionally, configure publishing to Maven repositories
+publishing {
+    repositories {
+        maven {
+            name = 'local'
+            url = layout.buildDirectory.dir('repo')
+        }
+    }
+}
+
+// Configure JAR manifest
+tasks.named('jar') {
+    manifest {
+        attributes(
+            'Implementation-Title': project.name,
+            'Implementation-Version': project.version,
+            'Implementation-Vendor': 'Bernhard Haumacher'
+        )
+    }
+}
+
+// Generate sources JAR
+java {
+    withSourcesJar()
+    withJavadocJar()
+}

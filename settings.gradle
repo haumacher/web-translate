@@ -1,0 +1,10 @@
+rootProject.name = 'web-translate'
+
+include 'auto-translate'
+include 'auto-translate-gradle-plugin'
+include 'auto-translate-maven-plugin'
+
+// Configure project directories
+project(':auto-translate').projectDir = file('auto-translate')
+project(':auto-translate-gradle-plugin').projectDir = file('auto-translate-gradle-plugin')
+project(':auto-translate-maven-plugin').projectDir = file('auto-translate-maven-plugin')

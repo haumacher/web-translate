@@ -1,0 +1,93 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+}
+
+group = 'de.haumacher'
+version = '1.0.1-SNAPSHOT'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // DeepL API client
+    api 'com.deepl.api:deepl-java:1.9.0'
+
+    // Gson for JSON parsing (ARB files)
+    implementation 'com.google.code.gson:gson:2.10.1'
+
+    // JUnit for testing
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.11.1'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+// Configure JAR manifest
+tasks.named('jar') {
+    manifest {
+        attributes(
+            'Implementation-Title': 'Auto Translate',
+            'Implementation-Version': project.version,
+            'Implementation-Vendor': 'Bernhard Haumacher',
+            'Main-Class': 'de.haumacher.autotranslate.Translator'
+        )
+    }
+}
+
+// Generate sources and javadoc JARs
+java {
+    withSourcesJar()
+    withJavadocJar()
+}
+
+// Configure publishing
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+
+            pom {
+                name = 'Auto Translate'
+                description = 'Automatic translation of HTML templates and ARB files using DeepL API'
+                url = 'https://github.com/haumacher/auto-translate'
+
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+
+                developers {
+                    developer {
+                        id = 'haumacher'
+                        name = 'Bernhard Haumacher'
+                        email = 'haui@haumacher.de'
+                    }
+                }
+
+                scm {
+                    connection = 'scm:git:https://github.com/haumacher/auto-translate.git'
+                    developerConnection = 'scm:git:https://github.com/haumacher/auto-translate.git'
+                    url = 'https://github.com/haumacher/auto-translate'
+                }
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            name = 'local'
+            url = layout.buildDirectory.dir('repo')
+        }
+    }
+}

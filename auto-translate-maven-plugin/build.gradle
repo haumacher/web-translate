@@ -1,0 +1,33 @@
+plugins {
+    id 'java'
+}
+
+group = 'de.haumacher'
+version = '1.0.1-SNAPSHOT'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Core auto-translate library
+    implementation project(':auto-translate')
+
+    // Maven plugin dependencies
+    compileOnly 'org.apache.maven:maven-plugin-api:3.9.6'
+    compileOnly 'org.apache.maven.plugin-tools:maven-plugin-annotations:3.11.0'
+    compileOnly 'org.apache.maven:maven-settings:3.9.6'
+    compileOnly 'org.apache.maven:maven-settings-builder:3.9.6'
+
+    // DeepL API client
+    implementation 'com.deepl.api:deepl-java:1.9.0'
+}
+
+// Note: This module is primarily built with Maven (mvn)
+// This Gradle build file is here for project structure consistency
+// To build the Maven plugin, use: cd auto-translate-maven-plugin && mvn install

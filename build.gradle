@@ -1,0 +1,28 @@
+// Root build.gradle for web-translate multi-module project
+
+subprojects {
+    repositories {
+        mavenCentral()
+    }
+}
+
+tasks.register('clean') {
+    group = 'build'
+    description = 'Clean all subprojects'
+
+    dependsOn subprojects.collect { it.tasks.findByName('clean') }.findAll { it != null }
+}
+
+tasks.register('build') {
+    group = 'build'
+    description = 'Build all subprojects'
+
+    dependsOn subprojects.collect { it.tasks.findByName('build') }.findAll { it != null }
+}
+
+tasks.register('publishToMavenLocal') {
+    group = 'publishing'
+    description = 'Publish all subprojects to Maven Local'
+
+    dependsOn subprojects.collect { it.tasks.findByName('publishToMavenLocal') }.findAll { it != null }
+}
