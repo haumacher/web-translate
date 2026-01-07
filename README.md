@@ -1,62 +1,20 @@
 # auto-translate - Automatic translation of HTML templates and ARB files using DeepL
 
-The `auto-translate` Maven plugin provides automated translation for:
+The `auto-translate` project provides automated translation tools for:
 - **HTML templates** (Thymeleaf or any HTML-based templates)
 - **ARB files** (Application Resource Bundle for Flutter/Dart localization)
 
-It uses the [DeepL API](https://www.deepl.com/pro-api) to automatically translate content while preserving markup structure and supporting incremental updates.
+Available as both **Maven plugin** and **Gradle plugin**, using the [DeepL API](https://www.deepl.com/pro-api) to automatically translate content while preserving markup structure and supporting incremental updates.
 
-## Quick Start
+## Project Structure
 
-**Step 1:** Add your DeepL API key to Maven settings (`~/.m2/settings.xml`):
+This is a multi-module project:
 
-```xml
-<settings>
-  <servers>
-    <server>
-      <id>deepl</id>
-      <passphrase>YOUR_DEEPL_API_KEY</passphrase>
-    </server>
-  </servers>
-</settings>
-```
+- **auto-translate** - Core translation library
+- **auto-translate-maven-plugin** - Maven plugin for HTML and ARB translation
+- **auto-translate-gradle-plugin** - Gradle plugin for ARB translation
 
-**Step 2:** Add the plugin to your `pom.xml`:
-
-```xml
-<plugin>
-  <groupId>de.haumacher</groupId>
-  <artifactId>auto-translate</artifactId>
-  <version>1.0.0</version>
-  <executions>
-    <execution>
-      <goals>
-        <goal>translate</goal>
-      </goals>
-      <configuration>
-        <!-- serverId defaults to "deepl", can be omitted if you use that ID -->
-        <sourceLang>en</sourceLang>
-        <targetLangs>de,fr,es</targetLangs>
-      </configuration>
-    </execution>
-  </executions>
-</plugin>
-```
-
-The plugin will run automatically during the `process-resources` phase:
-```bash
-mvn process-resources
-```
-
-You can also invoke it manually:
-```bash
-mvn auto-translate:translate
-```
-
-**Alternative:** Direct API key (less secure):
-```bash
-mvn auto-translate:translate -Dtranslate.apiKey=YOUR_DEEPL_API_KEY
-```
+See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed architectural information.
 
 ## HTML Translation
 
@@ -154,7 +112,7 @@ The plugin uses CRC checksums to detect changes:
 - **Modified content**: Detects via CRC mismatch and re-translates
 - **No CRC**: Treats as unchanged (backward compatibility)
 
-### Configuration
+### HTML Translation Configuration (Maven)
 
 Directory structure:
 ```
@@ -170,8 +128,8 @@ Maven plugin configuration:
 ```xml
 <plugin>
   <groupId>de.haumacher</groupId>
-  <artifactId>auto-translate</artifactId>
-  <version>1.0.0</version>
+  <artifactId>auto-translate-maven-plugin</artifactId>
+  <version>1.0.1-SNAPSHOT</version>
   <executions>
     <execution>
       <goals>
@@ -202,7 +160,7 @@ Don't forget to configure the DeepL API key in `~/.m2/settings.xml`:
 
 ## ARB Translation
 
-The plugin also supports ARB (Application Resource Bundle) files used in Flutter/Dart applications.
+Both plugins support ARB (Application Resource Bundle) files used in Flutter/Dart applications.
 
 ### Features
 
@@ -211,7 +169,7 @@ The plugin also supports ARB (Application Resource Bundle) files used in Flutter
 - **ICU MessageFormat support**: Handles plurals, select, gender, nested formats
 - **Compact output**: Target files contain only translations (no metadata)
 
-### Example
+### Example Translation
 
 Source file `app_en.arb`:
 ```json
@@ -220,11 +178,6 @@ Source file `app_en.arb`:
   "greeting": "Hello {username}!",
   "messages": "{count, plural, =0{no messages} =1{1 message} other{{count} messages}}"
 }
-```
-
-Run translation:
-```bash
-java -jar auto-translate.jar YOUR_API_KEY app_en.arb de,fr
 ```
 
 Generated `app_de.arb`:
@@ -238,18 +191,103 @@ Generated `app_de.arb`:
 
 Parameters and format identifiers are preserved, only the actual text is translated.
 
+### Configuration
+
+**Maven (pom.xml):**
+
+```xml
+<plugin>
+  <groupId>de.haumacher</groupId>
+  <artifactId>auto-translate-maven-plugin</artifactId>
+  <version>1.0.1-SNAPSHOT</version>
+  <executions>
+    <execution>
+      <goals>
+        <goal>translate-arb</goal>
+      </goals>
+      <configuration>
+        <sourceFile>${project.basedir}/lib/l10n/app_en.arb</sourceFile>
+        <targetLangs>de,fr,es</targetLangs>
+      </configuration>
+    </execution>
+  </executions>
+</plugin>
+```
+
+Run with: `mvn auto-translate:translate-arb`
+
+**Gradle (build.gradle):**
+
+```gradle
+plugins {
+    id 'de.haumacher.auto-translate-arb' version '1.0.0-SNAPSHOT'
+}
+
+translateArb {
+    serverId = 'deepl'  // API key from gradle.properties
+    sourceFile = file('lib/l10n/app_en.arb')
+    targetLangs = ['de', 'fr', 'es']
+}
+```
+
+Run with: `./gradlew translateArb`
+
+See [auto-translate-gradle-plugin/QUICK_START.md](auto-translate-gradle-plugin/QUICK_START.md) for a detailed Gradle tutorial.
+
 ## Building from Source
 
+### Build All Modules (Gradle)
+
 ```bash
-cd auto-translate
+./gradlew build
+```
+
+### Build Individual Modules
+
+**Core library:**
+```bash
+./gradlew :auto-translate:build
+```
+
+**Gradle plugin:**
+```bash
+./gradlew :auto-translate-gradle-plugin:build
+```
+
+**Maven plugin:**
+```bash
+cd auto-translate-maven-plugin
 mvn clean install
+```
+
+### Publish to Maven Local
+
+```bash
+./gradlew publishToMavenLocal
+```
+
+For the Maven plugin:
+```bash
+cd auto-translate-maven-plugin
+mvn install
 ```
 
 ## Documentation
 
-- [HOWTO-RELEASE.md](auto-translate/HOWTO-RELEASE.md) - Guide for releasing to Maven Central
+- [ARCHITECTURE.md](ARCHITECTURE.md) - Multi-module project architecture
 - [CLAUDE.md](CLAUDE.md) - Development guide for Claude Code
+- [auto-translate/HOWTO-RELEASE.md](auto-translate/HOWTO-RELEASE.md) - Guide for releasing to Maven Central
+- [auto-translate-gradle-plugin/README.md](auto-translate-gradle-plugin/README.md) - Gradle plugin documentation
+- [auto-translate-gradle-plugin/QUICK_START.md](auto-translate-gradle-plugin/QUICK_START.md) - Gradle quick start guide
+
+## Module Overview
+
+| Module | Description | Build Tool | Artifact |
+|--------|-------------|------------|----------|
+| auto-translate | Core translation library | Maven/Gradle | `auto-translate-1.0.1-SNAPSHOT.jar` |
+| auto-translate-maven-plugin | Maven plugin for HTML & ARB | Maven | `auto-translate-maven-plugin-1.0.1-SNAPSHOT.jar` |
+| auto-translate-gradle-plugin | Gradle plugin for ARB | Gradle | `auto-translate-gradle-plugin-1.0.0-SNAPSHOT.jar` |
 
 ## License
 
-Apache License 2.0 
+Apache License 2.0
