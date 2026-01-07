@@ -60,21 +60,25 @@ import org.w3c.dom.Text;
  * <p data-tx="t0002">
  * An example <b>with <th:block th:if="..."><i>considerable</i></th:block>
  * nesting</b>.
- * </p>
+ *
  * }</pre>
  *
+ * <p>
  * When text contains markup with deeply nested structure as in the example
  * above, each tag that has text siblings and each tag that directly contains
  * text is mapped to an identifying tag in the text to translate:
+ * </p>
  *
  * <pre>{@code t0002=An example <x1>with <x2>considerable</x2> nesting</x1>. }</pre>
  *
+ * <p>
  * Here, the original tag {@code <b>} is represented by {@code <x1>} and
  * {@code <i>} is represented by {@code <x2>}, while the tag
  * {@code <th:block>} has no representation in the text to translate, since
  * it neither directly contains text nor is it adjacent to translated text. This
  * approach considerably reduces structure in translated text, reducing size of
  * translation input and output and reduces potential errors during translation.
+ * </p>
  */
 public class HtmlAnalyzer {
 

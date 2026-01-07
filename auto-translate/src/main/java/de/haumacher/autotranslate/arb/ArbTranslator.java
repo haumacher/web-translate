@@ -35,20 +35,23 @@ import com.deepl.api.DeepLClient;
  *
  * <p>
  * File naming convention:
+ * </p>
  * <ul>
  *   <li>Source file: {@code basename_lang.arb} (e.g., {@code app_en.arb})</li>
  *   <li>Target files: {@code basename_targetLang.arb} (e.g., {@code app_de.arb}, {@code app_fr.arb})</li>
  * </ul>
- * </p>
+ *
  *
  * <p>
  * Example usage:
+ * </p>
+ * 
  * <pre>
  * ArbTranslator translator = new ArbTranslator("your-deepl-api-key");
  * List&lt;String&gt; targetLangs = List.of("de", "fr", "es");
  * translator.translate(new File("app_en.arb"), targetLangs);
  * </pre>
- * </p>
+ *
  */
 public class ArbTranslator {
 
@@ -341,7 +344,6 @@ public class ArbTranslator {
 	 *   <li>{@code messages_de_DE.arb} → "de_DE"</li>
 	 *   <li>{@code strings_fr.arb} → "fr"</li>
 	 * </ul>
-	 * </p>
 	 *
 	 * @param file The ARB file
 	 * @return The language code, or {@code null} if not found

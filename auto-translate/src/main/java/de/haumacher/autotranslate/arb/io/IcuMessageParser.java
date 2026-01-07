@@ -12,6 +12,8 @@ import de.haumacher.autotranslate.arb.ParameterProtector.ProtectedText;
  *
  * <p>
  * ICU MessageFormat supports complex parameter syntax including:
+ * </p>
+ * 
  * <ul>
  *   <li>Simple placeholders: {@code {name}}</li>
  *   <li>Typed arguments: {@code {count, number}}</li>
@@ -19,7 +21,6 @@ import de.haumacher.autotranslate.arb.ParameterProtector.ProtectedText;
  *   <li>Select forms: {@code {gender, select, male{his} female{her} other{their}}}</li>
  *   <li>Nested formats: Complex combinations of the above</li>
  * </ul>
- * </p>
  *
  * <p>
  * This parser identifies translatable text vs. non-translatable identifiers (keywords like
@@ -28,6 +29,8 @@ import de.haumacher.autotranslate.arb.ParameterProtector.ProtectedText;
  *
  * <p>
  * Example:
+ * </p>
+
  * <pre>
  * Input:  "{count, plural, =1{1 message} other{{count} messages}}"
  *
@@ -40,7 +43,7 @@ import de.haumacher.autotranslate.arb.ParameterProtector.ProtectedText;
  * - "1 message"
  * - "messages"
  * </pre>
- * </p>
+ *
  */
 public class IcuMessageParser {
 

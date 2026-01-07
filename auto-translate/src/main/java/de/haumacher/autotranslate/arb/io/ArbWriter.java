@@ -21,11 +21,12 @@ import de.haumacher.autotranslate.arb.model.ArbResourceAttributes;
  * <p>
  * Converts an in-memory {@link ArbBundle} representation into JSON-formatted ARB files.
  * Supports two output modes:
+ * </p>
+ * 
  * <ul>
  *   <li><b>Verbose mode</b>: Includes all metadata (@-prefixed attributes) for development</li>
  *   <li><b>Compact mode</b>: Strips metadata for runtime usage</li>
  * </ul>
- * </p>
  *
  * <p>
  * The writer preserves the insertion order of resources and formats JSON with 2-space indentation.
@@ -33,11 +34,13 @@ import de.haumacher.autotranslate.arb.model.ArbResourceAttributes;
  *
  * <p>
  * Example usage:
+ * </p>
+ * 
  * <pre>
  * ArbWriter writer = new ArbWriter();
  * writer.write(bundle, new File("messages_en.arb"), true); // verbose mode
  * </pre>
- * </p>
+ *
  */
 public class ArbWriter {
 

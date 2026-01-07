@@ -24,21 +24,24 @@ import de.haumacher.autotranslate.arb.model.ArbResourceAttributes;
  * <p>
  * Reads JSON-formatted ARB files and converts them into an in-memory {@link ArbBundle}
  * representation. The parser handles:
+ * </p>
+ * 
  * <ul>
  *   <li>Global attributes (@@locale, @@context, etc.)</li>
  *   <li>Resource entries (translatable strings)</li>
  *   <li>Resource attributes (@resource_id metadata)</li>
  *   <li>Placeholder definitions</li>
  * </ul>
- * </p>
  *
  * <p>
  * Example usage:
+ * </p>
+ * 
  * <pre>
  * ArbParser parser = new ArbParser();
  * ArbBundle bundle = parser.parse(new File("messages_en.arb"));
  * </pre>
- * </p>
+ *
  */
 public class ArbParser {
 

@@ -8,15 +8,18 @@ import java.util.Map;
  *
  * <p>
  * An ARB bundle contains:
+ * </p>
+ * 
  * <ul>
  *   <li>Global attributes (@@locale, @@context, etc.)</li>
  *   <li>Resource entries (translatable strings)</li>
  *   <li>Resource attributes (metadata for each resource)</li>
  * </ul>
- * </p>
  *
  * <p>
  * Example ARB structure:
+ * </p>
+ * 
  * <pre>
  * {
  *   "@@locale": "en_US",
@@ -28,7 +31,7 @@ import java.util.Map;
  *   }
  * }
  * </pre>
- * </p>
+ *
  *
  * <p>
  * This class uses {@link LinkedHashMap} to preserve the insertion order of resources,
@@ -59,7 +62,6 @@ public class ArbBundle {
 	 *   <li>{@code @@last_modified} - ISO8601 timestamp</li>
 	 *   <li>{@code @@author} - Creator or translator information</li>
 	 * </ul>
-	 * </p>
 	 */
 	public Map<String, String> getGlobalAttributes() {
 		return _globalAttributes;

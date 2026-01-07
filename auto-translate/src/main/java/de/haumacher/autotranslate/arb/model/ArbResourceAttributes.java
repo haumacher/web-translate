@@ -13,6 +13,8 @@ import java.util.Map;
  *
  * <p>
  * Example ARB entry:
+ * </p>
+ * 
  * <pre>
  * "@MSG_HELLO": {
  *   "type": "text",
@@ -26,7 +28,6 @@ import java.util.Map;
  *   }
  * }
  * </pre>
- * </p>
  */
 public class ArbResourceAttributes {
 

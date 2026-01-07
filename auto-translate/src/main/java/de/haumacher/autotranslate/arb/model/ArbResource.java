@@ -11,6 +11,8 @@ package de.haumacher.autotranslate.arb.model;
  *
  * <p>
  * Example ARB entries:
+ * </p>
+ * 
  * <pre>
  * "MSG_HELLO": "Hello {username}!",
  * "@MSG_HELLO": {
@@ -22,7 +24,6 @@ package de.haumacher.autotranslate.arb.model;
  *   }
  * }
  * </pre>
- * </p>
  */
 public class ArbResource {
 

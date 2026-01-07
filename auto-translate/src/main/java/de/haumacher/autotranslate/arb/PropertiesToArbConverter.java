@@ -23,16 +23,20 @@ import de.haumacher.autotranslate.arb.model.ArbResource;
  *
  * <p>
  * Example usage with minimal configuration:
+ * </p>
+ * 
  * <pre>
  * PropertiesToArbConverter converter = new PropertiesToArbConverter();
  * converter.convert(new File("messages_en.properties"));
  * // Creates messages_en.arb in the same directory
  * // Uses default Properties.load() (ISO-8859-1 with Unicode escapes)
  * </pre>
- * </p>
+ *
  *
  * <p>
  * Example usage with UTF-8 properties files:
+ * </p>
+ * 
  * <pre>
  * PropertiesToArbConverter converter = new PropertiesToArbConverter();
  * converter.setCharset(StandardCharsets.UTF_8);
@@ -41,15 +45,15 @@ import de.haumacher.autotranslate.arb.model.ArbResource;
  *     new File("app_en.arb")
  * );
  * </pre>
- * </p>
  *
  * <p>
  * The converter can automatically:
+ * </p>
+ * 
  * <ul>
  *   <li>Extract the locale from the filename (e.g., {@code messages_en.properties} → locale "en")</li>
  *   <li>Generate the output filename (e.g., {@code messages_en.properties} → {@code messages_en.arb})</li>
  * </ul>
- * </p>
  *
  * <p>
  * <b>Charset Handling:</b><br>
@@ -232,7 +236,6 @@ public class PropertiesToArbConverter {
 	 *   <li>{@code app_en_US.properties} → "en_US"</li>
 	 *   <li>{@code strings_de_DE.properties} → "de_DE"</li>
 	 * </ul>
-	 * </p>
 	 *
 	 * @param file The properties file
 	 * @return The language code, or {@code null} if not found
@@ -255,7 +258,6 @@ public class PropertiesToArbConverter {
 	 *   <li>{@code messages_en.properties} → {@code messages_en.arb}</li>
 	 *   <li>{@code /path/to/app_de.properties} → {@code /path/to/app_de.arb}</li>
 	 * </ul>
-	 * </p>
 	 *
 	 * @param propertiesFile The source properties file
 	 * @return The ARB file with the same basename but .arb extension
@@ -286,7 +288,6 @@ public class PropertiesToArbConverter {
 	 *   <li>{@code --charset CHARSET} - Charset to use for reading properties files (default: ISO-8859-1 with Unicode escapes)</li>
 	 *   <li>{@code --locale LOCALE} - Fallback locale identifier when locale cannot be extracted from filename (default: "en")</li>
 	 * </ul>
-	 * </p>
 	 *
 	 * <p>
 	 * All non-option arguments are treated as properties files to convert.

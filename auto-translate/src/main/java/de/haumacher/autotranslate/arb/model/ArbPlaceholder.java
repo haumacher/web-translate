@@ -10,6 +10,8 @@ package de.haumacher.autotranslate.arb.model;
  *
  * <p>
  * Example ARB entry:
+ * </p>
+ * 
  * <pre>
  * "FOO_123": "Your pending cost is {COST}",
  * "@FOO_123": {
@@ -21,7 +23,6 @@ package de.haumacher.autotranslate.arb.model;
  *   }
  * }
  * </pre>
- * </p>
  */
 public class ArbPlaceholder {
 

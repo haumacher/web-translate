@@ -28,6 +28,8 @@ import de.haumacher.autotranslate.html.extract.PropertiesExtractor;
  *
  * <p>
  * This translator:
+ * </p>
+ * 
  * <ul>
  *   <li>Parses the source HTML file and extracts translatable text with data-tx IDs</li>
  *   <li>Tracks which data-tx IDs are new (freshly assigned) vs existing (already in source)</li>
@@ -35,7 +37,6 @@ import de.haumacher.autotranslate.html.extract.PropertiesExtractor;
  *   <li>Only translates new content or content missing from target files</li>
  *   <li>Writes translated HTML files directly without intermediate properties files</li>
  * </ul>
- * </p>
  */
 public class HtmlFileTranslator {
 

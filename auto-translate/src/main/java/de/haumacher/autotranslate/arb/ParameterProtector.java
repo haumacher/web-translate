@@ -16,22 +16,24 @@ import de.haumacher.autotranslate.arb.io.IcuMessageParser.ParameterPart;
  * <p>
  * ARB resources can contain parameters in curly braces (e.g., {@code {username}}, {@code {count}}).
  * These parameter names should not be translated, as they are code identifiers. This class:
+ * </p>
+ * 
  * <ol>
  *   <li>Extracts parameters from text</li>
  *   <li>Replaces them with numbered XML tags (e.g., {@code <x1>username</x1>})</li>
  *   <li>After translation, restores the original parameter syntax</li>
  * </ol>
- * </p>
  *
  * <p>
  * Example workflow:
+ * </p>
+ * 
  * <pre>
  * Original:    "Hello {username}, you have {count} messages"
  * Protected:   "Hello &lt;x1&gt;username&lt;/x1&gt;, you have &lt;x2&gt;count&lt;/x2&gt; messages"
  * Translated:  "Hallo &lt;x1&gt;benutzername&lt;/x1&gt;, Sie haben &lt;x2&gt;anzahl&lt;/x2&gt; Nachrichten"
  * Restored:    "Hallo {username}, Sie haben {count} Nachrichten"
  * </pre>
- * </p>
  *
  * <p>
  * Note: The translator may change the text inside the XML tags (e.g., "username" → "benutzername"),
@@ -71,7 +73,6 @@ public class ParameterProtector {
 		 *   <li>Simple: {@code "Hello {username}"} → {@code "Hello <x1>username</x1>"}</li>
 		 *   <li>Plural: {@code "{count, plural, =1{1 message} other{{count} messages}}"}</li>
 		 * </ul>
-		 * </p>
 		 *
 		 * <p>
 		 * For complex ICU formats (plural, select), only translatable text is exposed
@@ -182,12 +183,10 @@ public class ParameterProtector {
 	 *   <li>Simple: {@code "Hello {username}"} → {@code "Hello <x1>username</x1>"}</li>
 	 *   <li>Plural: {@code "{count, plural, =1{1 message} other{{count} messages}}"}</li>
 	 * </ul>
-	 * </p>
 	 *
 	 * <p>
 	 * For complex ICU formats (plural, select), only translatable text is exposed
 	 * while identifiers (parameter names, format types, selector keywords) are protected.
-	 * </p>
 	 *
 	 * @param text The original text with ARB parameters
 	 * @return ProtectedText containing the protected text and parameter list
