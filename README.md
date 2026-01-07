@@ -129,7 +129,7 @@ Maven plugin configuration:
 <plugin>
   <groupId>de.haumacher</groupId>
   <artifactId>auto-translate-maven-plugin</artifactId>
-  <version>1.0.1</version>
+  <version>1.0.2-SNAPSHOT</version>
   <executions>
     <execution>
       <goals>
@@ -199,7 +199,7 @@ Parameters and format identifiers are preserved, only the actual text is transla
 <plugin>
   <groupId>de.haumacher</groupId>
   <artifactId>auto-translate-maven-plugin</artifactId>
-  <version>1.0.1</version>
+  <version>1.0.2-SNAPSHOT</version>
   <executions>
     <execution>
       <goals>
@@ -286,8 +286,8 @@ mvn install
 
 | Module | Description | Build Tool | Artifact |
 |--------|-------------|------------|----------|
-| auto-translate | Core translation library | Maven/Gradle | `auto-translate-1.0.1.jar` |
-| auto-translate-maven-plugin | Maven plugin for HTML & ARB | Maven | `auto-translate-maven-plugin-1.0.1.jar` |
+| auto-translate | Core translation library | Maven/Gradle | `auto-translate-1.0.2-SNAPSHOT.jar` |
+| auto-translate-maven-plugin | Maven plugin for HTML & ARB | Maven | `auto-translate-maven-plugin-1.0.2-SNAPSHOT.jar` |
 | auto-translate-gradle-plugin | Gradle plugin for ARB | Gradle | `auto-translate-gradle-plugin-1.0.0-SNAPSHOT.jar` |
 
 ## License
