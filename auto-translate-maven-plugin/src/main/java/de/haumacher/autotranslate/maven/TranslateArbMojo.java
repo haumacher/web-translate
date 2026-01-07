@@ -2,7 +2,9 @@ package de.haumacher.autotranslate.maven;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -117,6 +119,34 @@ public class TranslateArbMojo extends AbstractMojo {
 	@Parameter(property = "translate.arb.targetLangs", required = true)
 	private String targetLangs;
 
+	/**
+	 * Language mappings for DeepL API compatibility.
+	 *
+	 * <p>
+	 * Allows customizing how generic language codes map to DeepL-specific variants.
+	 * For example, "en" can be mapped to "en-US" or "en-GB".
+	 *
+	 * <p>
+	 * Default mappings are used if not specified:
+	 * <ul>
+	 *   <li>{@code en} → {@code en-US}</li>
+	 *   <li>{@code pt} → {@code pt-PT}</li>
+	 * </ul>
+	 *
+	 * <p>
+	 * Example configuration to override defaults:
+	 * <pre>{@code
+	 * <configuration>
+	 *   <languageMappings>
+	 *     <en>en-GB</en>
+	 *     <pt>pt-BR</pt>
+	 *   </languageMappings>
+	 * </configuration>
+	 * }</pre>
+	 */
+	@Parameter(property = "translate.arb.languageMappings")
+	private Map<String, String> languageMappings;
+
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
 		try {
@@ -153,8 +183,15 @@ public class TranslateArbMojo extends AbstractMojo {
 			// Create DeepL translator
 			Translator deeplTranslator = new DeepLClient(resolvedApiKey);
 
-			// Create and run ARB translator
-			ArbTranslator arbTranslator = new ArbTranslator(deeplTranslator);
+			// Create ARB translator with custom language mappings if provided
+			ArbTranslator arbTranslator;
+			if (languageMappings != null && !languageMappings.isEmpty()) {
+				getLog().info("Using custom language mappings: " + languageMappings);
+				arbTranslator = new ArbTranslator(deeplTranslator, languageMappings);
+			} else {
+				arbTranslator = new ArbTranslator(deeplTranslator);
+			}
+
 			arbTranslator.translate(sourceFile, targetLangsList);
 
 			getLog().info("");

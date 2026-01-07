@@ -1,9 +1,11 @@
 package de.haumacher.autotranslate.gradle;
 
 import java.io.File;
+import java.util.Map;
 
 import org.gradle.api.Project;
 import org.gradle.api.provider.ListProperty;
+import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Property;
 
 /**
@@ -38,6 +40,21 @@ import org.gradle.api.provider.Property;
  * }
  * </pre>
  *
+ *
+ * <p>
+ * Custom language mappings for DeepL API compatibility:
+ * <pre>
+ * translateArb {
+ *     serverId = 'deepl'
+ *     sourceFile = file('lib/l10n/app_en.arb')
+ *     targetLangs = ['de', 'fr', 'en']
+ *     languageMappings = [
+ *         'en': 'en-GB',  // Override default en-US with British English
+ *         'pt': 'pt-BR'   // Override default pt-PT with Brazilian Portuguese
+ *     ]
+ * }
+ * </pre>
+ *
  */
 public class TranslateArbExtension {
 
@@ -45,6 +62,7 @@ public class TranslateArbExtension {
     private final Property<String> serverId;
     private final Property<File> sourceFile;
     private final ListProperty<String> targetLangs;
+    private final MapProperty<String, String> languageMappings;
 
     public TranslateArbExtension(Project project) {
         this.apiKey = project.getObjects().property(String.class);
@@ -53,6 +71,7 @@ public class TranslateArbExtension {
 
         this.sourceFile = project.getObjects().property(File.class);
         this.targetLangs = project.getObjects().listProperty(String.class);
+        this.languageMappings = project.getObjects().mapProperty(String.class, String.class);
     }
 
     /**
@@ -139,5 +158,40 @@ public class TranslateArbExtension {
      */
     public void setTargetLangs(Iterable<String> targetLangs) {
         this.targetLangs.set(targetLangs);
+    }
+
+    /**
+     * Gets the language mappings for DeepL API compatibility.
+     *
+     * <p>
+     * Language mappings allow you to specify how generic language codes should be
+     * mapped to DeepL-specific variants. For example, "en" can be mapped to "en-US"
+     * or "en-GB".
+     *
+     * <p>
+     * Default mappings:
+     * <ul>
+     *   <li>{@code en} → {@code en-US}</li>
+     *   <li>{@code pt} → {@code pt-PT}</li>
+     * </ul>
+     */
+    public MapProperty<String, String> getLanguageMappings() {
+        return languageMappings;
+    }
+
+    /**
+     * Sets custom language mappings for DeepL API compatibility.
+     *
+     * <p>
+     * These mappings override the defaults. For example, to use British English
+     * or Brazilian Portuguese:
+     * <pre>
+     * languageMappings = ['en': 'en-GB', 'pt': 'pt-BR']
+     * </pre>
+     *
+     * @param languageMappings Map from user language codes to DeepL API language codes
+     */
+    public void setLanguageMappings(Map<String, String> languageMappings) {
+        this.languageMappings.set(languageMappings);
     }
 }

@@ -59,9 +59,27 @@ public class ArbTranslator {
 
 	private static final String X_TRANSLATED_ATTR = "x-translated";
 
+	/**
+	 * Default language mappings for DeepL API compatibility.
+	 *
+	 * <p>
+	 * DeepL requires specific language variants for certain languages.
+	 * These defaults map generic codes to sensible variants:
+	 * </p>
+	 * <ul>
+	 *   <li>{@code en} → {@code en-US} (American English)</li>
+	 *   <li>{@code pt} → {@code pt-PT} (European Portuguese)</li>
+	 * </ul>
+	 */
+	private static final Map<String, String> DEFAULT_LANGUAGE_MAPPINGS = Map.of(
+		"en", "en-US",
+		"pt", "pt-PT"
+	);
+
 	private final Translator _translator;
 	private final ArbParser _parser;
 	private final ArbWriter _writer;
+	private final Map<String, String> _languageMappings;
 
 	private int _totalBilledChars = 0;
 
@@ -85,12 +103,46 @@ public class ArbTranslator {
 	/**
 	 * Creates a new ARB translator with a translator instance.
 	 *
+	 * <p>
+	 * Uses default language mappings: {@code en} → {@code en-US}, {@code pt} → {@code pt-PT}
+	 *
 	 * @param translator Translator instance for DeepL API communication
 	 */
 	public ArbTranslator(Translator translator) {
+		this(translator, new HashMap<>(DEFAULT_LANGUAGE_MAPPINGS));
+	}
+
+	/**
+	 * Creates a new ARB translator with a translator instance and custom language mappings.
+	 *
+	 * <p>
+	 * Custom language mappings allow you to override DeepL API target language codes.
+	 * For example, to use British English or Brazilian Portuguese:
+	 * <pre>
+	 * Map&lt;String, String&gt; mappings = new HashMap&lt;&gt;();
+	 * mappings.put("en", "en-GB");  // Override default en-US with British English
+	 * mappings.put("pt", "pt-BR");  // Override default pt-PT with Brazilian Portuguese
+	 * ArbTranslator translator = new ArbTranslator(deeplClient, mappings);
+	 * </pre>
+	 *
+	 * <p>
+	 * Default mappings (used when not overridden):
+	 * <ul>
+	 *   <li>{@code en} → {@code en-US}</li>
+	 *   <li>{@code pt} → {@code pt-PT}</li>
+	 * </ul>
+	 *
+	 * @param translator Translator instance for DeepL API communication
+	 * @param languageMappings Map from user language codes to DeepL API language codes
+	 */
+	public ArbTranslator(Translator translator, Map<String, String> languageMappings) {
 		_translator = translator;
 		_parser = new ArbParser();
 		_writer = new ArbWriter();
+		_languageMappings = new HashMap<>(DEFAULT_LANGUAGE_MAPPINGS);
+		if (languageMappings != null) {
+			_languageMappings.putAll(languageMappings);
+		}
 	}
 
 	/**
@@ -175,6 +227,9 @@ public class ArbTranslator {
 	private void translateToLanguage(File sourceFile, ArbBundle sourceBundle,
 			String sourceLang, String targetLang)
 			throws IOException, DeepLException, InterruptedException {
+
+		// Normalize target language for DeepL API
+		String deeplTargetLang = normalizeTargetLanguage(targetLang);
 
 		// Check if target file already exists and load it
 		File targetFile = createTargetFile(sourceFile, targetLang);
@@ -293,7 +348,7 @@ public class ArbTranslator {
 			List<TextResult> results = _translator.translateText(
 				new ArrayList<>(textsToTranslate),
 				sourceLang,
-				targetLang
+				deeplTargetLang
 			);
 
 			// Build translation map
@@ -393,6 +448,40 @@ public class ArbTranslator {
 	private String updateLocale(String originalLocale, String targetLang) {
 		// Simple approach: just return target language
 		// Could be enhanced to preserve region (e.g., de_DE, fr_FR)
+		return targetLang;
+	}
+
+	/**
+	 * Normalizes target language codes for DeepL API compatibility.
+	 *
+	 * <p>
+	 * DeepL requires specific language variants for certain languages:
+	 * <ul>
+	 *   <li>English: requires {@code en-US} or {@code en-GB} (not just {@code en})</li>
+	 *   <li>Portuguese: requires {@code pt-PT} or {@code pt-BR} (not just {@code pt})</li>
+	 * </ul>
+	 *
+	 * <p>
+	 * This method uses configurable language mappings with the following defaults:
+	 * <ul>
+	 *   <li>{@code en} → {@code en-US}</li>
+	 *   <li>{@code pt} → {@code pt-BR}</li>
+	 * </ul>
+	 *
+	 * <p>
+	 * Custom mappings can be provided via the constructor to override these defaults.
+	 *
+	 * @param targetLang The target language code (e.g., "en", "en-US", "de", "pt")
+	 * @return Normalized language code compatible with DeepL API
+	 */
+	private String normalizeTargetLanguage(String targetLang) {
+		String normalized = _languageMappings.get(targetLang.toLowerCase());
+		if (normalized != null && !normalized.equals(targetLang)) {
+			System.out.println("  Note: Mapping '" + targetLang + "' to '" + normalized + "' for DeepL API compatibility");
+			return normalized;
+		}
+
+		// Return original if no mapping found
 		return targetLang;
 	}
 

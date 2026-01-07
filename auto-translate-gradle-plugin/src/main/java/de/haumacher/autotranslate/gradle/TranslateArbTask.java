@@ -2,10 +2,12 @@ package de.haumacher.autotranslate.gradle;
 
 import java.io.File;
 import java.util.List;
+import java.util.Map;
 
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.provider.ListProperty;
+import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFile;
@@ -85,6 +87,24 @@ public abstract class TranslateArbTask extends DefaultTask {
     @Input
     public abstract ListProperty<String> getTargetLangs();
 
+    /**
+     * Language mappings for DeepL API compatibility.
+     *
+     * <p>
+     * Allows customizing how generic language codes map to DeepL-specific variants.
+     * For example, "en" can be mapped to "en-US" or "en-GB".
+     *
+     * <p>
+     * Default mappings are used if not specified:
+     * <ul>
+     *   <li>{@code en} → {@code en-US}</li>
+     *   <li>{@code pt} → {@code pt-PT}</li>
+     * </ul>
+     */
+    @Input
+    @Optional
+    public abstract MapProperty<String, String> getLanguageMappings();
+
     @TaskAction
     public void translateArb() {
         try {
@@ -123,8 +143,16 @@ public abstract class TranslateArbTask extends DefaultTask {
             // Create DeepL translator
             Translator deeplTranslator = new DeepLClient(resolvedApiKey);
 
-            // Create and run ARB translator
-            ArbTranslator arbTranslator = new ArbTranslator(deeplTranslator);
+            // Create ARB translator with custom language mappings if provided
+            ArbTranslator arbTranslator;
+            if (getLanguageMappings().isPresent() && !getLanguageMappings().get().isEmpty()) {
+                Map<String, String> mappings = getLanguageMappings().get();
+                getLogger().lifecycle("Using custom language mappings: " + mappings);
+                arbTranslator = new ArbTranslator(deeplTranslator, mappings);
+            } else {
+                arbTranslator = new ArbTranslator(deeplTranslator);
+            }
+
             arbTranslator.translate(sourceFile, targetLangsList);
 
             getLogger().lifecycle("");

@@ -48,6 +48,7 @@ public class TranslateArbPlugin implements Plugin<Project> {
             task.getServerId().set(extension.getServerId());
             task.getSourceFile().set(extension.getSourceFile());
             task.getTargetLangs().set(extension.getTargetLangs());
+            task.getLanguageMappings().set(extension.getLanguageMappings());
         });
     }
 }
