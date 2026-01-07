@@ -275,8 +275,10 @@ mvn install
 ## Documentation
 
 - [ARCHITECTURE.md](ARCHITECTURE.md) - Multi-module project architecture
+- [RELEASE.md](RELEASE.md) - How to release all modules (coordinated release process)
+- [RELEASE_SCRIPTS.md](RELEASE_SCRIPTS.md) - Automated release scripts guide (one-click releases!)
 - [CLAUDE.md](CLAUDE.md) - Development guide for Claude Code
-- [auto-translate/HOWTO-RELEASE.md](auto-translate/HOWTO-RELEASE.md) - Guide for releasing to Maven Central
+- [auto-translate/HOWTO-RELEASE.md](auto-translate/HOWTO-RELEASE.md) - Detailed Maven Central release guide
 - [auto-translate-gradle-plugin/README.md](auto-translate-gradle-plugin/README.md) - Gradle plugin documentation
 - [auto-translate-gradle-plugin/QUICK_START.md](auto-translate-gradle-plugin/QUICK_START.md) - Gradle quick start guide
 
