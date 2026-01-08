@@ -106,14 +106,6 @@
 		</plugin>
 		<plugin>
 		  <groupId>org.apache.maven.plugins</groupId>
-		  <artifactId>maven-plugin-plugin</artifactId>
-		  <version>3.11.0</version>
-		  <configuration>
-		    <goalPrefix>auto-translate</goalPrefix>
-		  </configuration>
-		</plugin>
-		<plugin>
-		  <groupId>org.apache.maven.plugins</groupId>
 		  <artifactId>maven-surefire-plugin</artifactId>
 		  <version>3.0.0-M9</version>
 		</plugin>
