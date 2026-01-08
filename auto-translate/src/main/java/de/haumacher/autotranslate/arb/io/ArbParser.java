@@ -195,6 +195,18 @@ public class ArbParser {
 				placeholderObj.get("example").getAsString() : null;
 
 			ArbPlaceholder placeholder = new ArbPlaceholder(placeholderName, type, description, example);
+
+			// Parse custom attributes (anything not a standard field)
+			for (Map.Entry<String, JsonElement> attrEntry : placeholderObj.entrySet()) {
+				String attrName = attrEntry.getKey();
+				if (!attrName.equals("type") && !attrName.equals("description") && !attrName.equals("example")) {
+					// Custom attribute
+					if (attrEntry.getValue().isJsonPrimitive()) {
+						placeholder.setCustomAttribute(attrName, attrEntry.getValue().getAsString());
+					}
+				}
+			}
+
 			attributes.addPlaceholder(placeholder);
 		}
 	}

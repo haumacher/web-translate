@@ -177,6 +177,11 @@ public class ArbWriter {
 					placeholderObj.addProperty("example", placeholder.getExample());
 				}
 
+				// Add custom attributes
+				for (Map.Entry<String, String> customAttr : placeholder.customAttributeEntries()) {
+					placeholderObj.addProperty(customAttr.getKey(), customAttr.getValue());
+				}
+
 				placeholdersObj.add(placeholder.getName(), placeholderObj);
 			}
 			attrObj.add("placeholders", placeholdersObj);

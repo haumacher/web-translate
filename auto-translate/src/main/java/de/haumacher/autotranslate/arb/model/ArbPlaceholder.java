@@ -1,5 +1,9 @@
 package de.haumacher.autotranslate.arb.model;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
 /**
  * Metadata for a placeholder variable in an ARB resource value.
  *
@@ -11,14 +15,16 @@ package de.haumacher.autotranslate.arb.model;
  * <p>
  * Example ARB entry:
  * </p>
- * 
+ *
  * <pre>
  * "FOO_123": "Your pending cost is {COST}",
  * "@FOO_123": {
  *   "placeholders": {
  *     "COST": {
+ *       "type": "double",
  *       "example": "$123.45",
- *       "description": "cost presented with currency symbol"
+ *       "description": "cost presented with currency symbol",
+ *       "x-custom": "custom value"
  *     }
  *   }
  * }
@@ -30,6 +36,7 @@ public class ArbPlaceholder {
 	private String _type;
 	private String _description;
 	private String _example;
+	private Map<String, String> _customAttributes;
 
 	/**
 	 * Creates a new placeholder with all metadata.
@@ -108,6 +115,50 @@ public class ArbPlaceholder {
 
 	public void setExample(String example) {
 		_example = example;
+	}
+
+	/**
+	 * Sets a custom attribute (e.g., "x-custom-field").
+	 *
+	 * @param key   The attribute name
+	 * @param value The attribute value
+	 */
+	public void setCustomAttribute(String key, String value) {
+		if (_customAttributes == null) {
+			_customAttributes = new HashMap<>();
+		}
+		_customAttributes.put(key, value);
+	}
+
+	/**
+	 * Gets a custom attribute value.
+	 *
+	 * @param key The attribute name
+	 * @return The attribute value, or null if not set
+	 */
+	public String getCustomAttribute(String key) {
+		return _customAttributes != null ? _customAttributes.get(key) : null;
+	}
+
+	/**
+	 * Returns all custom attribute entries.
+	 *
+	 * @return Set of custom attribute entries
+	 */
+	public Set<Map.Entry<String, String>> customAttributeEntries() {
+		if (_customAttributes == null) {
+			return Set.of();
+		}
+		return _customAttributes.entrySet();
+	}
+
+	/**
+	 * Checks if this placeholder has any custom attributes.
+	 *
+	 * @return true if custom attributes exist
+	 */
+	public boolean hasCustomAttributes() {
+		return _customAttributes != null && !_customAttributes.isEmpty();
 	}
 
 	@Override

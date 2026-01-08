@@ -264,6 +264,68 @@ public class TestArbParser {
 	}
 
 	@Test
+	public void testPlaceholderCustomAttributes() {
+		String json = """
+			{
+			  "@@locale": "en",
+			  "priceMessage": "The price is {amount}",
+			  "@priceMessage": {
+			    "description": "Display price to user",
+			    "placeholders": {
+			      "amount": {
+			        "type": "double",
+			        "description": "The monetary amount",
+			        "example": "42.50",
+			        "x-format": "currency",
+			        "x-precision": "2",
+			        "x-custom-field": "custom value"
+			      }
+			    }
+			  }
+			}
+			""";
+
+		// Parse the JSON
+		ArbParser parser = new ArbParser();
+		ArbBundle bundle = parser.parse(json);
+
+		// Verify standard fields
+		ArbResource resource = bundle.getResource("priceMessage");
+		assertNotNull(resource);
+		ArbPlaceholder placeholder = resource.getAttributes().getPlaceholders().get("amount");
+		assertNotNull(placeholder);
+		assertEquals("amount", placeholder.getName());
+		assertEquals("double", placeholder.getType());
+		assertEquals("The monetary amount", placeholder.getDescription());
+		assertEquals("42.50", placeholder.getExample());
+
+		// Verify custom attributes
+		assertTrue(placeholder.hasCustomAttributes());
+		assertEquals("currency", placeholder.getCustomAttribute("x-format"));
+		assertEquals("2", placeholder.getCustomAttribute("x-precision"));
+		assertEquals("custom value", placeholder.getCustomAttribute("x-custom-field"));
+
+		// Write back and verify all fields are preserved
+		ArbWriter writer = new ArbWriter();
+		String outputJson = writer.toJson(bundle, true);
+
+		assertTrue(outputJson.contains("\"type\": \"double\""));
+		assertTrue(outputJson.contains("\"x-format\": \"currency\""));
+		assertTrue(outputJson.contains("\"x-precision\": \"2\""));
+		assertTrue(outputJson.contains("\"x-custom-field\": \"custom value\""));
+
+		// Parse again to verify round-trip
+		ArbBundle reparsed = parser.parse(outputJson);
+		ArbResource reparsedResource = reparsed.getResource("priceMessage");
+		ArbPlaceholder reparsedPlaceholder = reparsedResource.getAttributes().getPlaceholders().get("amount");
+
+		assertEquals("double", reparsedPlaceholder.getType());
+		assertEquals("currency", reparsedPlaceholder.getCustomAttribute("x-format"));
+		assertEquals("2", reparsedPlaceholder.getCustomAttribute("x-precision"));
+		assertEquals("custom value", reparsedPlaceholder.getCustomAttribute("x-custom-field"));
+	}
+
+	@Test
 	public void testComplexExample() {
 		String json = """
 			{
