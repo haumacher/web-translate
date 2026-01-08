@@ -1,12 +1,16 @@
 package de.haumacher.autotranslate.arb;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
 import de.haumacher.autotranslate.arb.io.ArbParser;
 import de.haumacher.autotranslate.arb.io.ArbWriter;
 import de.haumacher.autotranslate.arb.model.ArbBundle;
+import de.haumacher.autotranslate.arb.model.ArbConstants;
 import de.haumacher.autotranslate.arb.model.ArbPlaceholder;
 import de.haumacher.autotranslate.arb.model.ArbResource;
 import de.haumacher.autotranslate.arb.model.ArbResourceAttributes;
@@ -76,10 +80,9 @@ public class TestArbParser {
 		assertNotNull(resource);
 		assertTrue(resource.hasAttributes());
 
-		ArbResourceAttributes attrs = resource.getAttributes();
-		assertEquals("text", attrs.getType());
-		assertEquals("HomePage", attrs.getContext());
-		assertEquals("greeting message", attrs.getDescription());
+		assertEquals("text", resource.getType());
+		assertEquals("HomePage", resource.getContext());
+		assertEquals("greeting message", resource.getDescription());
 	}
 
 	@Test
@@ -106,12 +109,9 @@ public class TestArbParser {
 		ArbResource resource = bundle.getResource("FOO_123");
 		assertNotNull(resource);
 		assertEquals("Your pending cost is {COST}", resource.getValue());
+		assertTrue(resource.hasAttributes());
 
-		ArbResourceAttributes attrs = resource.getAttributes();
-		assertNotNull(attrs);
-		assertEquals(1, attrs.getPlaceholders().size());
-
-		ArbPlaceholder placeholder = attrs.getPlaceholders().get("COST");
+		ArbPlaceholder placeholder = resource.getPlaceholder("COST");
 		assertNotNull(placeholder);
 		assertEquals("COST", placeholder.getName());
 		assertEquals("$123.45", placeholder.getExample());
@@ -125,11 +125,9 @@ public class TestArbParser {
 		bundle.setContext("HomePage");
 
 		ArbResource resource = new ArbResource("MSG_HELLO", "Hello {username}!");
-		ArbResourceAttributes attrs = new ArbResourceAttributes();
-		attrs.setType("text");
-		attrs.setDescription("greeting message");
-		attrs.addPlaceholder(new ArbPlaceholder("username", "name of the user", "John"));
-		resource.setAttributes(attrs);
+		resource.setType("text");
+		resource.setDescription("greeting message");
+		resource.addPlaceholder(new ArbPlaceholder("username", "name of the user", "John"));
 
 		bundle.addResource(resource);
 
@@ -153,9 +151,7 @@ public class TestArbParser {
 		bundle.setLocale("en_US");
 
 		ArbResource resource = new ArbResource("MSG_HELLO", "Hello!");
-		ArbResourceAttributes attrs = new ArbResourceAttributes();
-		attrs.setDescription("greeting message");
-		resource.setAttributes(attrs);
+		resource.setDescription("greeting message");
 		bundle.addResource(resource);
 
 		ArbWriter writer = new ArbWriter();
@@ -179,11 +175,9 @@ public class TestArbParser {
 		original.addResource(resource1);
 
 		ArbResource resource2 = new ArbResource("MSG_2", "Kosten: {amount}");
-		ArbResourceAttributes attrs = new ArbResourceAttributes();
-		attrs.setType("text");
-		attrs.setDescription("cost display");
-		attrs.addPlaceholder(new ArbPlaceholder("amount", "monetary amount", "42.00 EUR"));
-		resource2.setAttributes(attrs);
+		resource2.setType("text");
+		resource2.setDescription("cost display");
+		resource2.addPlaceholder(new ArbPlaceholder("amount", "monetary amount", "42.00 EUR"));
 		original.addResource(resource2);
 
 		// Write to JSON
@@ -204,12 +198,10 @@ public class TestArbParser {
 		assertEquals("Kosten: {amount}", parsedResource2.getValue());
 		assertTrue(parsedResource2.hasAttributes());
 
-		ArbResourceAttributes parsedAttrs = parsedResource2.getAttributes();
-		assertEquals("text", parsedAttrs.getType());
-		assertEquals("cost display", parsedAttrs.getDescription());
-		assertEquals(1, parsedAttrs.getPlaceholders().size());
+		assertEquals("text", parsedResource2.getType());
+		assertEquals("cost display", parsedResource2.getDescription());
 
-		ArbPlaceholder parsedPlaceholder = parsedAttrs.getPlaceholders().get("amount");
+		ArbPlaceholder parsedPlaceholder = parsedResource2.getPlaceholder("amount");
 		assertEquals("amount", parsedPlaceholder.getName());
 		assertEquals("monetary amount", parsedPlaceholder.getDescription());
 		assertEquals("42.00 EUR", parsedPlaceholder.getExample());
@@ -243,7 +235,7 @@ public class TestArbParser {
 		assertNotNull(resource);
 		assertTrue(resource.hasAttributes());
 
-		ArbPlaceholder placeholder = resource.getAttributes().getPlaceholders().get("count");
+		ArbPlaceholder placeholder = resource.getPlaceholder("count");
 		assertNotNull(placeholder);
 		assertEquals("count", placeholder.getName());
 		assertEquals("int", placeholder.getType());
@@ -259,7 +251,7 @@ public class TestArbParser {
 		// Parse again to verify round-trip
 		ArbBundle reparsed = parser.parse(outputJson);
 		ArbResource reparsedResource = reparsed.getResource("itemCount");
-		ArbPlaceholder reparsedPlaceholder = reparsedResource.getAttributes().getPlaceholders().get("count");
+		ArbPlaceholder reparsedPlaceholder = reparsedResource.getPlaceholder("count");
 		assertEquals("int", reparsedPlaceholder.getType());
 	}
 
@@ -292,7 +284,7 @@ public class TestArbParser {
 		// Verify standard fields
 		ArbResource resource = bundle.getResource("priceMessage");
 		assertNotNull(resource);
-		ArbPlaceholder placeholder = resource.getAttributes().getPlaceholders().get("amount");
+		ArbPlaceholder placeholder = resource.getPlaceholder("amount");
 		assertNotNull(placeholder);
 		assertEquals("amount", placeholder.getName());
 		assertEquals("double", placeholder.getType());
@@ -317,7 +309,7 @@ public class TestArbParser {
 		// Parse again to verify round-trip
 		ArbBundle reparsed = parser.parse(outputJson);
 		ArbResource reparsedResource = reparsed.getResource("priceMessage");
-		ArbPlaceholder reparsedPlaceholder = reparsedResource.getAttributes().getPlaceholders().get("amount");
+		ArbPlaceholder reparsedPlaceholder = reparsedResource.getPlaceholder("amount");
 
 		assertEquals("double", reparsedPlaceholder.getType());
 		assertEquals("currency", reparsedPlaceholder.getAttribute("x-format"));
@@ -365,7 +357,7 @@ public class TestArbParser {
 
 		ArbResource titleBar = bundle.getResource("title_bar");
 		assertEquals("My Cool Home", titleBar.getValue());
-		assertEquals("Page title.", titleBar.getAttributes().getDescription());
+		assertEquals("Page title.", titleBar.getDescription());
 
 		ArbResource msgOk = bundle.getResource("MSG_OK");
 		assertEquals("Everything works fine.", msgOk.getValue());
@@ -373,7 +365,7 @@ public class TestArbParser {
 
 		ArbResource foo123 = bundle.getResource("FOO_123");
 		assertEquals("Your pending cost is {COST}", foo123.getValue());
-		assertEquals("HomePage:MainPanel", foo123.getAttributes().getContext());
-		assertEquals("Your pending cost is {COST}", foo123.getAttributes().getSourceText());
+		assertEquals("HomePage:MainPanel", foo123.getContext());
+		assertEquals("Your pending cost is {COST}", foo123.getAttribute(ArbConstants.SOURCE_TEXT));
 	}
 }
