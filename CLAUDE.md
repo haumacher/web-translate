@@ -355,36 +355,43 @@ Supports complex ICU syntax including:
 
 ### Parameter Protection Algorithm
 
-The translation process protects code identifiers while exposing translatable text:
+The translation process protects the entire parameter structure while exposing only the translatable text within each case. Complex parameters are replaced with a single placeholder, and DeepL receives multiple separate translation requests for each translatable text fragment.
 
 **Original:**
 ```json
-"{count, plural, =1{1 Meldung} other{{count} Meldungen}}"
+"You have {count, plural, =0{no messages} =1{one message} other{{count} messages}}"
 ```
 
-**Protected for DeepL:**
+**What DeepL sees** (4 separate translation requests):
 ```
-<x1>count, plural,</x1> <x2>=1</x2>{1 Meldung} <x3>other</x3>{<x4>count</x4> Meldungen}
+1. "You have <x1>count</x1>"
+2. "no messages"
+3. "one message"
+4. "<x1>count</x1> messages"
 ```
 
 **After translation:**
 ```
-<x1>count, plural,</x1> <x2>=1</x2>{1 report} <x3>other</x3>{<x4>count</x4> reports}
+1. "Sie haben <x1>count</x1>"
+2. "keine Nachrichten"
+3. "eine Nachricht"
+4. "<x1>count</x1> Nachrichten"
 ```
 
 **Restored:**
 ```json
-"{count, plural, =1{1 report} other{{count} reports}}"
+"Sie haben {count, plural, =0{keine Nachrichten} =1{eine Nachricht} other{{count} Nachrichten}}"
 ```
 
 **What's protected:**
+- The entire parameter structure (`{count, plural, ...}`)
 - Parameter names (`count`, `gender`, etc.)
 - Format types (`plural`, `select`, `selectordinal`)
-- Selector keywords (`=1`, `one`, `other`, `male`, `female`)
+- Selector keywords (`=0`, `=1`, `one`, `other`, `male`, `female`)
 - Special symbols (`#` in plural forms)
 
 **What's translated:**
-- Actual message text inside cases
+- Only the actual message text inside each case
 - Text outside parameter definitions
 
 ### ARB File Structure

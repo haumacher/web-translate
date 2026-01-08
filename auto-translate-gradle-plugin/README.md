@@ -135,27 +135,43 @@ lib/
 
 ### Parameter Protection
 
-The plugin intelligently protects ICU MessageFormat syntax:
+The plugin intelligently protects ICU MessageFormat syntax by hiding the entire parameter structure and only exposing the translatable text within each case.
 
 **Original:**
 ```json
-"{count, plural, =1{1 message} other{{count} messages}}"
+"You have {count, plural, =0{no messages} =1{one message} other{{count} messages}}"
 ```
 
-**Protected for DeepL:**
+**What DeepL sees** (3 separate translation requests):
 ```
-<x1>count, plural,</x1> <x2>=1</x2>{1 message} <x3>other</x3>{<x4>count</x4> messages}
+1. "You have <x1>count</x1>"
+2. "no messages"
+3. "one message"
+4. "<x1>count</x1> messages"
 ```
 
 **After Translation:**
 ```
-<x1>count, plural,</x1> <x2>=1</x2>{1 Nachricht} <x3>other</x3>{<x4>count</x4> Nachrichten}
+1. "Sie haben <x1>count</x1>"
+2. "keine Nachrichten"
+3. "eine Nachricht"
+4. "<x1>count</x1> Nachrichten"
 ```
 
 **Restored:**
 ```json
-"{count, plural, =1{1 Nachricht} other{{count} Nachrichten}}"
+"Sie haben {count, plural, =0{keine Nachrichten} =1{eine Nachricht} other{{count} Nachrichten}}"
 ```
+
+**What's protected:**
+- The entire parameter structure (`{count, plural, ...}`)
+- Parameter names (`count`)
+- Format types (`plural`, `select`, `selectordinal`)
+- Selector keywords (`=0`, `=1`, `one`, `other`, etc.)
+
+**What's translated:**
+- Only the actual message text inside each case
+- Text outside the parameter
 
 ## API Key Management
 
