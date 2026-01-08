@@ -1,28 +1,53 @@
 // Root build.gradle for web-translate multi-module project
 
+plugins {
+    id 'net.researchgate.release' version '3.1.0'
+}
+
 subprojects {
     repositories {
         mavenCentral()
     }
 }
 
-tasks.register('clean') {
-    group = 'build'
-    description = 'Clean all subprojects'
+// Task to synchronize version to Maven POM
+tasks.register('updateMavenVersion') {
+    group = 'versioning'
+    description = 'Update Maven plugin POM version to match gradle.properties'
 
-    dependsOn subprojects.collect { it.tasks.findByName('clean') }.findAll { it != null }
+    doLast {
+        def pomFile = file('auto-translate-maven-plugin/pom.xml')
+        if (pomFile.exists()) {
+            exec {
+                workingDir 'auto-translate-maven-plugin'
+                commandLine 'mvn', '-q', 'versions:set', "-DnewVersion=${project.version}", '-DgenerateBackupPoms=false'
+            }
+            println "Updated Maven POM to version ${project.version}"
+        }
+    }
 }
 
-tasks.register('build') {
-    group = 'build'
-    description = 'Build all subprojects'
+// Configure release plugin
+release {
+    // Use git for version control
+    git {
+        requireBranch.set('master')
+        pushToRemote.set('origin')
+        signTag.set(false)
+    }
 
-    dependsOn subprojects.collect { it.tasks.findByName('build') }.findAll { it != null }
+    // Version update strategy
+    versionPropertyFile = 'gradle.properties'
+
+    // Tasks to run before release
+    preTagCommitMessage = 'Release version'
+    tagCommitMessage = 'Release version'
+    newVersionCommitMessage = 'Prepare for next development iteration'
+
+    // Don't push automatically - let user review first
+    pushReleaseVersionBranch.set('master')
 }
 
-tasks.register('publishToMavenLocal') {
-    group = 'publishing'
-    description = 'Publish all subprojects to Maven Local'
-
-    dependsOn subprojects.collect { it.tasks.findByName('publishToMavenLocal') }.findAll { it != null }
-}
+// Hook Maven version update into release lifecycle
+afterReleaseBuild.dependsOn updateMavenVersion
+beforeReleaseBuild.dependsOn updateMavenVersion

@@ -1,11 +1,14 @@
-# How to Release the Auto-Translate Multi-Module Project
+# Release Guide
 
-This guide describes the release process for the multi-module `auto-translate` project, which includes:
-- `auto-translate` - Core library
-- `auto-translate-maven-plugin` - Maven plugin
-- `auto-translate-gradle-plugin` - Gradle plugin
+This guide describes the automated release process using the **Gradle Release Plugin** ([net.researchgate.release](https://github.com/researchgate/gradle-release)).
 
-**Quick Start:** Use the automated release scripts! See [RELEASE_SCRIPTS.md](RELEASE_SCRIPTS.md) for detailed script documentation.
+## Overview
+
+The project uses the Gradle release plugin to automate:
+- Version management (removing/adding SNAPSHOT)
+- Git tagging
+- Maven POM synchronization
+- Commit creation
 
 ## Prerequisites
 
@@ -14,354 +17,232 @@ See [auto-translate/HOWTO-RELEASE.md](auto-translate/HOWTO-RELEASE.md) for detai
 - GPG key configuration
 - Maven settings.xml
 
-## Release Strategy
+## Quick Release
 
-The project uses **coordinated releases** where all modules are versioned together:
-- All modules share the same version number
-- Releases are coordinated to ensure compatibility
-- Each module can be released independently if needed
+### One-Command Release
 
-## Version Numbering
-
-- **Core library**: `1.0.x` (stable API)
-- **Maven plugin**: `1.0.x` (matches core)
-- **Gradle plugin**: `1.0.x` (matches core)
-
-Example release versions:
-- `auto-translate-1.0.1`
-- `auto-translate-maven-plugin-1.0.1`
-- `auto-translate-gradle-plugin-1.0.1`
-
-## Release Process
-
-### One-Click Release (Easiest)
-
-For the simplest release (auto-increments patch version):
+The simplest way to release:
 
 ```bash
-./quick-release.sh
+./gradlew release
 ```
 
-This automatically determines:
-- Release version: Removes `-SNAPSHOT` from current version
-- Next version: Auto-increments patch number
+This will:
+1. Check that your working directory is clean
+2. Run all tests
+3. Prompt you for the release version (suggests removing `-SNAPSHOT`)
+4. Prompt you for the next development version (suggests incrementing patch)
+5. Update all version files (including Maven POM)
+6. Build all modules
+7. Commit and tag the release
+8. Update to next SNAPSHOT version
+9. Commit the next version
 
-Example: `1.0.1-SNAPSHOT` → Release `1.0.1` → Next `1.0.2-SNAPSHOT`
+**Example interaction:**
+```
+Current version: 1.0.3-SNAPSHOT
+Release version [1.0.3]:
+Next version [1.0.4-SNAPSHOT]:
+```
 
-### Custom Release
+### Non-Interactive Release
 
-Use the full release script for custom versions:
+For CI/CD or scripted releases:
 
 ```bash
-./release.sh 1.0.1
+./gradlew release -Prelease.useAutomaticVersion=true -Prelease.releaseVersion=1.0.3 -Prelease.newVersion=1.0.4-SNAPSHOT
 ```
 
-This script will automatically:
-- Check that working tree is clean
-- Run all tests
-- Update version numbers in all modules (Gradle and Maven)
-- Update README examples
-- Commit the release version
-- Create a git tag
-- Build and publish to Maven Local
-- Update to next SNAPSHOT version
-- Commit the next development version
+## After Release
 
-After the script completes, you just need to:
-1. Push to GitHub: `git push origin master && git push origin v1.0.1`
-2. Publish Maven plugin: `cd auto-translate-maven-plugin && mvn deploy -Prelease`
-3. Publish Gradle plugin: `git checkout v1.0.1 && cd auto-translate-gradle-plugin && ../gradlew publishPlugins`
-4. Create GitHub release
+After the `release` task completes successfully, you need to:
 
-**Custom next version:**
-```bash
-./release.sh 1.0.1 1.1.0-SNAPSHOT
-```
-
-### Manual Release Process
-
-If you prefer manual control:
-
-### Step 1: Prepare for Release
-
-1. **Ensure working tree is clean:**
-   ```bash
-   git status
-   # Should show "working tree clean"
-   ```
-
-2. **Run full build and tests:**
-   ```bash
-   ./gradlew clean build test
-   cd auto-translate-maven-plugin && mvn clean test && cd ..
-   ```
-
-3. **Verify all modules build successfully:**
-   ```bash
-   ./gradlew build
-   ```
-
-### Step 2: Update Version Numbers
-
-Update versions in all modules:
-
-**For Gradle modules (auto-translate, auto-translate-gradle-plugin):**
-```bash
-# Update version in build.gradle files
-# Change from: version = '1.0.1-SNAPSHOT'
-# To:         version = '1.0.1'
-```
-
-**For Maven plugin:**
-```bash
-cd auto-translate-maven-plugin
-mvn versions:set -DnewVersion=1.0.1
-cd ..
-```
-
-**Files to update manually:**
-- `auto-translate/build.gradle` - line 7
-- `auto-translate-gradle-plugin/build.gradle` - line 7
-- `auto-translate-maven-plugin/pom.xml` - via mvn versions:set
-- `README.md` - update version numbers in examples
-
-### Step 3: Commit Release Version
-
-```bash
-git add -A
-git commit -m "Release version 1.0.1"
-git tag -a v1.0.1 -m "Release version 1.0.1"
-```
-
-### Step 4: Build and Publish
-
-**Publish Core Library and Gradle Plugin:**
-```bash
-./gradlew publishToMavenLocal
-./gradlew publish  # If configured for publishing to Maven Central
-```
-
-**Publish Maven Plugin:**
-```bash
-cd auto-translate-maven-plugin
-mvn clean deploy -Prelease
-cd ..
-```
-
-**For Gradle Plugin Portal** (requires account at https://plugins.gradle.org/):
-```bash
-cd auto-translate-gradle-plugin
-./gradlew publishPlugins
-cd ..
-```
-
-### Step 5: Update to Next Development Version
-
-**Gradle modules:**
-```bash
-# Update version in build.gradle files
-# Change from: version = '1.0.1'
-# To:         version = '1.0.2-SNAPSHOT'
-```
-
-**Maven plugin:**
-```bash
-cd auto-translate-maven-plugin
-mvn versions:set -DnewVersion=1.0.2-SNAPSHOT
-cd ..
-```
-
-**Commit:**
-```bash
-git add -A
-git commit -m "Prepare for next development iteration (1.0.2-SNAPSHOT)"
-```
-
-### Step 6: Push to GitHub
+### 1. Push to GitHub
 
 ```bash
 git push origin master
-git push origin v1.0.1
+git push origin v1.0.3
 ```
 
-### Step 7: Create GitHub Release
-
-1. Go to https://github.com/haumacher/auto-translate/releases
-2. Click "Create a new release"
-3. Select tag `v1.0.1`
-4. Title: `v1.0.1`
-5. Description:
-   ```markdown
-   ## Changes in this release
-
-   - Feature 1
-   - Feature 2
-   - Bug fix 1
-
-   ## Modules Released
-
-   - `auto-translate-1.0.1` - Core library
-   - `auto-translate-maven-plugin-1.0.1` - Maven plugin
-   - `auto-translate-gradle-plugin-1.0.1` - Gradle plugin
-
-   ## Installation
-
-   **Maven:**
-   ```xml
-   <dependency>
-     <groupId>de.haumacher</groupId>
-     <artifactId>auto-translate-maven-plugin</artifactId>
-     <version>1.0.1</version>
-   </dependency>
-   ```
-
-   **Gradle:**
-   ```gradle
-   plugins {
-     id 'de.haumacher.auto-translate-arb' version '1.0.1'
-   }
-   ```
-   ```
-6. Click "Publish release"
-
-## Alternative: Maven Release Plugin (Maven Plugin Only)
-
-For the Maven plugin module, you can use the automated Maven release plugin:
+### 2. Publish Maven Plugin to Maven Central
 
 ```bash
 cd auto-translate-maven-plugin
-mvn release:prepare release:perform
+mvn deploy -Prelease
 cd ..
 ```
 
-**Note:** This only releases the Maven plugin module. You'll still need to manually release the Gradle modules.
+### 3. Publish Gradle Plugin to Gradle Plugin Portal
 
-## Publishing to Gradle Plugin Portal
+```bash
+git checkout v1.0.3
+cd auto-translate-gradle-plugin
+../gradlew publishPlugins
+cd ..
+git checkout master
+```
 
-To publish the Gradle plugin to https://plugins.gradle.org/:
+### 4. Create GitHub Release
 
-1. **Create account** at https://plugins.gradle.org/
-2. **Get API key** from your account settings
-3. **Configure credentials** in `~/.gradle/gradle.properties`:
-   ```properties
-   gradle.publish.key=YOUR_API_KEY
-   gradle.publish.secret=YOUR_API_SECRET
-   ```
+Go to https://github.com/haumacher/auto-translate/releases/new and:
+- Select tag `v1.0.3`
+- Add release notes
+- Publish release
 
-4. **Publish:**
-   ```bash
-   cd auto-translate-gradle-plugin
-   ../gradlew publishPlugins
-   ```
+## Advanced Usage
+
+### Skip Tests
+
+**Not recommended**, but if needed:
+
+```bash
+./gradlew release -x test
+```
+
+### Custom Version Property File
+
+The version is stored in `gradle.properties` at the root. To check the current version:
+
+```bash
+./gradlew properties | grep "^version:"
+```
+
+### Update Maven POM Manually
+
+If you need to sync the Maven POM version manually:
+
+```bash
+./gradlew updateMavenVersion
+```
+
+This task is automatically run during the release process.
+
+### Preview What Release Will Do
+
+To see what the release plugin will do without making changes:
+
+```bash
+./gradlew tasks --group=release
+```
+
+Key tasks in the release workflow:
+- `checkCommitNeeded` - Verifies working tree is clean
+- `checkSnapshotDependencies` - Checks for SNAPSHOT dependencies
+- `unSnapshotVersion` - Removes `-SNAPSHOT` from version
+- `confirmReleaseVersion` - Prompts for release version
+- `createReleaseTag` - Creates git tag
+- `updateVersion` - Prompts for next version
+- `commitNewVersion` - Commits next development version
+
+## Version Management
+
+### Version Storage
+
+All version information is centralized in:
+- **`gradle.properties`** - Single source of truth for version
+- **Gradle modules** - Read version from `gradle.properties`
+- **Maven POM** - Updated automatically by `updateMavenVersion` task
+
+### Version Format
+
+- **Development**: `X.Y.Z-SNAPSHOT` (e.g., `1.0.3-SNAPSHOT`)
+- **Release**: `X.Y.Z` (e.g., `1.0.3`)
+
+### Semantic Versioning
+
+Follow [semantic versioning](https://semver.org/):
+- **Patch** (X.Y.Z): Bug fixes, no API changes
+- **Minor** (X.Y.0): New features, backward compatible
+- **Major** (X.0.0): Breaking changes
+
+## Configuration
+
+The release plugin is configured in the root `build.gradle`:
+
+```groovy
+release {
+    git {
+        requireBranch.set('master')
+        pushToRemote.set('origin')
+        signTag.set(false)
+    }
+
+    versionPropertyFile = 'gradle.properties'
+
+    preTagCommitMessage = 'Release version'
+    tagCommitMessage = 'Release version'
+    newVersionCommitMessage = 'Prepare for next development iteration'
+
+    pushReleaseVersionBranch.set('master')
+}
+```
 
 ## SNAPSHOT Releases
 
-For development snapshots:
+For development snapshots (no release needed):
 
-**Gradle modules:**
 ```bash
+# Local testing
 ./gradlew publishToMavenLocal
-```
 
-**Maven plugin:**
-```bash
+# Deploy SNAPSHOT to Sonatype
 cd auto-translate-maven-plugin
 mvn clean deploy
 cd ..
 ```
 
-Snapshots are deployed to:
-- Gradle: Maven Local only (unless configured otherwise)
-- Maven: https://s01.oss.sonatype.org/content/repositories/snapshots/
+## Troubleshooting
 
-## Verification
+### "Working directory is not clean"
 
-After release, verify each module:
-
-### 1. Core Library
+Commit or stash your changes:
 ```bash
-# Check Maven Central
-https://search.maven.org/artifact/de.haumacher/auto-translate/1.0.1/jar
+git status
+git stash
+./gradlew release
 ```
 
-### 2. Maven Plugin
-```bash
-# Check Maven Central
-https://search.maven.org/artifact/de.haumacher/auto-translate-maven-plugin/1.0.1/maven-plugin
+### "Task 'release' not found"
 
-# Test in a project
-mvn de.haumacher:auto-translate-maven-plugin:1.0.1:help
+Make sure you're in the root directory and the release plugin is configured in `build.gradle`:
+```bash
+./gradlew tasks --group=release
 ```
 
-### 3. Gradle Plugin
-```bash
-# Check Gradle Plugin Portal
-https://plugins.gradle.org/plugin/de.haumacher.auto-translate-arb
+### Maven POM version out of sync
 
-# Test in a project
-gradle wrapper --gradle-version 8.5
-echo "plugins { id 'de.haumacher.auto-translate-arb' version '1.0.1' }" > test.gradle
-gradle -b test.gradle tasks
+Run the sync task manually:
+```bash
+./gradlew updateMavenVersion
+git add auto-translate-maven-plugin/pom.xml
+git commit -m "Sync Maven POM version"
+```
+
+### Failed to push tags
+
+The plugin doesn't auto-push by default. Push manually:
+```bash
+git push origin master
+git push origin v1.0.3
 ```
 
 ## Release Checklist
 
-- [ ] All tests passing
+- [ ] All tests passing (`./gradlew test`)
+- [ ] Working directory clean (`git status`)
 - [ ] Documentation updated
-- [ ] CHANGELOG updated
-- [ ] Version numbers updated in all modules
-- [ ] Version numbers updated in README examples
-- [ ] Git tag created
-- [ ] Core library published
-- [ ] Maven plugin published to Maven Central
-- [ ] Gradle plugin published to Gradle Plugin Portal
-- [ ] GitHub release created
-- [ ] Announcements sent (if applicable)
-
-## Rollback
-
-If you need to rollback a release:
-
-1. **Delete the tag:**
-   ```bash
-   git tag -d v1.0.1
-   git push origin :refs/tags/v1.0.1
-   ```
-
-2. **Revert version commits:**
-   ```bash
-   git revert HEAD~2..HEAD
-   ```
-
-3. **Contact Sonatype** if already published to Maven Central (releases cannot be deleted, but you can mark as deprecated)
-
-## Troubleshooting
-
-See [auto-translate/HOWTO-RELEASE.md](auto-translate/HOWTO-RELEASE.md) for detailed troubleshooting of:
-- GPG signing issues
-- Maven Central deployment issues
-- Permission errors
-
-## Module-Specific Notes
-
-### Core Library (`auto-translate`)
-- Can be built with either Maven or Gradle
-- Maven: `cd auto-translate && mvn deploy -Prelease`
-- Gradle: `./gradlew :auto-translate:publish`
-
-### Maven Plugin (`auto-translate-maven-plugin`)
-- **Must** be built with Maven for proper plugin packaging
-- The `pom.xml` has packaging type `maven-plugin`
-- Uses Maven plugin annotations
-
-### Gradle Plugin (`auto-translate-gradle-plugin`)
-- **Must** be built with Gradle
-- Uses `java-gradle-plugin` for plugin packaging
-- Auto-generates plugin descriptor
+- [ ] Run `./gradlew release`
+- [ ] Push to GitHub (`git push origin master && git push origin vX.Y.Z`)
+- [ ] Publish Maven plugin (`cd auto-translate-maven-plugin && mvn deploy -Prelease`)
+- [ ] Publish Gradle plugin (`cd auto-translate-gradle-plugin && ../gradlew publishPlugins`)
+- [ ] Create GitHub release
+- [ ] Verify on Maven Central (https://search.maven.org/)
+- [ ] Verify on Gradle Plugin Portal (https://plugins.gradle.org/)
 
 ## Additional Resources
 
+- [net.researchgate.release plugin](https://github.com/researchgate/gradle-release)
 - [Maven Central Guide](https://central.sonatype.org/publish/publish-guide/)
 - [Gradle Plugin Publishing](https://plugins.gradle.org/docs/publish-plugin)
 - [Semantic Versioning](https://semver.org/)
-- [auto-translate/HOWTO-RELEASE.md](auto-translate/HOWTO-RELEASE.md) - Detailed Maven release guide
+- [auto-translate/HOWTO-RELEASE.md](auto-translate/HOWTO-RELEASE.md) - Detailed Maven setup

@@ -4,7 +4,7 @@ plugins {
 }
 
 group = 'de.haumacher'
-version = '1.0.3-SNAPSHOT'
+// Version is read from root gradle.properties
 
 java {
     sourceCompatibility = JavaVersion.VERSION_17
