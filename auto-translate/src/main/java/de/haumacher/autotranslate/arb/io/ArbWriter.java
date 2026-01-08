@@ -11,6 +11,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 
 import de.haumacher.autotranslate.arb.model.ArbBundle;
+import de.haumacher.autotranslate.arb.model.ArbConstants;
 import de.haumacher.autotranslate.arb.model.ArbPlaceholder;
 import de.haumacher.autotranslate.arb.model.ArbResource;
 import de.haumacher.autotranslate.arb.model.ArbResourceAttributes;
@@ -137,27 +138,27 @@ public class ArbWriter {
 		JsonObject attrObj = new JsonObject();
 
 		if (attributes.getType() != null) {
-			attrObj.addProperty("type", attributes.getType());
+			attrObj.addProperty(ArbConstants.TYPE, attributes.getType());
 		}
 
 		if (attributes.getContext() != null) {
-			attrObj.addProperty("context", attributes.getContext());
+			attrObj.addProperty(ArbConstants.ATTR_CONTEXT, attributes.getContext());
 		}
 
 		if (attributes.getDescription() != null) {
-			attrObj.addProperty("description", attributes.getDescription());
+			attrObj.addProperty(ArbConstants.DESCRIPTION, attributes.getDescription());
 		}
 
 		if (attributes.getSourceText() != null) {
-			attrObj.addProperty("source_text", attributes.getSourceText());
+			attrObj.addProperty(ArbConstants.SOURCE_TEXT, attributes.getSourceText());
 		}
 
 		if (attributes.getScreenshot() != null) {
-			attrObj.addProperty("screenshot", attributes.getScreenshot());
+			attrObj.addProperty(ArbConstants.SCREENSHOT, attributes.getScreenshot());
 		}
 
 		if (attributes.getVideo() != null) {
-			attrObj.addProperty("video", attributes.getVideo());
+			attrObj.addProperty(ArbConstants.VIDEO, attributes.getVideo());
 		}
 
 		// Add placeholders
@@ -168,13 +169,13 @@ public class ArbWriter {
 				JsonObject placeholderObj = new JsonObject();
 
 				if (placeholder.getType() != null) {
-					placeholderObj.addProperty("type", placeholder.getType());
+					placeholderObj.addProperty(ArbConstants.PLACEHOLDER_TYPE, placeholder.getType());
 				}
 				if (placeholder.getDescription() != null) {
-					placeholderObj.addProperty("description", placeholder.getDescription());
+					placeholderObj.addProperty(ArbConstants.PLACEHOLDER_DESCRIPTION, placeholder.getDescription());
 				}
 				if (placeholder.getExample() != null) {
-					placeholderObj.addProperty("example", placeholder.getExample());
+					placeholderObj.addProperty(ArbConstants.PLACEHOLDER_EXAMPLE, placeholder.getExample());
 				}
 
 				// Add custom attributes
@@ -184,7 +185,7 @@ public class ArbWriter {
 
 				placeholdersObj.add(placeholder.getName(), placeholderObj);
 			}
-			attrObj.add("placeholders", placeholdersObj);
+			attrObj.add(ArbConstants.PLACEHOLDERS, placeholdersObj);
 		}
 
 		// Add custom attributes

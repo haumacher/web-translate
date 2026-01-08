@@ -301,9 +301,9 @@ public class TestArbParser {
 
 		// Verify custom attributes
 		assertTrue(placeholder.hasCustomAttributes());
-		assertEquals("currency", placeholder.getCustomAttribute("x-format"));
-		assertEquals("2", placeholder.getCustomAttribute("x-precision"));
-		assertEquals("custom value", placeholder.getCustomAttribute("x-custom-field"));
+		assertEquals("currency", placeholder.getAttribute("x-format"));
+		assertEquals("2", placeholder.getAttribute("x-precision"));
+		assertEquals("custom value", placeholder.getAttribute("x-custom-field"));
 
 		// Write back and verify all fields are preserved
 		ArbWriter writer = new ArbWriter();
@@ -320,9 +320,9 @@ public class TestArbParser {
 		ArbPlaceholder reparsedPlaceholder = reparsedResource.getAttributes().getPlaceholders().get("amount");
 
 		assertEquals("double", reparsedPlaceholder.getType());
-		assertEquals("currency", reparsedPlaceholder.getCustomAttribute("x-format"));
-		assertEquals("2", reparsedPlaceholder.getCustomAttribute("x-precision"));
-		assertEquals("custom value", reparsedPlaceholder.getCustomAttribute("x-custom-field"));
+		assertEquals("currency", reparsedPlaceholder.getAttribute("x-format"));
+		assertEquals("2", reparsedPlaceholder.getAttribute("x-precision"));
+		assertEquals("custom value", reparsedPlaceholder.getAttribute("x-custom-field"));
 	}
 
 	@Test

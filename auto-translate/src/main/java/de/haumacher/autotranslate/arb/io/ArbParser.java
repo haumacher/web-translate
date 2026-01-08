@@ -14,6 +14,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 import de.haumacher.autotranslate.arb.model.ArbBundle;
+import de.haumacher.autotranslate.arb.model.ArbConstants;
 import de.haumacher.autotranslate.arb.model.ArbPlaceholder;
 import de.haumacher.autotranslate.arb.model.ArbResource;
 import de.haumacher.autotranslate.arb.model.ArbResourceAttributes;
@@ -149,31 +150,31 @@ public class ArbParser {
 			JsonElement attrValue = entry.getValue();
 
 			switch (attrName) {
-				case "type":
+				case ArbConstants.TYPE:
 					attributes.setType(attrValue.getAsString());
 					break;
-				case "context":
+				case ArbConstants.ATTR_CONTEXT:
 					attributes.setContext(attrValue.getAsString());
 					break;
-				case "description":
+				case ArbConstants.DESCRIPTION:
 					attributes.setDescription(attrValue.getAsString());
 					break;
-				case "source_text":
+				case ArbConstants.SOURCE_TEXT:
 					attributes.setSourceText(attrValue.getAsString());
 					break;
-				case "screenshot":
+				case ArbConstants.SCREENSHOT:
 					attributes.setScreenshot(attrValue.getAsString());
 					break;
-				case "video":
+				case ArbConstants.VIDEO:
 					attributes.setVideo(attrValue.getAsString());
 					break;
-				case "placeholders":
+				case ArbConstants.PLACEHOLDERS:
 					parsePlaceholders(attributes, attrValue.getAsJsonObject());
 					break;
 				default:
 					// Custom attribute
 					if (attrValue.isJsonPrimitive()) {
-						attributes.setCustomAttribute(attrName, attrValue.getAsString());
+						attributes.setAttribute(attrName, attrValue.getAsString());
 					}
 					break;
 			}
@@ -187,22 +188,22 @@ public class ArbParser {
 			String placeholderName = entry.getKey();
 			JsonObject placeholderObj = entry.getValue().getAsJsonObject();
 
-			String type = placeholderObj.has("type") ?
-				placeholderObj.get("type").getAsString() : null;
-			String description = placeholderObj.has("description") ?
-				placeholderObj.get("description").getAsString() : null;
-			String example = placeholderObj.has("example") ?
-				placeholderObj.get("example").getAsString() : null;
+			String type = placeholderObj.has(ArbConstants.PLACEHOLDER_TYPE) ?
+				placeholderObj.get(ArbConstants.PLACEHOLDER_TYPE).getAsString() : null;
+			String description = placeholderObj.has(ArbConstants.PLACEHOLDER_DESCRIPTION) ?
+				placeholderObj.get(ArbConstants.PLACEHOLDER_DESCRIPTION).getAsString() : null;
+			String example = placeholderObj.has(ArbConstants.PLACEHOLDER_EXAMPLE) ?
+				placeholderObj.get(ArbConstants.PLACEHOLDER_EXAMPLE).getAsString() : null;
 
 			ArbPlaceholder placeholder = new ArbPlaceholder(placeholderName, type, description, example);
 
 			// Parse custom attributes (anything not a standard field)
 			for (Map.Entry<String, JsonElement> attrEntry : placeholderObj.entrySet()) {
 				String attrName = attrEntry.getKey();
-				if (!attrName.equals("type") && !attrName.equals("description") && !attrName.equals("example")) {
+				if (!ArbConstants.isStandardPlaceholderAttribute(attrName)) {
 					// Custom attribute
 					if (attrEntry.getValue().isJsonPrimitive()) {
-						placeholder.setCustomAttribute(attrName, attrEntry.getValue().getAsString());
+						placeholder.setAttribute(attrName, attrEntry.getValue().getAsString());
 					}
 				}
 			}

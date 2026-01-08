@@ -118,26 +118,66 @@ public class ArbPlaceholder {
 	}
 
 	/**
-	 * Sets a custom attribute (e.g., "x-custom-field").
+	 * Sets an attribute value.
 	 *
-	 * @param key   The attribute name
+	 * <p>
+	 * If the attribute name is a standard ARB placeholder property (type, description, example),
+	 * it will be set on the corresponding dedicated field. Otherwise, it will be stored as a
+	 * custom attribute. This provides a unified API for setting both standard and custom properties.
+	 * </p>
+	 *
+	 * @param name  The attribute name (use {@link ArbConstants} for standard properties)
 	 * @param value The attribute value
 	 */
-	public void setCustomAttribute(String key, String value) {
-		if (_customAttributes == null) {
-			_customAttributes = new HashMap<>();
+	public void setAttribute(String name, String value) {
+		// Redirect standard properties to their dedicated fields
+		if (ArbConstants.isStandardPlaceholderAttribute(name)) {
+			switch (name) {
+				case ArbConstants.PLACEHOLDER_TYPE:
+					setType(value);
+					break;
+				case ArbConstants.PLACEHOLDER_DESCRIPTION:
+					setDescription(value);
+					break;
+				case ArbConstants.PLACEHOLDER_EXAMPLE:
+					setExample(value);
+					break;
+			}
+		} else {
+			// Store as custom attribute
+			if (_customAttributes == null) {
+				_customAttributes = new HashMap<>();
+			}
+			_customAttributes.put(name, value);
 		}
-		_customAttributes.put(key, value);
 	}
 
 	/**
-	 * Gets a custom attribute value.
+	 * Gets an attribute value.
 	 *
-	 * @param key The attribute name
+	 * <p>
+	 * This method works for both standard and custom attributes, providing a unified API.
+	 * For standard properties (type, description, example), it returns the value from the
+	 * dedicated field. For custom properties, it returns the value from the custom attributes map.
+	 * </p>
+	 *
+	 * @param name The attribute name (use {@link ArbConstants} for standard properties)
 	 * @return The attribute value, or null if not set
 	 */
-	public String getCustomAttribute(String key) {
-		return _customAttributes != null ? _customAttributes.get(key) : null;
+	public String getAttribute(String name) {
+		// Check standard properties first
+		if (ArbConstants.isStandardPlaceholderAttribute(name)) {
+			switch (name) {
+				case ArbConstants.PLACEHOLDER_TYPE:
+					return getType();
+				case ArbConstants.PLACEHOLDER_DESCRIPTION:
+					return getDescription();
+				case ArbConstants.PLACEHOLDER_EXAMPLE:
+					return getExample();
+			}
+		}
+		// Fall back to custom attributes
+		return _customAttributes != null ? _customAttributes.get(name) : null;
 	}
 
 	/**

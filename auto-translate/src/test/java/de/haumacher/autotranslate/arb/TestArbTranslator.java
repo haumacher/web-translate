@@ -105,7 +105,7 @@ public class TestArbTranslator {
 		assertTrue(finalGreeting.getAttributes().hasCustomAttribute("x-translated"),
 			"greeting should have x-translated checksum");
 		assertEquals(ArbTranslator.computeChecksum("Hello {username}!"),
-			finalGreeting.getAttributes().getCustomAttribute("x-translated"),
+			finalGreeting.getAttributes().getAttribute("x-translated"),
 			"greeting checksum should match current text");
 
 		ArbResource finalWelcome = finalSourceBundle.getResource("welcome");
@@ -114,7 +114,7 @@ public class TestArbTranslator {
 		assertTrue(finalWelcome.getAttributes().hasCustomAttribute("x-translated"),
 			"welcome should have x-translated checksum");
 		assertEquals(ArbTranslator.computeChecksum("Welcome to our app"),
-			finalWelcome.getAttributes().getCustomAttribute("x-translated"),
+			finalWelcome.getAttributes().getAttribute("x-translated"),
 			"welcome checksum should match current text");
 
 		// Verify target file was created with translations
@@ -158,7 +158,7 @@ public class TestArbTranslator {
 		ArbBundle initialSourceBundle = parser.parse(sourceFile);
 
 		ArbResource initialGreeting = initialSourceBundle.getResource("greeting");
-		String storedChecksum = initialGreeting.getAttributes().getCustomAttribute("x-translated");
+		String storedChecksum = initialGreeting.getAttributes().getAttribute("x-translated");
 		String currentChecksum = ArbTranslator.computeChecksum(initialGreeting.getValue());
 
 		// Verify checksum mismatch
@@ -172,7 +172,7 @@ public class TestArbTranslator {
 		// Verify source file was updated with new checksum
 		ArbBundle finalSourceBundle = parser.parse(sourceFile);
 		ArbResource finalSourceGreeting = finalSourceBundle.getResource("greeting");
-		String finalChecksum = finalSourceGreeting.getAttributes().getCustomAttribute("x-translated");
+		String finalChecksum = finalSourceGreeting.getAttributes().getAttribute("x-translated");
 
 		assertEquals(currentChecksum, finalChecksum,
 			"Source checksum should be updated to match current text");
@@ -223,7 +223,7 @@ public class TestArbTranslator {
 
 		// Verify checksum matches initially
 		ArbResource initialGreeting = initialSourceBundle.getResource("greeting");
-		String storedChecksum = initialGreeting.getAttributes().getCustomAttribute("x-translated");
+		String storedChecksum = initialGreeting.getAttributes().getAttribute("x-translated");
 		String currentChecksum = ArbTranslator.computeChecksum(initialGreeting.getValue());
 
 		assertEquals(currentChecksum, storedChecksum,
@@ -245,7 +245,7 @@ public class TestArbTranslator {
 		// Verify source file checksum remains unchanged
 		ArbBundle finalSourceBundle = parser.parse(sourceFile);
 		ArbResource finalSourceGreeting = finalSourceBundle.getResource("greeting");
-		String finalChecksum = finalSourceGreeting.getAttributes().getCustomAttribute("x-translated");
+		String finalChecksum = finalSourceGreeting.getAttributes().getAttribute("x-translated");
 
 		assertEquals(greetingChecksum, finalChecksum,
 			"Source checksum should remain unchanged");
@@ -297,7 +297,7 @@ public class TestArbTranslator {
 		ArbBundle initialSourceBundle = parser.parse(sourceFile);
 
 		ArbResource greetingResource = initialSourceBundle.getResource("greeting");
-		String greetingChecksum = greetingResource.getAttributes().getCustomAttribute("x-translated");
+		String greetingChecksum = greetingResource.getAttributes().getAttribute("x-translated");
 		String currentGreetingChecksum = ArbTranslator.computeChecksum("Hello {username}!");
 
 		// Verify checksum mismatch exists initially
@@ -311,7 +311,7 @@ public class TestArbTranslator {
 		// Verify the source file was updated with correct checksums
 		ArbBundle finalSourceBundle = parser.parse(sourceFile);
 		ArbResource finalGreeting = finalSourceBundle.getResource("greeting");
-		String finalChecksum = finalGreeting.getAttributes().getCustomAttribute("x-translated");
+		String finalChecksum = finalGreeting.getAttributes().getAttribute("x-translated");
 
 		assertEquals(currentGreetingChecksum, finalChecksum,
 			"Source file should have updated checksum after translation");
@@ -389,7 +389,7 @@ public class TestArbTranslator {
 		assertTrue(updatedGreeting.getAttributes().hasCustomAttribute("x-translated"),
 			"greeting must have x-translated checksum to detect future changes");
 		assertEquals(expectedGreetingChecksum,
-			updatedGreeting.getAttributes().getCustomAttribute("x-translated"),
+			updatedGreeting.getAttributes().getAttribute("x-translated"),
 			"greeting checksum should match current text");
 
 		ArbResource updatedWelcome = updatedSourceBundle.getResource("welcome");
@@ -398,7 +398,7 @@ public class TestArbTranslator {
 		assertTrue(updatedWelcome.getAttributes().hasCustomAttribute("x-translated"),
 			"welcome must have x-translated checksum to detect future changes");
 		assertEquals(expectedWelcomeChecksum,
-			updatedWelcome.getAttributes().getCustomAttribute("x-translated"),
+			updatedWelcome.getAttributes().getAttribute("x-translated"),
 			"welcome checksum should match current text");
 	}
 }

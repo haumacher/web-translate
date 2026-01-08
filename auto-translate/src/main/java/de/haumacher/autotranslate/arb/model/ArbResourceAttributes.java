@@ -137,19 +137,40 @@ public class ArbResourceAttributes {
 	}
 
 	/**
-	 * Gets a custom attribute value by name.
+	 * Gets an attribute value.
 	 *
 	 * <p>
-	 * ARB specification requires custom attributes to be prefixed with {@code x-}
-	 * (e.g., {@code x-version}, {@code x-priority}).
+	 * This method works for both standard and custom attributes, providing a unified API.
+	 * For standard properties (type, context, description, etc.), it returns the value from the
+	 * dedicated field. For custom properties, it returns the value from the custom attributes map.
 	 * </p>
 	 *
-	 * @param name Attribute name
+	 * @param name Attribute name (use {@link ArbConstants} for standard properties)
 	 * @return The attribute value, or {@code null} if not set
 	 */
-	public String getCustomAttribute(String name) {
+	public String getAttribute(String name) {
+		// Check standard properties first
+		if (ArbConstants.isStandardResourceAttribute(name)) {
+			switch (name) {
+				case ArbConstants.TYPE:
+					return getType();
+				case ArbConstants.ATTR_CONTEXT:
+					return getContext();
+				case ArbConstants.DESCRIPTION:
+					return getDescription();
+				case ArbConstants.SOURCE_TEXT:
+					return getSourceText();
+				case ArbConstants.SCREENSHOT:
+					return getScreenshot();
+				case ArbConstants.VIDEO:
+					return getVideo();
+				// Note: PLACEHOLDERS is not returned as a string
+			}
+		}
+		// Fall back to custom attributes
 		return _customAttributes == null ? null : _customAttributes.get(name);
 	}
+
 
 	/**
 	 * Checks if a custom attribute is present.
@@ -162,17 +183,50 @@ public class ArbResourceAttributes {
 	}
 
 	/**
-	 * Sets a custom attribute.
+	 * Sets an attribute value.
 	 *
-	 * @param name  Attribute name (should be prefixed with {@code x-})
+	 * <p>
+	 * If the attribute name is a standard ARB resource property (type, context, description, etc.),
+	 * it will be set on the corresponding dedicated field. Otherwise, it will be stored as a
+	 * custom attribute. This provides a unified API for setting both standard and custom properties.
+	 * </p>
+	 *
+	 * @param name  Attribute name (use {@link ArbConstants} for standard properties)
 	 * @param value Attribute value
 	 */
-	public void setCustomAttribute(String name, String value) {
-		if (_customAttributes == null) {
-			_customAttributes = new HashMap<>();
+	public void setAttribute(String name, String value) {
+		// Redirect standard properties to their dedicated fields
+		if (ArbConstants.isStandardResourceAttribute(name)) {
+			switch (name) {
+				case ArbConstants.TYPE:
+					setType(value);
+					break;
+				case ArbConstants.ATTR_CONTEXT:
+					setContext(value);
+					break;
+				case ArbConstants.DESCRIPTION:
+					setDescription(value);
+					break;
+				case ArbConstants.SOURCE_TEXT:
+					setSourceText(value);
+					break;
+				case ArbConstants.SCREENSHOT:
+					setScreenshot(value);
+					break;
+				case ArbConstants.VIDEO:
+					setVideo(value);
+					break;
+				// Note: "placeholders" is not set via this method as it's a complex object
+			}
+		} else {
+			// Store as custom attribute
+			if (_customAttributes == null) {
+				_customAttributes = new HashMap<>();
+			}
+			_customAttributes.put(name, value);
 		}
-		_customAttributes.put(name, value);
 	}
+
 
 	/**
 	 * Removes a custom attribute.
