@@ -216,6 +216,54 @@ public class TestArbParser {
 	}
 
 	@Test
+	public void testPlaceholderTypePreservation() {
+		String json = """
+			{
+			  "@@locale": "en",
+			  "itemCount": "{count, plural, =0{No items} =1{One item} other{{count} items}}",
+			  "@itemCount": {
+			    "description": "Number of items",
+			    "placeholders": {
+			      "count": {
+			        "type": "int",
+			        "description": "The number of items",
+			        "example": "5"
+			      }
+			    }
+			  }
+			}
+			""";
+
+		// Parse the JSON
+		ArbParser parser = new ArbParser();
+		ArbBundle bundle = parser.parse(json);
+
+		// Verify placeholder has type
+		ArbResource resource = bundle.getResource("itemCount");
+		assertNotNull(resource);
+		assertTrue(resource.hasAttributes());
+
+		ArbPlaceholder placeholder = resource.getAttributes().getPlaceholders().get("count");
+		assertNotNull(placeholder);
+		assertEquals("count", placeholder.getName());
+		assertEquals("int", placeholder.getType());
+		assertEquals("The number of items", placeholder.getDescription());
+		assertEquals("5", placeholder.getExample());
+
+		// Write back and verify type is preserved
+		ArbWriter writer = new ArbWriter();
+		String outputJson = writer.toJson(bundle, true);
+
+		assertTrue(outputJson.contains("\"type\": \"int\""));
+
+		// Parse again to verify round-trip
+		ArbBundle reparsed = parser.parse(outputJson);
+		ArbResource reparsedResource = reparsed.getResource("itemCount");
+		ArbPlaceholder reparsedPlaceholder = reparsedResource.getAttributes().getPlaceholders().get("count");
+		assertEquals("int", reparsedPlaceholder.getType());
+	}
+
+	@Test
 	public void testComplexExample() {
 		String json = """
 			{

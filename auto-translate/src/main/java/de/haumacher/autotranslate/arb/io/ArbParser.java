@@ -187,12 +187,14 @@ public class ArbParser {
 			String placeholderName = entry.getKey();
 			JsonObject placeholderObj = entry.getValue().getAsJsonObject();
 
+			String type = placeholderObj.has("type") ?
+				placeholderObj.get("type").getAsString() : null;
 			String description = placeholderObj.has("description") ?
 				placeholderObj.get("description").getAsString() : null;
 			String example = placeholderObj.has("example") ?
 				placeholderObj.get("example").getAsString() : null;
 
-			ArbPlaceholder placeholder = new ArbPlaceholder(placeholderName, description, example);
+			ArbPlaceholder placeholder = new ArbPlaceholder(placeholderName, type, description, example);
 			attributes.addPlaceholder(placeholder);
 		}
 	}

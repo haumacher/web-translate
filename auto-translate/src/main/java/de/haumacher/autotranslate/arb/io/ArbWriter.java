@@ -167,6 +167,9 @@ public class ArbWriter {
 				ArbPlaceholder placeholder = entry.getValue();
 				JsonObject placeholderObj = new JsonObject();
 
+				if (placeholder.getType() != null) {
+					placeholderObj.addProperty("type", placeholder.getType());
+				}
 				if (placeholder.getDescription() != null) {
 					placeholderObj.addProperty("description", placeholder.getDescription());
 				}
