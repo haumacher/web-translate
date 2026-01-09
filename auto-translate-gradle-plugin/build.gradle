@@ -1,6 +1,7 @@
 plugins {
     id 'java-gradle-plugin'
     id 'maven-publish'
+    id 'com.gradle.plugin-publish' version '1.2.1'
 }
 
 group = 'de.haumacher'
@@ -27,12 +28,16 @@ dependencies {
 }
 
 gradlePlugin {
+    website = 'https://github.com/haumacher/auto-translate'
+    vcsUrl = 'https://github.com/haumacher/auto-translate.git'
+
     plugins {
         autoTranslateArb {
             id = 'de.haumacher.auto-translate-arb'
             implementationClass = 'de.haumacher.autotranslate.gradle.TranslateArbPlugin'
             displayName = 'ARB Auto-Translation Plugin'
             description = 'Gradle plugin for automatic translation of ARB (Application Resource Bundle) files using DeepL API'
+            tags = ['translation', 'i18n', 'localization', 'arb', 'deepl', 'flutter']
         }
     }
 }
