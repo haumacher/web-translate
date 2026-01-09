@@ -129,7 +129,7 @@ Maven plugin configuration:
 <plugin>
   <groupId>de.haumacher</groupId>
   <artifactId>auto-translate-maven-plugin</artifactId>
-  <version>1.0.3-SNAPSHOT</version>
+  <version>1.1.0</version>
   <executions>
     <execution>
       <goals>
@@ -199,7 +199,7 @@ Parameters and format identifiers are preserved, only the actual text is transla
 <plugin>
   <groupId>de.haumacher</groupId>
   <artifactId>auto-translate-maven-plugin</artifactId>
-  <version>1.0.3-SNAPSHOT</version>
+  <version>1.1.0</version>
   <executions>
     <execution>
       <goals>
@@ -220,7 +220,7 @@ Run with: `mvn auto-translate:translate-arb`
 
 ```gradle
 plugins {
-    id 'de.haumacher.auto-translate-arb' version '1.0.0-SNAPSHOT'
+    id 'de.haumacher.auto-translate-arb' version '1.1.0'
 }
 
 translateArb {
@@ -285,9 +285,9 @@ mvn install
 
 | Module | Description | Build Tool | Artifact |
 |--------|-------------|------------|----------|
-| auto-translate | Core translation library | Maven/Gradle | `auto-translate-1.0.3-SNAPSHOT.jar` |
-| auto-translate-maven-plugin | Maven plugin for HTML & ARB | Maven | `auto-translate-maven-plugin-1.0.3-SNAPSHOT.jar` |
-| auto-translate-gradle-plugin | Gradle plugin for ARB | Gradle | `auto-translate-gradle-plugin-1.0.0-SNAPSHOT.jar` |
+| auto-translate | Core translation library | Maven/Gradle | `auto-translate-1.1.0.jar` |
+| auto-translate-maven-plugin | Maven plugin for HTML & ARB | Maven | `auto-translate-maven-plugin-1.1.0.jar` |
+| auto-translate-gradle-plugin | Gradle plugin for ARB | Gradle | `auto-translate-gradle-plugin-1.1.0.jar` |
 
 ## License
 

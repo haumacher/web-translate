@@ -114,7 +114,7 @@ The plugin depends on:
 
 ```gradle
 plugins {
-    id 'de.haumacher.auto-translate-arb' version '1.0.0-SNAPSHOT'
+    id 'de.haumacher.auto-translate-arb' version '1.1.0'
 }
 
 repositories {
@@ -173,7 +173,7 @@ cd /home/bhu/git/web-translate
 ./gradlew publishToMavenLocal
 ```
 
-This installs the plugin to `~/.m2/repository/de/haumacher/auto-translate-gradle-plugin/1.0.0-SNAPSHOT/`
+This installs the plugin to `~/.m2/repository/de/haumacher/auto-translate-gradle-plugin/1.1.0/`
 
 ### Using in Other Projects
 
@@ -181,7 +181,7 @@ After publishing to Maven Local, add to your project's `build.gradle`:
 
 ```gradle
 plugins {
-    id 'de.haumacher.auto-translate-arb' version '1.0.0-SNAPSHOT'
+    id 'de.haumacher.auto-translate-arb' version '1.1.0'
 }
 
 repositories {

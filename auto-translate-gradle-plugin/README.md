@@ -29,7 +29,7 @@ cd auto-translate-gradle-plugin
 
 ```gradle
 plugins {
-    id 'de.haumacher.auto-translate-arb' version '1.0.0-SNAPSHOT'
+    id 'de.haumacher.auto-translate-arb' version '1.1.0'
 }
 ```
 
@@ -235,7 +235,7 @@ The plugin fully supports:
 
 ```gradle
 plugins {
-    id 'de.haumacher.auto-translate-arb' version '1.0.0-SNAPSHOT'
+    id 'de.haumacher.auto-translate-arb' version '1.1.0'
 }
 
 translateArb {

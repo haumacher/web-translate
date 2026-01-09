@@ -31,7 +31,7 @@ web-translate/
   - `synthesize` - Inject translations back
 
 **Build Output**:
-- `auto-translate-1.0.1-SNAPSHOT.jar` (75KB) - Pure library, no plugin code
+- `auto-translate-1.1.0.jar` (75KB) - Pure library, no plugin code
 - Published to Maven Local
 
 **Build Tools**: Both Maven and Gradle
@@ -45,7 +45,7 @@ web-translate/
 **Purpose**: Gradle plugin for ARB auto-translation
 
 **Dependencies**:
-- `auto-translate:1.0.1-SNAPSHOT` - Core library (project dependency)
+- `auto-translate:1.1.0` - Core library (project dependency)
 - `deepl-java:1.9.0` - DeepL API
 - `gson:2.10.1` - JSON parsing
 
@@ -55,7 +55,7 @@ web-translate/
 - `TranslateArbExtension` - Configuration DSL
 
 **Build Output**:
-- `auto-translate-gradle-plugin-1.0.0-SNAPSHOT.jar` (6.3KB)
+- `auto-translate-gradle-plugin-1.1.0.jar` (6.3KB)
 - Plugin ID: `de.haumacher.auto-translate-arb`
 - Published to Maven Local
 
@@ -65,7 +65,7 @@ web-translate/
 **Usage**:
 ```gradle
 plugins {
-    id 'de.haumacher.auto-translate-arb' version '1.0.0-SNAPSHOT'
+    id 'de.haumacher.auto-translate-arb' version '1.1.0'
 }
 
 translateArb {
@@ -82,7 +82,7 @@ translateArb {
 **Purpose**: Maven plugin for HTML and ARB auto-translation
 
 **Dependencies**:
-- `auto-translate:1.0.1-SNAPSHOT` - Core library
+- `auto-translate:1.1.0` - Core library
 - `maven-plugin-api:3.9.6` - Maven plugin API (provided)
 - `maven-plugin-annotations:3.11.0` - Annotations (provided)
 - `maven-settings:3.9.6` - Settings access (provided)
@@ -93,7 +93,7 @@ translateArb {
 - `TranslateArbMojo` - ARB translation goal
 
 **Build Output**:
-- `auto-translate-maven-plugin-1.0.1-SNAPSHOT.jar` (6.8KB)
+- `auto-translate-maven-plugin-1.1.0.jar` (6.8KB)
 - Goal prefix: `auto-translate`
 - **Note**: This JAR built with Gradle contains only the Mojo classes
 - For full Maven plugin, build with Maven: `cd auto-translate-maven-plugin && mvn install`
@@ -202,14 +202,14 @@ All modules published to Maven Local (`~/.m2/repository/`):
 
 ```
 de/haumacher/
-├── auto-translate/1.0.1-SNAPSHOT/
-│   ├── auto-translate-1.0.1-SNAPSHOT.jar
-│   ├── auto-translate-1.0.1-SNAPSHOT-sources.jar
-│   └── auto-translate-1.0.1-SNAPSHOT-javadoc.jar
-├── auto-translate-gradle-plugin/1.0.0-SNAPSHOT/
-│   ├── auto-translate-gradle-plugin-1.0.0-SNAPSHOT.jar
-│   ├── auto-translate-gradle-plugin-1.0.0-SNAPSHOT-sources.jar
-│   └── auto-translate-gradle-plugin-1.0.0-SNAPSHOT-javadoc.jar
+├── auto-translate/1.1.0/
+│   ├── auto-translate-1.1.0.jar
+│   ├── auto-translate-1.1.0-sources.jar
+│   └── auto-translate-1.1.0-javadoc.jar
+├── auto-translate-gradle-plugin/1.1.0/
+│   ├── auto-translate-gradle-plugin-1.1.0.jar
+│   ├── auto-translate-gradle-plugin-1.1.0-sources.jar
+│   └── auto-translate-gradle-plugin-1.1.0-javadoc.jar
 └── (Maven plugin would be here after mvn install)
 ```
 

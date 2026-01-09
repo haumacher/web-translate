@@ -64,7 +64,7 @@ Then configure the plugin in your `pom.xml`:
 <plugin>
   <groupId>de.haumacher</groupId>
   <artifactId>auto-translate</artifactId>
-  <version>1.0.0-SNAPSHOT</version>
+  <version>1.1.0</version>
   <executions>
     <execution>
       <goals>
@@ -126,7 +126,7 @@ The Maven goal translates HTML files directly without creating intermediate prop
 You can also run the translator directly via the main class:
 
 ```bash
-java -cp target/auto-translate-1.0.0-SNAPSHOT.jar de.haumacher.autotranslate.Translator \
+java -cp target/auto-translate-1.1.0.jar de.haumacher.autotranslate.Translator \
   <deepl-api-key> \
   <source-language> \
   <dest-languages-comma-separated> \

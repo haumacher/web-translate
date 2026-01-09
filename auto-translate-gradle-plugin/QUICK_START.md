@@ -27,7 +27,7 @@ In your Flutter project's `build.gradle` (or create one if it doesn't exist):
 
 ```gradle
 plugins {
-    id 'de.haumacher.auto-translate-arb' version '1.0.0-SNAPSHOT'
+    id 'de.haumacher.auto-translate-arb' version '1.1.0'
 }
 
 repositories {
