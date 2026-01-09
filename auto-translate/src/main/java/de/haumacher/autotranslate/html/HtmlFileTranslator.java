@@ -22,6 +22,7 @@ import com.deepl.api.Translator;
 
 import de.haumacher.autotranslate.html.extract.HtmlAnalyzer;
 import de.haumacher.autotranslate.html.extract.PropertiesExtractor;
+import de.haumacher.autotranslate.log.Logger;
 
 /**
  * Translates a single HTML file to multiple target languages using an in-memory approach.
@@ -29,7 +30,7 @@ import de.haumacher.autotranslate.html.extract.PropertiesExtractor;
  * <p>
  * This translator:
  * </p>
- * 
+ *
  * <ul>
  *   <li>Parses the source HTML file and extracts translatable text with data-tx IDs</li>
  *   <li>Tracks which data-tx IDs are new (freshly assigned) vs existing (already in source)</li>
@@ -43,6 +44,7 @@ public class HtmlFileTranslator {
 	private final Translator _translator;
 	private final String _srcLang;
 	private final List<String> _destLangs;
+	private final Logger _logger;
 
 	private int _totalBilledChars = 0;
 
@@ -52,11 +54,13 @@ public class HtmlFileTranslator {
 	 * @param translator Translator instance for DeepL API communication
 	 * @param srcLang Source language code
 	 * @param destLangs List of destination language codes
+	 * @param logger Logger for output messages
 	 */
-	public HtmlFileTranslator(Translator translator, String srcLang, List<String> destLangs) {
+	public HtmlFileTranslator(Translator translator, String srcLang, List<String> destLangs, Logger logger) {
 		_translator = translator;
 		_srcLang = srcLang;
 		_destLangs = destLangs;
+		_logger = logger;
 	}
 
 	/**
@@ -74,14 +78,14 @@ public class HtmlFileTranslator {
 	public void translateFile(File sourceFile, File targetDir, String relativePath)
 			throws ParserConfigurationException, SAXException, IOException, DeepLException, InterruptedException {
 
-		System.out.println("Processing: " + sourceFile.getPath());
+		_logger.info("Processing: " + sourceFile.getPath());
 
 		// Save original timestamp before we modify the source file
 		long originalSourceTimestamp = sourceFile.lastModified();
 
 		// Check if all target files are up-to-date based on timestamps
 		if (areAllTargetsUpToDate(originalSourceTimestamp, targetDir, relativePath)) {
-			System.out.println("All target files are up-to-date, skipping translation");
+			_logger.info("All target files are up-to-date, skipping translation");
 			return;
 		}
 
@@ -203,8 +207,7 @@ public class HtmlFileTranslator {
 				targetAnalyzer.analyze();
 				existingTargetTexts.putAll(targetAnalyzer.getTextById());
 			} catch (Exception e) {
-				System.err.println("WARN: Could not parse existing target file, will create new: " +
-					e.getMessage());
+				_logger.warn("Could not parse existing target file, will create new: " + e.getMessage());
 			}
 		}
 
@@ -231,7 +234,7 @@ public class HtmlFileTranslator {
 		// Translate missing texts in batch
 		Map<String, String> translatedTexts = new HashMap<>();
 		if (!textsToTranslate.isEmpty()) {
-			System.out.println("Translating " + textsToTranslate.size() + " texts from " + sourceFile + " to " + destLang + ": " + sorted(textIdToSourceText.keySet()));
+			_logger.info("Translating " + textsToTranslate.size() + " texts from " + sourceFile + " to " + destLang + ": " + sorted(textIdToSourceText.keySet()));
 
 			List<TextResult> results = _translator.translateText(textsToTranslate, _srcLang, destLang);
 
@@ -251,9 +254,9 @@ public class HtmlFileTranslator {
 			}
 
 			_totalBilledChars += billedChars;
-			System.out.println("Billed characters: " + billedChars);
+			_logger.info("Billed characters: " + billedChars);
 		} else {
-			System.out.println("No new texts to translate to " + destLang + ", reusing existing");
+			_logger.info("No new texts to translate to " + destLang + ", reusing existing");
 		}
 
 		// Build complete target texts map (existing + newly translated)
@@ -294,7 +297,7 @@ public class HtmlFileTranslator {
 		try (FileOutputStream out = new FileOutputStream(targetFile)) {
 			PropertiesExtractor.serializeDocument(out, targetDoc);
 		}
-		System.out.println("Written to: " + targetFile.getAbsolutePath());
+		_logger.info("Written to: " + targetFile.getAbsolutePath());
 	}
 
 	private static List<String> sorted(Set<String> set) {

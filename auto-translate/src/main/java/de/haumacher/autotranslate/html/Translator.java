@@ -12,12 +12,16 @@ import org.xml.sax.SAXException;
 import com.deepl.api.DeepLClient;
 import com.deepl.api.DeepLException;
 
+import de.haumacher.autotranslate.log.ConsoleLogger;
+import de.haumacher.autotranslate.log.Logger;
+
 public class Translator {
 
 	private final com.deepl.api.Translator _translator;
 	private final String _srcLang;
 	private final List<String> _destLangs;
 	private final File _templateDir;
+	private final Logger _logger;
 
 	/**
 	 * Creates a new HTML translator with a translator instance.
@@ -26,12 +30,26 @@ public class Translator {
 	 * @param srcLang Source language code
 	 * @param destLangs List of destination language codes
 	 * @param templateDir Base template directory containing language subdirectories
+	 * @param logger Logger for output messages
 	 */
-	public Translator(com.deepl.api.Translator translator, String srcLang, List<String> destLangs, File templateDir) {
+	public Translator(com.deepl.api.Translator translator, String srcLang, List<String> destLangs, File templateDir, Logger logger) {
 		_translator = translator;
 		_srcLang = srcLang;
 		_destLangs = destLangs;
 		_templateDir = templateDir;
+		_logger = logger;
+	}
+
+	/**
+	 * Creates a new HTML translator with a translator instance using console logger.
+	 *
+	 * @param translator Translator instance for DeepL API communication
+	 * @param srcLang Source language code
+	 * @param destLangs List of destination language codes
+	 * @param templateDir Base template directory containing language subdirectories
+	 */
+	public Translator(com.deepl.api.Translator translator, String srcLang, List<String> destLangs, File templateDir) {
+		this(translator, srcLang, destLangs, templateDir, ConsoleLogger.INSTANCE);
 	}
 
 	/**
@@ -43,7 +61,20 @@ public class Translator {
 	 * @param templateDir Base template directory containing language subdirectories
 	 */
 	public Translator(String apikey, String srcLang, List<String> destLangs, File templateDir) {
-		this(new DeepLClient(apikey), srcLang, destLangs, templateDir);
+		this(new DeepLClient(apikey), srcLang, destLangs, templateDir, ConsoleLogger.INSTANCE);
+	}
+
+	/**
+	 * Creates a new HTML translator with an API key and custom logger.
+	 *
+	 * @param apikey DeepL API key
+	 * @param srcLang Source language code
+	 * @param destLangs List of destination language codes
+	 * @param templateDir Base template directory containing language subdirectories
+	 * @param logger Logger for output messages
+	 */
+	public Translator(String apikey, String srcLang, List<String> destLangs, File templateDir, Logger logger) {
+		this(new DeepLClient(apikey), srcLang, destLangs, templateDir, logger);
 	}
 
 	/**
@@ -67,12 +98,12 @@ public class Translator {
 			throw new IOException("Source language directory does not exist: " + srcDir.getAbsolutePath());
 		}
 
-		HtmlFileTranslator fileTranslator = new HtmlFileTranslator(_translator, _srcLang, _destLangs);
+		HtmlFileTranslator fileTranslator = new HtmlFileTranslator(_translator, _srcLang, _destLangs, _logger);
 		processDirectory(srcDir, fileTranslator, "");
 
-		System.err.println();
-		System.err.println("Translation complete!");
-		System.err.println("Total billed characters: " + fileTranslator.getTotalBilledChars());
+		_logger.info("");
+		_logger.info("Translation complete!");
+		_logger.info("Total billed characters: " + fileTranslator.getTotalBilledChars());
 	}
 
 	private void processDirectory(File dir, HtmlFileTranslator fileTranslator, String relativePath)

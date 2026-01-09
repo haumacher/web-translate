@@ -127,13 +127,14 @@ public class TranslateMojo extends AbstractMojo {
 
 			List<String> destLangs = parseTargetLanguages();
 
-			// Create and run translator
+			// Create and run translator with Maven logger
 			de.haumacher.autotranslate.html.Translator translator =
 				new de.haumacher.autotranslate.html.Translator(
 					resolvedApiKey,
 					sourceLang,
 					destLangs,
-					templateDirectory
+					templateDirectory,
+					new MavenLoggerAdapter(getLog())
 				);
 			translator.run();
 
