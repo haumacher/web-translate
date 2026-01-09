@@ -70,9 +70,9 @@ git status
 
 This will:
 - Remove `-SNAPSHOT` from version
-- Update Maven POM
+- Update Maven POMs
 - Run tests
-- Create git tag
+- Create git tag (e.g., `v1.0.3`)
 - Bump to next SNAPSHOT version
 
 ### 2. Push to GitHub
@@ -82,15 +82,17 @@ git push origin master
 git push origin v1.0.3
 ```
 
-### 3. Publish Maven Plugin
+### 3. Publish Maven Artifacts to Maven Central
+
+Deploy both core library and Maven plugin together:
 
 ```bash
-cd auto-translate-maven-plugin
 mvn deploy -Prelease
-cd ..
 ```
 
-### 4. Publish Gradle Plugin
+This will deploy both modules in the correct order (core library first, then plugin).
+
+### 4. Publish Gradle Plugin to Gradle Plugin Portal
 
 ```bash
 git checkout v1.0.3
@@ -109,8 +111,9 @@ Go to https://github.com/haumacher/auto-translate/releases/new:
 
 ### 6. Verify
 
-- Maven Central: https://search.maven.org/
-- Gradle Plugin Portal: https://plugins.gradle.org/
+- Core library: https://search.maven.org/artifact/de.haumacher/auto-translate
+- Maven plugin: https://search.maven.org/artifact/de.haumacher/auto-translate-maven-plugin
+- Gradle plugin: https://plugins.gradle.org/plugin/de.haumacher.auto-translate-arb
 
 ## Troubleshooting
 

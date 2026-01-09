@@ -10,20 +10,17 @@ subprojects {
     }
 }
 
-// Task to synchronize version to Maven POM
+// Task to synchronize version to all Maven POMs
 tasks.register('updateMavenVersion') {
     group = 'versioning'
-    description = 'Update Maven plugin POM version to match gradle.properties'
+    description = 'Update all Maven POM versions to match gradle.properties'
 
     doLast {
-        def pomFile = file('auto-translate-maven-plugin/pom.xml')
-        if (pomFile.exists()) {
-            exec {
-                workingDir 'auto-translate-maven-plugin'
-                commandLine 'mvn', '-q', 'versions:set', "-DnewVersion=${project.version}", '-DgenerateBackupPoms=false'
-            }
-            println "Updated Maven POM to version ${project.version}"
+        // Update parent POM and all modules using Maven versions plugin
+        exec {
+            commandLine 'mvn', '-q', 'versions:set', "-DnewVersion=${project.version}", '-DgenerateBackupPoms=false'
         }
+        println "Updated all Maven POMs to version ${project.version}"
     }
 }
 

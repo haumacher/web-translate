@@ -1,51 +1,17 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>de.haumacher</groupId>
+
+  <parent>
+    <groupId>de.haumacher</groupId>
+    <artifactId>auto-translate-parent</artifactId>
+    <version>1.0.4-SNAPSHOT</version>
+  </parent>
+
   <artifactId>auto-translate</artifactId>
-  <version>1.0.1-SNAPSHOT</version>
-  <packaging>maven-plugin</packaging>
+  <packaging>jar</packaging>
 
-  <name>Auto Translate Maven Plugin</name>
-  <description>Maven plugin for automatic translation of HTML templates and ARB (Application Resource Bundle) files using DeepL API</description>
-  <url>https://github.com/haumacher/auto-translate</url>
-
-  <licenses>
-    <license>
-      <name>Apache License, Version 2.0</name>
-      <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
-      <distribution>repo</distribution>
-    </license>
-  </licenses>
-
-  <developers>
-    <developer>
-      <id>haumacher</id>
-      <name>Bernhard Haumacher</name>
-      <email>haui@haumacher.de</email>
-    </developer>
-  </developers>
-
-  <scm>
-    <connection>scm:git:https://github.com/haumacher/auto-translate.git</connection>
-    <developerConnection>scm:git:https://github.com/haumacher/auto-translate.git</developerConnection>
-    <url>https://github.com/haumacher/auto-translate/tree/master</url>
-    <tag>HEAD</tag>
-  </scm>
-
-  <distributionManagement>
-    <snapshotRepository>
-      <id>central</id>
-      <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
-    </snapshotRepository>
-    <repository>
-      <id>central</id>
-      <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-    </repository>
-  </distributionManagement>
-
-  <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-  </properties>
+  <name>Auto Translate Core Library</name>
+  <description>Core library for automatic translation of HTML templates and ARB (Application Resource Bundle) files using DeepL API</description>
 
   <dependencies>
 		<dependency>
@@ -57,30 +23,6 @@
 		  <groupId>com.google.code.gson</groupId>
 		  <artifactId>gson</artifactId>
 		  <version>2.10.1</version>
-		</dependency>
-		<dependency>
-		  <groupId>org.apache.maven</groupId>
-		  <artifactId>maven-plugin-api</artifactId>
-		  <version>3.9.6</version>
-		  <scope>provided</scope>
-		</dependency>
-		<dependency>
-		  <groupId>org.apache.maven.plugin-tools</groupId>
-		  <artifactId>maven-plugin-annotations</artifactId>
-		  <version>3.11.0</version>
-		  <scope>provided</scope>
-		</dependency>
-		<dependency>
-		  <groupId>org.apache.maven</groupId>
-		  <artifactId>maven-settings</artifactId>
-		  <version>3.9.6</version>
-		  <scope>provided</scope>
-		</dependency>
-		<dependency>
-		  <groupId>org.apache.maven</groupId>
-		  <artifactId>maven-settings-builder</artifactId>
-		  <version>3.9.6</version>
-		  <scope>provided</scope>
 		</dependency>
 		<dependency>
 		    <groupId>org.junit.jupiter</groupId>
