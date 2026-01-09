@@ -80,7 +80,7 @@
 			<artifactId>central-publishing-maven-plugin</artifactId>
 			<extensions>true</extensions>
 			<configuration>
-				<publishingServerId>tl-ossrh</publishingServerId>
+				<publishingServerId>central</publishingServerId>
 			</configuration>
 		</plugin>
     </plugins>
