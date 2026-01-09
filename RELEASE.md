@@ -97,6 +97,7 @@ This will deploy both modules in the correct order (core library first, then plu
 ```bash
 git checkout $VERSION
 ./gradlew :auto-translate-gradle-plugin:publishPlugins
+./gradlew publishToMavenLocal 
 git checkout master
 ```
 
