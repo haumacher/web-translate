@@ -76,6 +76,15 @@ public class HtmlFileTranslator {
 
 		System.out.println("Processing: " + sourceFile.getPath());
 
+		// Save original timestamp before we modify the source file
+		long originalSourceTimestamp = sourceFile.lastModified();
+
+		// Check if all target files are up-to-date based on timestamps
+		if (areAllTargetsUpToDate(originalSourceTimestamp, targetDir, relativePath)) {
+			System.out.println("All target files are up-to-date, skipping translation");
+			return;
+		}
+
 		// Parse and analyze source HTML
 		Document sourceDoc = PropertiesExtractor.parseHtml(sourceFile);
 		HtmlAnalyzer sourceAnalyzer = new HtmlAnalyzer(sourceDoc);
@@ -125,6 +134,48 @@ public class HtmlFileTranslator {
 		for (String destLang : _destLangs) {
 			translateToLanguage(sourceFile, targetDir, relativePath, destLang, sourceTexts, textsNeedingTranslation);
 		}
+	}
+
+	/**
+	 * Checks if all target language files are up-to-date based on file timestamps.
+	 * A target file is considered up-to-date if it exists and its last modification time
+	 * is significantly newer than the source file's last modification time.
+	 *
+	 * <p>
+	 * To account for filesystem timestamp granularity (which can be 1-2 seconds on some systems),
+	 * we require targets to be at least 2000ms (2 seconds) newer than the source to be considered up-to-date.
+	 * This prevents false positives when files are modified quickly in succession.
+	 * </p>
+	 *
+	 * @param sourceTimestamp Last modification time of the source file (before any modifications by translator)
+	 * @param targetDir Base directory for target language subdirectories
+	 * @param relativePath Relative path from language directory to HTML file
+	 * @return true if all target files exist and are up-to-date, false otherwise
+	 */
+	private boolean areAllTargetsUpToDate(long sourceTimestamp, File targetDir, String relativePath) {
+		// Minimum time difference (in ms) for target to be considered newer
+		// This accounts for filesystem timestamp granularity
+		final long TIMESTAMP_THRESHOLD_MS = 2000;
+
+		for (String destLang : _destLangs) {
+			File targetFile = new File(new File(targetDir, destLang), relativePath);
+
+			// If target doesn't exist, it's not up-to-date
+			if (!targetFile.exists()) {
+				return false;
+			}
+
+			long targetTimestamp = targetFile.lastModified();
+
+			// If source is newer or within threshold, target is not definitively up-to-date
+			// We require target to be significantly newer to avoid false positives
+			if (targetTimestamp < sourceTimestamp + TIMESTAMP_THRESHOLD_MS) {
+				return false;
+			}
+		}
+
+		// All targets exist and are significantly newer than source
+		return true;
 	}
 
 	/**
