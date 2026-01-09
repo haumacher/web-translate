@@ -78,16 +78,16 @@ public class HtmlFileTranslator {
 	public void translateFile(File sourceFile, File targetDir, String relativePath)
 			throws ParserConfigurationException, SAXException, IOException, DeepLException, InterruptedException {
 
-		_logger.info("Processing: " + sourceFile.getPath());
-
 		// Save original timestamp before we modify the source file
 		long originalSourceTimestamp = sourceFile.lastModified();
 
 		// Check if all target files are up-to-date based on timestamps
 		if (areAllTargetsUpToDate(originalSourceTimestamp, targetDir, relativePath)) {
-			_logger.info("All target files are up-to-date, skipping translation");
+			// Silently skip - reduces verbosity when nothing has changed
 			return;
 		}
+
+		_logger.info("Processing: " + sourceFile.getPath());
 
 		// Parse and analyze source HTML
 		Document sourceDoc = PropertiesExtractor.parseHtml(sourceFile);
@@ -234,7 +234,7 @@ public class HtmlFileTranslator {
 		// Translate missing texts in batch
 		Map<String, String> translatedTexts = new HashMap<>();
 		if (!textsToTranslate.isEmpty()) {
-			_logger.info("Translating " + textsToTranslate.size() + " texts from " + sourceFile + " to " + destLang + ": " + sorted(textIdToSourceText.keySet()));
+			_logger.info("  -> " + destLang + ": Translating " + textsToTranslate.size() + " texts: " + sorted(textIdToSourceText.keySet()));
 
 			List<TextResult> results = _translator.translateText(textsToTranslate, _srcLang, destLang);
 
@@ -254,10 +254,9 @@ public class HtmlFileTranslator {
 			}
 
 			_totalBilledChars += billedChars;
-			_logger.info("Billed characters: " + billedChars);
-		} else {
-			_logger.info("No new texts to translate to " + destLang + ", reusing existing");
+			_logger.info("     Billed characters: " + billedChars);
 		}
+		// Don't log anything when reusing - reduces verbosity
 
 		// Build complete target texts map (existing + newly translated)
 		Map<String, String> targetTexts = new HashMap<>();
@@ -297,7 +296,10 @@ public class HtmlFileTranslator {
 		try (FileOutputStream out = new FileOutputStream(targetFile)) {
 			PropertiesExtractor.serializeDocument(out, targetDoc);
 		}
-		_logger.info("Written to: " + targetFile.getAbsolutePath());
+		// Only log file write when translations were performed
+		if (!textsToTranslate.isEmpty()) {
+			_logger.info("     Written to: " + targetFile.getAbsolutePath());
+		}
 	}
 
 	private static List<String> sorted(Set<String> set) {
