@@ -1,5 +1,21 @@
 # Release Guide
 
+## Quick Start (Automated)
+
+Run the automated release script:
+
+```bash
+./release.sh
+```
+
+Options:
+- `--dry-run` - Show what would be done without executing
+- `--skip-tests` - Skip running tests during Gradle release
+- `--skip-gradle-plugin` - Skip publishing Gradle plugin
+- `--skip-github-release` - Skip creating GitHub release
+
+The script handles all steps below automatically with confirmation prompts.
+
 ## Prerequisites
 
 ### Sonatype OSSRH Account
@@ -56,7 +72,9 @@ gradle.publish.secret=YOUR_API_SECRET
 
 Get credentials from https://plugins.gradle.org/
 
-## Release Process
+## Release Process (Manual)
+
+The steps below are automated by `./release.sh`. Use these instructions if you need to run steps individually.
 
 ### 1. Prepare Release
 
