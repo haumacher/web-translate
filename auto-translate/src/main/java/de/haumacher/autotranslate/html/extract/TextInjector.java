@@ -79,7 +79,15 @@ public class TextInjector {
 
 			if (startTag) {
 				int index = id - 1;
-				Element child = _children.get(index);
+				// Defensive: a translated text may reference a marker that has no
+				// counterpart in the (possibly changed) source structure — e.g. a
+				// stale cached translation with more placeholders than the current
+				// source. Drop such a marker instead of crashing the whole run; the
+				// surrounding text is still preserved.
+				Element child = (index >= 0 && index < _children.size()) ? _children.get(index) : null;
+				if (child == null) {
+					System.err.println("WARN: No source element for marker '<x" + id + ">' in: " + text);
+				}
 				if (child != null) {
 					Element top = elements.top();
 					while (!_contentElements.contains(top)) {
