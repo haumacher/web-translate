@@ -134,9 +134,12 @@ public class HtmlFileTranslator {
 			PropertiesExtractor.serializeDocument(out, sourceDoc);
 		}
 
-		// Translate to each target language
+		// Translate to each target language. Pass the CRCs recorded in the
+		// source's data-tx attributes (not the freshly computed ones) so the
+		// per-language staleness check below preserves the "source without CRC =
+		// treated as unchanged" backward-compatibility rule.
 		for (String destLang : _destLangs) {
-			translateToLanguage(sourceFile, targetDir, relativePath, destLang, sourceTexts, textsNeedingTranslation);
+			translateToLanguage(sourceFile, targetDir, relativePath, destLang, sourceTexts, oldCrcs, textsNeedingTranslation);
 		}
 	}
 
@@ -192,7 +195,8 @@ public class HtmlFileTranslator {
 	}
 
 	private void translateToLanguage(File sourceFile, File targetDir, String relativePath,
-			String destLang, Map<String, String> sourceTexts, Set<String> textsNeedingTranslation)
+			String destLang, Map<String, String> sourceTexts, Map<String, String> sourceStoredCrcs,
+			Set<String> textsNeedingTranslation)
 			throws IOException, ParserConfigurationException, SAXException, DeepLException, InterruptedException {
 
 		// Determine target file location
@@ -200,12 +204,17 @@ public class HtmlFileTranslator {
 
 		// Load existing target file if it exists
 		Map<String, String> existingTargetTexts = new HashMap<>();
+		// CRC recorded in the target's data-tx attributes, keyed by base ID. Used
+		// to detect target translations that are stale relative to the current
+		// source content (see the reuse decision below).
+		Map<String, String> existingTargetCrcs = new HashMap<>();
 		if (targetFile.exists()) {
 			try {
 				Document targetDoc = PropertiesExtractor.parseHtml(targetFile);
 				HtmlAnalyzer targetAnalyzer = new HtmlAnalyzer(targetDoc).setExtractOnly(true);
 				targetAnalyzer.analyze();
 				existingTargetTexts.putAll(targetAnalyzer.getTextById());
+				existingTargetCrcs.putAll(targetAnalyzer.getOldCrcById());
 			} catch (Exception e) {
 				_logger.warn("Could not parse existing target file, will create new: " + e.getMessage());
 			}
@@ -224,10 +233,21 @@ public class HtmlFileTranslator {
 				textsToTranslate.add(sourceText);
 				textIdToSourceText.put(textId, sourceText);
 			}
-			// For unchanged texts, only translate if not in target
-			else if (!existingTargetTexts.containsKey(textId)) {
-				textsToTranslate.add(sourceText);
-				textIdToSourceText.put(textId, sourceText);
+			// For unchanged texts, translate if absent from the target or if the
+			// existing target translation is stale. The target is stale when the
+			// CRC recorded in its data-tx differs from the source's current CRC —
+			// the source content/structure changed since the target was last
+			// translated (e.g. the number of <xN> placeholders changed). Reusing
+			// such a translation would inject a structurally incompatible result.
+			else {
+				String baseId = extractBaseId(textId);
+				String srcCrc = sourceStoredCrcs.get(baseId);
+				String tgtCrc = existingTargetCrcs.get(baseId);
+				boolean targetStale = srcCrc != null && tgtCrc != null && !srcCrc.equals(tgtCrc);
+				if (!existingTargetTexts.containsKey(textId) || targetStale) {
+					textsToTranslate.add(sourceText);
+					textIdToSourceText.put(textId, sourceText);
+				}
 			}
 		}
 
@@ -268,9 +288,17 @@ public class HtmlFileTranslator {
 			if (translatedTexts.containsKey(sourceText)) {
 				targetTexts.put(textId, translatedTexts.get(sourceText));
 			}
-			// Otherwise use existing translation if available
+			// Otherwise reuse the existing translation, but only when it is not
+			// stale relative to the current source (same CRC). A stale entry
+			// would carry a placeholder structure incompatible with the source.
 			else if (existingTargetTexts.containsKey(textId)) {
-				targetTexts.put(textId, existingTargetTexts.get(textId));
+				String baseId = extractBaseId(textId);
+				String srcCrc = sourceStoredCrcs.get(baseId);
+				String tgtCrc = existingTargetCrcs.get(baseId);
+				boolean targetStale = srcCrc != null && tgtCrc != null && !srcCrc.equals(tgtCrc);
+				if (!targetStale) {
+					targetTexts.put(textId, existingTargetTexts.get(textId));
+				}
 			}
 		}
 
