@@ -196,8 +196,11 @@ else
     success "Gradle release completed"
 fi
 
-# Get the release tag
-RELEASE_TAG="v$RELEASE_VERSION"
+# Get the release tag. The Gradle release plugin tags with the bare version
+# (e.g. "1.1.2"), not a "v"-prefixed name — see the existing 1.0.0 / 1.1.0 /
+# 1.1.1 tags. A "v$RELEASE_VERSION" here makes every tag operation below
+# (push, checkout, release notes) fail with "src refspec v… does not match any".
+RELEASE_TAG="$RELEASE_VERSION"
 
 # Step 2: Push to GitHub
 echo ""
