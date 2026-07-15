@@ -109,6 +109,25 @@ public class TestParameterProtector {
 	}
 
 	@Test
+	public void testRestoreCapitalizedTag() {
+		// A translator (e.g. DeepL, especially with a glossary active) may
+		// capitalize a sentence-initial protection tag: "<x1>" -> "<X1>". The
+		// restore must still recognize the tag and put the original parameter back.
+		String original = "{phoneNumber} als SPAM gemeldet";
+
+		ProtectedText protection = ParameterProtector.protect(original);
+		assertEquals("<x1>phoneNumber</x1> als SPAM gemeldet", protection.getProtectedText());
+
+		// Simulate a translation whose leading tag was capitalized.
+		String translatedText = "<X1>phoneNumber</X1> reported as spam";
+		protection = protection.translate(x -> translatedText);
+
+		String restored = protection.restore();
+
+		assertEquals("{phoneNumber} reported as spam", restored);
+	}
+
+	@Test
 	public void testRestoreIgnoresTranslatedParameterNames() {
 		String original = "Hello {username}, you have {count} messages";
 

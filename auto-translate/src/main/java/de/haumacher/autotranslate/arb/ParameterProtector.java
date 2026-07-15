@@ -42,8 +42,10 @@ import de.haumacher.autotranslate.arb.io.IcuMessageParser.ParameterPart;
  */
 public class ParameterProtector {
 
-	// Pattern to match XML tags: <xN>...</xN>
-	private static final Pattern TAG_PATTERN = Pattern.compile("<x(\\d+)>.*?</x\\1>");
+	// Pattern to match XML tags: <xN>...</xN>. Case-insensitive because a
+	// translator may capitalize a sentence-initial tag (e.g. "<x1>" -> "<X1>"),
+	// which must still be recognized and restored to the original parameter.
+	private static final Pattern TAG_PATTERN = Pattern.compile("<x(\\d+)>.*?</x\\1>", Pattern.CASE_INSENSITIVE);
 
 	/**
 	 * Holds information about a translation with protected parameters.
