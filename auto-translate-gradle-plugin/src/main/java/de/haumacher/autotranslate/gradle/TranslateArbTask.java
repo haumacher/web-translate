@@ -105,6 +105,17 @@ public abstract class TranslateArbTask extends DefaultTask {
     @Optional
     public abstract MapProperty<String, String> getLanguageMappings();
 
+    /**
+     * Optional directory containing DeepL glossary files named
+     * {@code <source>-<target>.tsv} (base language codes, e.g. {@code en-de.tsv}),
+     * each line {@code sourceTerm<TAB>targetTerm}. Pins how individual terms are
+     * translated so the same source word stays consistent across resources and
+     * runs. When unset, translation runs without glossaries.
+     */
+    @Input
+    @Optional
+    public abstract Property<File> getGlossaryDir();
+
     @TaskAction
     public void translateArb() {
         try {
@@ -143,15 +154,18 @@ public abstract class TranslateArbTask extends DefaultTask {
             // Create DeepL translator
             Translator deeplTranslator = new DeepLClient(resolvedApiKey);
 
-            // Create ARB translator with custom language mappings if provided
-            ArbTranslator arbTranslator;
-            if (getLanguageMappings().isPresent() && !getLanguageMappings().get().isEmpty()) {
-                Map<String, String> mappings = getLanguageMappings().get();
+            // Create ARB translator with optional custom language mappings and glossary
+            Map<String, String> mappings =
+                (getLanguageMappings().isPresent() && !getLanguageMappings().get().isEmpty())
+                    ? getLanguageMappings().get() : null;
+            if (mappings != null) {
                 getLogger().lifecycle("Using custom language mappings: " + mappings);
-                arbTranslator = new ArbTranslator(deeplTranslator, mappings);
-            } else {
-                arbTranslator = new ArbTranslator(deeplTranslator);
             }
+            File glossaryDir = getGlossaryDir().getOrNull();
+            if (glossaryDir != null) {
+                getLogger().lifecycle("Glossary directory: " + glossaryDir.getAbsolutePath());
+            }
+            ArbTranslator arbTranslator = new ArbTranslator(deeplTranslator, mappings, glossaryDir);
 
             arbTranslator.translate(sourceFile, targetLangsList);
 

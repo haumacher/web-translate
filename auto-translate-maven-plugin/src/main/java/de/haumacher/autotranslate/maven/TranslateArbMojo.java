@@ -147,6 +147,22 @@ public class TranslateArbMojo extends AbstractMojo {
 	@Parameter(property = "translate.arb.languageMappings")
 	private Map<String, String> languageMappings;
 
+	/**
+	 * Optional directory containing DeepL glossary files.
+	 *
+	 * <p>
+	 * When set, the directory is expected to contain one tab-separated file per
+	 * source/target language pair, named {@code <source>-<target>.tsv} using base
+	 * language codes (e.g. {@code en-de.tsv}). Each line is
+	 * {@code sourceTerm<TAB>targetTerm} and pins how a term is translated, so the
+	 * same source word is rendered consistently across resources and runs.
+	 * Glossaries are created before translation and deleted afterwards. When unset,
+	 * translation runs without glossaries (unchanged behavior).
+	 * </p>
+	 */
+	@Parameter(property = "translate.arb.glossaryDirectory")
+	private File glossaryDirectory;
+
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
 		try {
@@ -183,14 +199,16 @@ public class TranslateArbMojo extends AbstractMojo {
 			// Create DeepL translator
 			Translator deeplTranslator = new DeepLClient(resolvedApiKey);
 
-			// Create ARB translator with custom language mappings if provided
-			ArbTranslator arbTranslator;
-			if (languageMappings != null && !languageMappings.isEmpty()) {
-				getLog().info("Using custom language mappings: " + languageMappings);
-				arbTranslator = new ArbTranslator(deeplTranslator, languageMappings);
-			} else {
-				arbTranslator = new ArbTranslator(deeplTranslator);
+			// Create ARB translator with optional custom language mappings and glossary
+			Map<String, String> mappings =
+				(languageMappings != null && !languageMappings.isEmpty()) ? languageMappings : null;
+			if (mappings != null) {
+				getLog().info("Using custom language mappings: " + mappings);
 			}
+			if (glossaryDirectory != null) {
+				getLog().info("Glossary directory: " + glossaryDirectory.getAbsolutePath());
+			}
+			ArbTranslator arbTranslator = new ArbTranslator(deeplTranslator, mappings, glossaryDirectory);
 
 			arbTranslator.translate(sourceFile, targetLangsList);
 

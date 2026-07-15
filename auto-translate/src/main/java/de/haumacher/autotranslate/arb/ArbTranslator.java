@@ -21,6 +21,9 @@ import de.haumacher.autotranslate.arb.io.ArbWriter;
 import de.haumacher.autotranslate.arb.model.ArbBundle;
 import de.haumacher.autotranslate.arb.model.ArbResource;
 import de.haumacher.autotranslate.arb.model.ArbResourceAttributes;
+import de.haumacher.autotranslate.glossary.GlossaryManager;
+import de.haumacher.autotranslate.glossary.GlossaryTranslator;
+import de.haumacher.autotranslate.log.ConsoleLogger;
 
 import com.deepl.api.DeepLClient;
 
@@ -80,6 +83,7 @@ public class ArbTranslator {
 	private final ArbParser _parser;
 	private final ArbWriter _writer;
 	private final Map<String, String> _languageMappings;
+	private final File _glossaryDir;
 
 	private int _totalBilledChars = 0;
 
@@ -136,6 +140,20 @@ public class ArbTranslator {
 	 * @param languageMappings Map from user language codes to DeepL API language codes
 	 */
 	public ArbTranslator(Translator translator, Map<String, String> languageMappings) {
+		this(translator, languageMappings, null);
+	}
+
+	/**
+	 * Creates a new ARB translator with a translator instance, custom language
+	 * mappings and an optional glossary directory.
+	 *
+	 * @param translator       Translator instance for DeepL API communication
+	 * @param languageMappings Map from user language codes to DeepL API language
+	 *                         codes, or {@code null} for the defaults
+	 * @param glossaryDir      Directory with {@code <source>-<target>.tsv} glossary
+	 *                         files, or {@code null} to translate without glossaries
+	 */
+	public ArbTranslator(Translator translator, Map<String, String> languageMappings, File glossaryDir) {
 		_translator = translator;
 		_parser = new ArbParser();
 		_writer = new ArbWriter();
@@ -143,6 +161,7 @@ public class ArbTranslator {
 		if (languageMappings != null) {
 			_languageMappings.putAll(languageMappings);
 		}
+		_glossaryDir = glossaryDir;
 	}
 
 	/**
@@ -184,11 +203,18 @@ public class ArbTranslator {
 		// Initialize tracking for translated resources
 		_translatedResourceChecksums = new HashMap<>();
 
-		// Translate to each target language
-		for (String targetLang : targetLangs) {
-			System.out.println();
-			System.out.println("Translating to: " + targetLang);
-			translateToLanguage(sourceFile, sourceBundle, sourceLang, targetLang);
+		try (GlossaryManager glossaries =
+				GlossaryManager.create(_translator, sourceLang, targetLangs, _glossaryDir, ConsoleLogger.INSTANCE)) {
+			Translator effectiveTranslator = glossaries.hasGlossaries()
+				? new GlossaryTranslator(_translator, glossaries.getGlossaryIdByTargetLang())
+				: _translator;
+
+			// Translate to each target language
+			for (String targetLang : targetLangs) {
+				System.out.println();
+				System.out.println("Translating to: " + targetLang);
+				translateToLanguage(effectiveTranslator, sourceFile, sourceBundle, sourceLang, targetLang);
+			}
 		}
 
 		// Update source file with checksums if any resources were translated
@@ -219,7 +245,7 @@ public class ArbTranslator {
 		System.out.println("========================================");
 	}
 
-	private void translateToLanguage(File sourceFile, ArbBundle sourceBundle,
+	private void translateToLanguage(Translator translator, File sourceFile, ArbBundle sourceBundle,
 			String sourceLang, String targetLang)
 			throws IOException, DeepLException, InterruptedException {
 
@@ -340,7 +366,7 @@ public class ArbTranslator {
 			System.out.println("Collected " + textsToTranslate.size() + " text fragments to translate");
 
 			// Phase 2: Translate all collected texts using DeepL
-			List<TextResult> results = _translator.translateText(
+			List<TextResult> results = translator.translateText(
 				new ArrayList<>(textsToTranslate),
 				sourceLang,
 				deeplTargetLang

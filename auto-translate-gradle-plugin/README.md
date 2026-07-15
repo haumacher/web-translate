@@ -81,6 +81,8 @@ translateArb {
 | `serverId` | String | No | `"deepl"` | Server ID for retrieving API key from gradle.properties |
 | `sourceFile` | File | Yes | - | Source ARB file to translate (must follow `basename_lang.arb` pattern) |
 | `targetLangs` | List<String> | Yes | - | List of target language codes (e.g., `['de', 'fr', 'es']`) |
+| `languageMappings` | Map<String,String> | No | `en→en-US`, `pt→pt-PT` | Override how generic codes map to DeepL variants |
+| `glossaryDir` | File | No | - | Directory with `<source>-<target>.tsv` glossary files (base lang codes, `sourceTerm<TAB>targetTerm` per line) that pin term translations for consistency; created before the run and deleted after |
 
 ## Usage
 

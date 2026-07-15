@@ -63,6 +63,7 @@ public class TranslateArbExtension {
     private final Property<File> sourceFile;
     private final ListProperty<String> targetLangs;
     private final MapProperty<String, String> languageMappings;
+    private final Property<File> glossaryDir;
 
     public TranslateArbExtension(Project project) {
         this.apiKey = project.getObjects().property(String.class);
@@ -72,6 +73,7 @@ public class TranslateArbExtension {
         this.sourceFile = project.getObjects().property(File.class);
         this.targetLangs = project.getObjects().listProperty(String.class);
         this.languageMappings = project.getObjects().mapProperty(String.class, String.class);
+        this.glossaryDir = project.getObjects().property(File.class);
     }
 
     /**
@@ -193,5 +195,30 @@ public class TranslateArbExtension {
      */
     public void setLanguageMappings(Map<String, String> languageMappings) {
         this.languageMappings.set(languageMappings);
+    }
+
+    /**
+     * Gets the optional glossary directory property.
+     *
+     * <p>
+     * The directory is expected to contain one tab-separated file per
+     * source/target language pair, named {@code <source>-<target>.tsv} using base
+     * language codes (e.g. {@code en-de.tsv}). Each line is
+     * {@code sourceTerm<TAB>targetTerm} and pins how a term is translated, so the
+     * same source word is rendered consistently across resources and runs.
+     * </p>
+     */
+    public Property<File> getGlossaryDir() {
+        return glossaryDir;
+    }
+
+    /**
+     * Sets the glossary directory. When unset, translation runs without
+     * glossaries.
+     *
+     * @param glossaryDir Directory with {@code <source>-<target>.tsv} glossary files
+     */
+    public void setGlossaryDir(File glossaryDir) {
+        this.glossaryDir.set(glossaryDir);
     }
 }
