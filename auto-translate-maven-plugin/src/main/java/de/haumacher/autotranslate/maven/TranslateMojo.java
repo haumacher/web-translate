@@ -111,6 +111,22 @@ public class TranslateMojo extends AbstractMojo {
 	@Parameter(property = "translate.templateDirectory", defaultValue = "${project.basedir}/templates")
 	private File templateDirectory;
 
+	/**
+	 * Optional directory containing DeepL glossary files.
+	 *
+	 * <p>
+	 * When set, the directory is expected to contain one tab-separated file per
+	 * source/target language pair, named {@code <source>-<target>.tsv} using base
+	 * language codes (e.g. {@code de-en.tsv}). Each line is
+	 * {@code sourceTerm<TAB>targetTerm} and pins how a term is translated, so the
+	 * same source word is rendered consistently across documents and runs.
+	 * Glossaries are created before translation and deleted afterwards. When unset,
+	 * translation runs without glossaries (unchanged behavior).
+	 * </p>
+	 */
+	@Parameter(property = "translate.glossaryDirectory")
+	private File glossaryDirectory;
+
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
 		try {
@@ -120,6 +136,9 @@ public class TranslateMojo extends AbstractMojo {
 			getLog().info("Source language: " + sourceLang);
 			getLog().info("Target languages: " + targetLangs);
 			getLog().info("Template directory: " + templateDirectory.getAbsolutePath());
+			if (glossaryDirectory != null) {
+				getLog().info("Glossary directory: " + glossaryDirectory.getAbsolutePath());
+			}
 			getLog().info("");
 
 			// Resolve API key from server credentials if not directly provided
@@ -134,6 +153,7 @@ public class TranslateMojo extends AbstractMojo {
 					sourceLang,
 					destLangs,
 					templateDirectory,
+					glossaryDirectory,
 					new MavenLoggerAdapter(getLog())
 				);
 			translator.run();

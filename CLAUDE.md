@@ -108,6 +108,7 @@ Or in `pom.xml` configuration:
 - `sourceLang` (default: `"en"`): Source language code
 - `targetLangs` (default: `"de"`): Comma-separated target language codes
 - `templateDirectory` (default: `${project.basedir}/templates`): Template directory
+- `glossaryDirectory` (optional): Directory with DeepL glossary files named `<source>-<target>.tsv` (base language codes, e.g. `de-en.tsv`), each line `sourceTerm<TAB>targetTerm`. Pins how individual terms are translated so the same source word stays consistent across documents and runs. Glossaries are created before the run and deleted afterwards (ephemeral). Language pairs DeepL does not support for glossaries are skipped with a warning. When unset, translation runs without glossaries.
 
 **Directory Structure Expected:**
 ```

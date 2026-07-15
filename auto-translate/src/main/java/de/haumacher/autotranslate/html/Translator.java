@@ -12,6 +12,8 @@ import org.xml.sax.SAXException;
 import com.deepl.api.DeepLClient;
 import com.deepl.api.DeepLException;
 
+import de.haumacher.autotranslate.glossary.GlossaryManager;
+import de.haumacher.autotranslate.glossary.GlossaryTranslator;
 import de.haumacher.autotranslate.log.ConsoleLogger;
 import de.haumacher.autotranslate.log.Logger;
 
@@ -21,6 +23,7 @@ public class Translator {
 	private final String _srcLang;
 	private final List<String> _destLangs;
 	private final File _templateDir;
+	private final File _glossaryDir;
 	private final Logger _logger;
 
 	/**
@@ -33,10 +36,27 @@ public class Translator {
 	 * @param logger Logger for output messages
 	 */
 	public Translator(com.deepl.api.Translator translator, String srcLang, List<String> destLangs, File templateDir, Logger logger) {
+		this(translator, srcLang, destLangs, templateDir, null, logger);
+	}
+
+	/**
+	 * Creates a new HTML translator with a translator instance and an optional
+	 * glossary directory.
+	 *
+	 * @param translator  Translator instance for DeepL API communication
+	 * @param srcLang     Source language code
+	 * @param destLangs   List of destination language codes
+	 * @param templateDir Base template directory containing language subdirectories
+	 * @param glossaryDir Directory with {@code <source>-<target>.tsv} glossary
+	 *                    files, or {@code null} to translate without glossaries
+	 * @param logger      Logger for output messages
+	 */
+	public Translator(com.deepl.api.Translator translator, String srcLang, List<String> destLangs, File templateDir, File glossaryDir, Logger logger) {
 		_translator = translator;
 		_srcLang = srcLang;
 		_destLangs = destLangs;
 		_templateDir = templateDir;
+		_glossaryDir = glossaryDir;
 		_logger = logger;
 	}
 
@@ -78,6 +98,22 @@ public class Translator {
 	}
 
 	/**
+	 * Creates a new HTML translator with an API key, a glossary directory and a
+	 * custom logger.
+	 *
+	 * @param apikey      DeepL API key
+	 * @param srcLang     Source language code
+	 * @param destLangs   List of destination language codes
+	 * @param templateDir Base template directory containing language subdirectories
+	 * @param glossaryDir Directory with {@code <source>-<target>.tsv} glossary
+	 *                    files, or {@code null} to translate without glossaries
+	 * @param logger      Logger for output messages
+	 */
+	public Translator(String apikey, String srcLang, List<String> destLangs, File templateDir, File glossaryDir, Logger logger) {
+		this(new DeepLClient(apikey), srcLang, destLangs, templateDir, glossaryDir, logger);
+	}
+
+	/**
 	 * Runs the complete HTML translation pipeline using in-memory translation.
 	 *
 	 * <p>
@@ -98,12 +134,17 @@ public class Translator {
 			throw new IOException("Source language directory does not exist: " + srcDir.getAbsolutePath());
 		}
 
-		HtmlFileTranslator fileTranslator = new HtmlFileTranslator(_translator, _srcLang, _destLangs, _logger);
-		processDirectory(srcDir, fileTranslator, "");
+		try (GlossaryManager glossaries = GlossaryManager.create(_translator, _srcLang, _destLangs, _glossaryDir, _logger)) {
+			com.deepl.api.Translator effectiveTranslator =
+				glossaries.hasGlossaries() ? new GlossaryTranslator(_translator, glossaries.getGlossaryIdByTargetLang()) : _translator;
 
-		_logger.info("");
-		_logger.info("Translation complete!");
-		_logger.info("Total billed characters: " + fileTranslator.getTotalBilledChars());
+			HtmlFileTranslator fileTranslator = new HtmlFileTranslator(effectiveTranslator, _srcLang, _destLangs, _logger);
+			processDirectory(srcDir, fileTranslator, "");
+
+			_logger.info("");
+			_logger.info("Translation complete!");
+			_logger.info("Total billed characters: " + fileTranslator.getTotalBilledChars());
+		}
 	}
 
 	private void processDirectory(File dir, HtmlFileTranslator fileTranslator, String relativePath)
