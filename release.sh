@@ -41,6 +41,12 @@ error() {
     exit 1
 }
 
+# Bumps the last version component: 1.1.4 -> 1.1.5-SNAPSHOT
+next_snapshot() {
+    local version="$1"
+    printf '%s.%s-SNAPSHOT' "${version%.*}" "$(( ${version##*.} + 1 ))"
+}
+
 confirm() {
     local prompt="$1"
     local default="${2:-n}"
@@ -166,8 +172,35 @@ if [[ ! "$CURRENT_VERSION" =~ -SNAPSHOT$ ]]; then
     error "Current version ($CURRENT_VERSION) is not a SNAPSHOT version"
 fi
 
-RELEASE_VERSION="${CURRENT_VERSION%-SNAPSHOT}"
-info "Release version will be: $RELEASE_VERSION (the Gradle release prompt can override this)"
+# Ask for the versions here, once. They are handed to the Gradle release plugin
+# below, so tag, deploy and GitHub release all use exactly what was entered.
+# Letting the plugin ask again would produce a second, independent answer that
+# the rest of this script knows nothing about.
+echo ""
+read -p "Release version [${CURRENT_VERSION%-SNAPSHOT}]: " RELEASE_VERSION
+RELEASE_VERSION=${RELEASE_VERSION:-${CURRENT_VERSION%-SNAPSHOT}}
+
+read -p "Next development version [$(next_snapshot "$RELEASE_VERSION")]: " NEXT_VERSION
+NEXT_VERSION=${NEXT_VERSION:-$(next_snapshot "$RELEASE_VERSION")}
+
+# The Gradle release plugin tags with the bare version (e.g. "1.1.2"), not a
+# "v"-prefixed name - see the existing 1.0.0 / 1.1.0 / 1.1.1 tags.
+RELEASE_TAG="$RELEASE_VERSION"
+
+# A leftover tag from a failed attempt makes the plugin skip tagging, which
+# leaves the release half done. Say so now instead of failing three steps later.
+if git rev-parse -q --verify "refs/tags/$RELEASE_TAG" > /dev/null; then
+    echo ""
+    error "Tag $RELEASE_TAG already exists locally. Remove it with 'git tag -d $RELEASE_TAG' (and 'git push origin :$RELEASE_TAG' if it was pushed)."
+fi
+if [[ -n $(git ls-remote --tags origin "refs/tags/$RELEASE_TAG") ]]; then
+    echo ""
+    error "Tag $RELEASE_TAG already exists on origin. Remove it with 'git push origin :$RELEASE_TAG'."
+fi
+
+echo ""
+info "Release version:          $RELEASE_VERSION"
+info "Next development version: $NEXT_VERSION"
 
 echo ""
 if ! confirm "Proceed with release $RELEASE_VERSION?"; then
@@ -182,46 +215,25 @@ echo "Step 1: Gradle Release"
 echo "=========================================="
 echo ""
 
-GRADLE_ARGS=""
+# Run the plugin non-interactively with the versions entered above.
+GRADLE_ARGS="-Prelease.useAutomaticVersion=true"
+GRADLE_ARGS="$GRADLE_ARGS -Prelease.releaseVersion=$RELEASE_VERSION"
+GRADLE_ARGS="$GRADLE_ARGS -Prelease.newVersion=$NEXT_VERSION"
 if $SKIP_TESTS; then
-    GRADLE_ARGS="-x test"
+    GRADLE_ARGS="$GRADLE_ARGS -x test"
     warn "Skipping tests"
 fi
 
 if $DRY_RUN; then
     info "[DRY RUN] Would run: ./gradlew release $GRADLE_ARGS"
-
-    # Nothing is tagged in a dry run, so fall back to the expected name.
-    RELEASE_TAG="$RELEASE_VERSION"
 else
-    # Remember the tags, so the one created by the release can be identified
-    # afterwards.
-    TAGS_BEFORE=$(git tag)
-
     info "Running Gradle release..."
     ./gradlew release $GRADLE_ARGS
     success "Gradle release completed"
 
-    # Take the release tag from what was actually created, never from
-    # gradle.properties: The Gradle release plugin asks for the release version
-    # interactively, so answering that prompt with anything but the proposed
-    # version makes a name derived up front point at a tag that does not exist
-    # ("error: src refspec 1.1.5 does not match any").
-    #
-    # The plugin tags with the bare version (e.g. "1.1.2"), not a "v"-prefixed
-    # name - see the existing 1.0.0 / 1.1.0 / 1.1.1 tags.
-    NEW_TAGS=$(comm -13 <(printf '%s\n' "$TAGS_BEFORE" | sort) <(git tag | sort))
-    NEW_TAG_COUNT=$(printf '%s\n' "$NEW_TAGS" | grep -c . || true)
-
-    if [[ "$NEW_TAG_COUNT" -eq 0 ]]; then
-        error "Gradle release created no tag. A tag of the release version may already exist - check 'git tag'."
-    elif [[ "$NEW_TAG_COUNT" -gt 1 ]]; then
-        error "Gradle release created more than one tag: $(printf '%s' "$NEW_TAGS" | tr '\n' ' ')"
+    if ! git rev-parse -q --verify "refs/tags/$RELEASE_TAG" > /dev/null; then
+        error "Gradle release did not create tag $RELEASE_TAG"
     fi
-
-    RELEASE_TAG="$NEW_TAGS"
-    RELEASE_VERSION="$RELEASE_TAG"
-    info "Released version: $RELEASE_VERSION (tag $RELEASE_TAG)"
 fi
 
 # Step 2: Push to GitHub
