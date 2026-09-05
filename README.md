@@ -1,5 +1,8 @@
 # auto-translate - Automatic translation of HTML templates and ARB files using DeepL
 
+[![Maven Central](https://img.shields.io/maven-central/v/de.haumacher/auto-translate?label=Maven%20Central)](https://central.sonatype.com/artifact/de.haumacher/auto-translate)
+[![Gradle Plugin Portal](https://img.shields.io/gradle-plugin-portal/v/de.haumacher.auto-translate-arb?label=Gradle%20Plugin%20Portal)](https://plugins.gradle.org/plugin/de.haumacher.auto-translate-arb)
+
 The `auto-translate` project provides automated translation tools for:
 - **HTML templates** (Thymeleaf or any HTML-based templates)
 - **ARB files** (Application Resource Bundle for Flutter/Dart localization)
@@ -129,7 +132,7 @@ Maven plugin configuration:
 <plugin>
   <groupId>de.haumacher</groupId>
   <artifactId>auto-translate-maven-plugin</artifactId>
-  <version>1.1.0</version>
+  <version>1.1.4</version>
   <executions>
     <execution>
       <goals>
@@ -230,7 +233,7 @@ Parameters and format identifiers are preserved, only the actual text is transla
 <plugin>
   <groupId>de.haumacher</groupId>
   <artifactId>auto-translate-maven-plugin</artifactId>
-  <version>1.1.0</version>
+  <version>1.1.4</version>
   <executions>
     <execution>
       <goals>
@@ -251,7 +254,7 @@ Run with: `mvn auto-translate:translate-arb`
 
 ```gradle
 plugins {
-    id 'de.haumacher.auto-translate-arb' version '1.1.0'
+    id 'de.haumacher.auto-translate-arb' version '1.1.4'
 }
 
 translateArb {
@@ -316,9 +319,9 @@ mvn install
 
 | Module | Description | Build Tool | Artifact |
 |--------|-------------|------------|----------|
-| auto-translate | Core translation library | Maven/Gradle | `auto-translate-1.1.0.jar` |
-| auto-translate-maven-plugin | Maven plugin for HTML & ARB | Maven | `auto-translate-maven-plugin-1.1.0.jar` |
-| auto-translate-gradle-plugin | Gradle plugin for ARB | Gradle | `auto-translate-gradle-plugin-1.1.0.jar` |
+| auto-translate | Core translation library | Maven/Gradle | `de.haumacher:auto-translate` |
+| auto-translate-maven-plugin | Maven plugin for HTML & ARB | Maven | `de.haumacher:auto-translate-maven-plugin` |
+| auto-translate-gradle-plugin | Gradle plugin for ARB | Gradle | `de.haumacher.auto-translate-arb` |
 
 ## License
 

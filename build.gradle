@@ -24,6 +24,44 @@ def syncMavenVersion = {
     println "Updated all Maven POMs to version ${project.version}"
 }
 
+// The copy&paste snippets in README.md must name a version that users can
+// actually resolve, so they are only synchronized with a release version - never
+// with a development version (see the '1.0.3-SNAPSHOT' README of commit 9d3659e
+// for what happens otherwise).
+def syncReadmeVersion = {
+    def readme = file('README.md')
+    def original = readme.text
+    def updated = original
+
+    // Maven plugin coordinates.
+    updated = updated.replaceAll(
+        /(<artifactId>auto-translate-maven-plugin<\/artifactId>\s*\n\s*<version>)[^<]+(<\/version>)/) {
+        all, prefix, suffix -> "${prefix}${project.version}${suffix}"
+    }
+
+    // Gradle plugin coordinates.
+    updated = updated.replaceAll(/(id 'de\.haumacher\.auto-translate-arb' version ')[^']+(')/) {
+        all, prefix, suffix -> "${prefix}${project.version}${suffix}"
+    }
+
+    if (updated == original) {
+        println "README.md already refers to version ${project.version}"
+    } else {
+        readme.text = updated
+        println "Updated README.md to version ${project.version}"
+    }
+}
+
+// Task to synchronize the documented version with the release version
+tasks.register('updateReadmeVersion') {
+    group = 'versioning'
+    description = 'Update the version in the README.md usage examples'
+
+    doLast {
+        syncReadmeVersion()
+    }
+}
+
 // Task to synchronize version to all Maven POMs
 tasks.register('updateMavenVersion') {
     group = 'versioning'
@@ -71,6 +109,12 @@ release {
 // Hook Maven version update into release lifecycle
 afterReleaseBuild.dependsOn updateMavenVersion
 beforeReleaseBuild.dependsOn updateMavenVersion
+
+// This hook runs while project.version is the release version, so the README
+// snippets end up in the 'Release version' commit pointing at a version that is
+// actually published. Deliberately not hooked into the next development
+// iteration below.
+beforeReleaseBuild.dependsOn updateReadmeVersion
 
 // The release plugin bumps gradle.properties to the next development version in
 // 'updateVersion' and commits the result in 'commitNewVersion'. The hooks above
