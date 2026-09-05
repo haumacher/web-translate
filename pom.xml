@@ -96,6 +96,18 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-gpg-plugin</artifactId>
+            <configuration>
+              <!--
+                Never open a pinentry dialog: The passphrase is taken from the
+                server "gpg.passphrase" in settings.xml and handed to gpg on a
+                file descriptor. GnuPG only accepts a passphrase that way in
+                loopback pinentry mode.
+              -->
+              <gpgArguments>
+                <arg>--pinentry-mode</arg>
+                <arg>loopback</arg>
+              </gpgArguments>
+            </configuration>
             <executions>
               <execution>
                 <id>sign-artifacts</id>
