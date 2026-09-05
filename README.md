@@ -167,7 +167,38 @@ Both plugins support ARB (Application Resource Bundle) files used in Flutter/Dar
 - **Incremental translation**: Only translates new or modified resources
 - **Parameter protection**: Preserves `{username}`, `{count}`, etc.
 - **ICU MessageFormat support**: Handles plurals, select, gender, nested formats
+- **Description as translation context**: The `description` of a resource is passed to DeepL as
+  [context](https://developers.deepl.com/docs/learning-how-tos/examples-and-guides/how-to-use-context-parameter)
 - **Compact output**: Target files contain only translations (no metadata)
+
+### Translation Context
+
+Short messages are often ambiguous: "Open" can be the label of a button (a verb) or the state of a
+ticket (an adjective) - and the two translate differently. If a resource has a `description`, it is
+sent to DeepL as *context*:
+
+```json
+{
+  "@@locale": "en",
+  "openAction": "Open",
+  "@openAction": {
+    "description": "Label of the button that opens the selected document."
+  },
+  "openState": "Open",
+  "@openState": {
+    "description": "State of a ticket that has not been closed yet."
+  }
+}
+```
+
+The context is not translated and is not billed by DeepL, it only disambiguates the translation.
+Since the context applies to a whole request, texts are grouped by their description and one request
+is sent per distinct description. Resources without a description are translated together in a
+single request without context, exactly as before.
+
+Note that changing only the `description` of a resource does not re-trigger a translation: The
+`x-translated` checksum tracks the message text. To pick up a new description for an already
+translated message, remove its `x-translated` attribute.
 
 ### Example Translation
 

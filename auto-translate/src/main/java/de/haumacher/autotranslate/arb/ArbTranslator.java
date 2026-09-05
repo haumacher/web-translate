@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -14,6 +15,7 @@ import java.util.zip.CRC32;
 
 import com.deepl.api.DeepLException;
 import com.deepl.api.TextResult;
+import com.deepl.api.TextTranslationOptions;
 import com.deepl.api.Translator;
 
 import de.haumacher.autotranslate.arb.io.ArbParser;
@@ -290,6 +292,7 @@ public class ArbTranslator {
 		// Separate resources into: existing (reuse) and new (translate)
 		List<String> resourceIdsToTranslate = new ArrayList<>();
 		List<ParameterProtector.ProtectedText> protectedTexts = new ArrayList<>();
+		List<String> translationContexts = new ArrayList<>();
 		int reusedCount = 0;
 		int updatedCount = 0;
 
@@ -336,6 +339,7 @@ public class ArbTranslator {
 
 				resourceIdsToTranslate.add(resourceId);
 				protectedTexts.add(protection);
+				translationContexts.add(translationContext(sourceResource));
 			} else if (existingTargetBundle != null && existingTargetBundle.hasResource(resourceId)) {
 				// Reuse existing translation
 				ArbResource existingResource = existingTargetBundle.getResource(resourceId);
@@ -353,38 +357,56 @@ public class ArbTranslator {
 		// Translate only new texts in batch
 		int billedChars = 0;
 		if (!protectedTexts.isEmpty()) {
-			// Phase 1: Collect all texts that need translation (including nested texts in complex parameters)
-			Set<String> textsToTranslate = new LinkedHashSet<>();
-			for (ParameterProtector.ProtectedText protection : protectedTexts) {
+			// Phase 1: Collect all texts that need translation (including nested texts in complex
+			// parameters), grouped by their translation context. The DeepL context parameter applies
+			// to a whole request, therefore texts with different contexts cannot share a request.
+			Map<String, Set<String>> textsByContext = new LinkedHashMap<>();
+			int fragmentCount = 0;
+			for (int i = 0; i < protectedTexts.size(); i++) {
+				Set<String> textsToTranslate =
+					textsByContext.computeIfAbsent(translationContexts.get(i), context -> new LinkedHashSet<>());
+
 				// Use a dummy translator that just collects all text fragments
-				protection.translate(text -> {
+				protectedTexts.get(i).translate(text -> {
 					textsToTranslate.add(text);
 					return text; // Return original, we're just collecting
 				});
 			}
-
-			System.out.println("Collected " + textsToTranslate.size() + " text fragments to translate");
-
-			// Phase 2: Translate all collected texts using DeepL
-			List<TextResult> results = translator.translateText(
-				new ArrayList<>(textsToTranslate),
-				sourceLang,
-				deeplTargetLang
-			);
-
-			// Build translation map
-			Map<String, String> translationMap = new HashMap<>();
-			int index = 0;
-			for (String original : textsToTranslate) {
-				translationMap.put(original, results.get(index).getText());
-				billedChars += results.get(index).getBilledCharacters();
-				index++;
+			for (Set<String> texts : textsByContext.values()) {
+				fragmentCount += texts.size();
 			}
 
-			// Phase 3: Apply translations to all protected texts using the map
+			System.out.println("Collected " + fragmentCount + " text fragments to translate in "
+				+ textsByContext.size() + " context group(s)");
+
+			// Phase 2: Translate all collected texts using DeepL, one request per context group
+			Map<String, Map<String, String>> translationsByContext = new HashMap<>();
+			for (var group : textsByContext.entrySet()) {
+				String context = group.getKey();
+				List<String> texts = new ArrayList<>(group.getValue());
+
+				List<TextResult> results;
+				if (context == null) {
+					results = translator.translateText(texts, sourceLang, deeplTargetLang);
+				} else {
+					results = translator.translateText(texts, sourceLang, deeplTargetLang,
+						new TextTranslationOptions().setContext(context));
+				}
+
+				// Build translation map for this context
+				Map<String, String> translationMap = new HashMap<>();
+				for (int index = 0; index < texts.size(); index++) {
+					translationMap.put(texts.get(index), results.get(index).getText());
+					billedChars += results.get(index).getBilledCharacters();
+				}
+				translationsByContext.put(context, translationMap);
+			}
+
+			// Phase 3: Apply translations to all protected texts using the maps
 			for (int i = 0; i < protectedTexts.size(); i++) {
 				String resourceId = resourceIdsToTranslate.get(i);
 				ParameterProtector.ProtectedText originalProtection = protectedTexts.get(i);
+				Map<String, String> translationMap = translationsByContext.get(translationContexts.get(i));
 
 				// Translate using the pre-built translation map
 				ParameterProtector.ProtectedText translatedProtection =
@@ -408,6 +430,37 @@ public class ArbTranslator {
 		// Write target ARB file in compact mode (without metadata)
 		_writer.write(targetBundle, targetFile, false); // compact mode - no metadata
 		System.out.println("Written to: " + targetFile.getAbsolutePath());
+	}
+
+	/**
+	 * The context that is passed to DeepL when translating the given resource.
+	 *
+	 * <p>
+	 * The DeepL <em>context</em> parameter takes additional text that describes the
+	 * situation in which a text is used. It is not translated and does not count
+	 * towards billing, but it helps to disambiguate short or ambiguous messages
+	 * (e.g. whether "Open" is a verb on a button or an adjective describing a
+	 * state). The {@code description} of an ARB resource holds exactly this kind of
+	 * information and is therefore used as context.
+	 * </p>
+	 *
+	 * <p>
+	 * The ARB {@code context} attribute is deliberately <em>not</em> used: It holds
+	 * a hierarchical identifier such as {@code HomePage:MainPanel}, which is not the
+	 * natural-language text that DeepL expects.
+	 * </p>
+	 *
+	 * @param resource The resource being translated.
+	 * @return The context to send to DeepL, or {@code null} if the resource has no
+	 *         description.
+	 */
+	private static String translationContext(ArbResource resource) {
+		String description = resource.getDescription();
+		if (description == null) {
+			return null;
+		}
+		description = description.trim();
+		return description.isEmpty() ? null : description;
 	}
 
 	/**
