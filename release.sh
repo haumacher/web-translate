@@ -167,7 +167,7 @@ if [[ ! "$CURRENT_VERSION" =~ -SNAPSHOT$ ]]; then
 fi
 
 RELEASE_VERSION="${CURRENT_VERSION%-SNAPSHOT}"
-info "Release version will be: $RELEASE_VERSION"
+info "Release version will be: $RELEASE_VERSION (the Gradle release prompt can override this)"
 
 echo ""
 if ! confirm "Proceed with release $RELEASE_VERSION?"; then
@@ -190,17 +190,39 @@ fi
 
 if $DRY_RUN; then
     info "[DRY RUN] Would run: ./gradlew release $GRADLE_ARGS"
+
+    # Nothing is tagged in a dry run, so fall back to the expected name.
+    RELEASE_TAG="$RELEASE_VERSION"
 else
+    # Remember the tags, so the one created by the release can be identified
+    # afterwards.
+    TAGS_BEFORE=$(git tag)
+
     info "Running Gradle release..."
     ./gradlew release $GRADLE_ARGS
     success "Gradle release completed"
-fi
 
-# Get the release tag. The Gradle release plugin tags with the bare version
-# (e.g. "1.1.2"), not a "v"-prefixed name — see the existing 1.0.0 / 1.1.0 /
-# 1.1.1 tags. A "v$RELEASE_VERSION" here makes every tag operation below
-# (push, checkout, release notes) fail with "src refspec v… does not match any".
-RELEASE_TAG="$RELEASE_VERSION"
+    # Take the release tag from what was actually created, never from
+    # gradle.properties: The Gradle release plugin asks for the release version
+    # interactively, so answering that prompt with anything but the proposed
+    # version makes a name derived up front point at a tag that does not exist
+    # ("error: src refspec 1.1.5 does not match any").
+    #
+    # The plugin tags with the bare version (e.g. "1.1.2"), not a "v"-prefixed
+    # name - see the existing 1.0.0 / 1.1.0 / 1.1.1 tags.
+    NEW_TAGS=$(comm -13 <(printf '%s\n' "$TAGS_BEFORE" | sort) <(git tag | sort))
+    NEW_TAG_COUNT=$(printf '%s\n' "$NEW_TAGS" | grep -c . || true)
+
+    if [[ "$NEW_TAG_COUNT" -eq 0 ]]; then
+        error "Gradle release created no tag. A tag of the release version may already exist - check 'git tag'."
+    elif [[ "$NEW_TAG_COUNT" -gt 1 ]]; then
+        error "Gradle release created more than one tag: $(printf '%s' "$NEW_TAGS" | tr '\n' ' ')"
+    fi
+
+    RELEASE_TAG="$NEW_TAGS"
+    RELEASE_VERSION="$RELEASE_TAG"
+    info "Released version: $RELEASE_VERSION (tag $RELEASE_TAG)"
+fi
 
 # Step 2: Push to GitHub
 echo ""
