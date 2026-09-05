@@ -13,7 +13,9 @@
 # Log unter $LOG (nur Laengen, keine Passwoerter).
 
 # ----- Konfiguration -------------------------------------------------------
-KP_CLI=/usr/local/bin/keepassxc-cli
+# keepassxc-cli liegt je nach Installation in /usr/bin (Distributionspaket)
+# oder /usr/local/bin (selbst gebaut), daher im PATH suchen.
+KP_CLI=$(command -v keepassxc-cli || echo /usr/bin/keepassxc-cli)
 KP_DB="$HOME/private/Documents/addresses.kdbx"
 GUI_PINENTRY=/usr/bin/pinentry-gnome3
 GPG=/usr/bin/gpg
@@ -51,7 +53,13 @@ keyid_for_grip() {
 get_passphrase() {
     if [ "$RETRY" -eq 0 ]; then
         keyid=$(keyid_for_grip "$KEYGRIP")
-        if [ -n "$keyid" ]; then
+        if [ -z "$keyid" ]; then
+            log "keine Key-ID zu Keygrip [$KEYGRIP] -- ueberspringe KeePassXC"
+        elif [ ! -x "$KP_CLI" ]; then
+            # Ohne keepassxc-cli waere das Master-Passwort nutzlos, also gar
+            # nicht erst danach fragen.
+            log "keepassxc-cli nicht ausfuehrbar [$KP_CLI] -- ueberspringe KeePassXC"
+        else
             entry="GPG-Key 0x$keyid"
             log "Keygrip $KEYGRIP -> Eintrag \"$entry\""
             [ -n "$MASTER" ] || MASTER=$(ask \
@@ -67,8 +75,6 @@ get_passphrase() {
                     return
                 fi
             fi
-        else
-            log "keine Key-ID zu Keygrip [$KEYGRIP] -- ueberspringe KeePassXC"
         fi
     fi
     log "Fallback: frage GPG-Passphrase direkt ab"
