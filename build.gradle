@@ -10,17 +10,40 @@ subprojects {
     }
 }
 
+// Synchronizes all Maven POM versions with the current Gradle project version.
+//
+// Must only be called at execution time: The release plugin updates
+// project.version in-memory while the build runs - it strips the '-SNAPSHOT'
+// suffix before the release build and bumps to the next development version
+// after tagging.
+def syncMavenVersion = {
+    // Update parent POM and all modules using Maven versions plugin
+    project.exec {
+        commandLine 'mvn', '-q', 'versions:set', "-DnewVersion=${project.version}", '-DgenerateBackupPoms=false'
+    }
+    println "Updated all Maven POMs to version ${project.version}"
+}
+
 // Task to synchronize version to all Maven POMs
 tasks.register('updateMavenVersion') {
     group = 'versioning'
     description = 'Update all Maven POM versions to match gradle.properties'
 
     doLast {
-        // Update parent POM and all modules using Maven versions plugin
-        exec {
-            commandLine 'mvn', '-q', 'versions:set', "-DnewVersion=${project.version}", '-DgenerateBackupPoms=false'
-        }
-        println "Updated all Maven POMs to version ${project.version}"
+        syncMavenVersion()
+    }
+}
+
+// The same synchronization for the version bump that the release plugin performs
+// after tagging. A separate task instance is required, because Gradle executes
+// each task at most once per build and 'updateMavenVersion' has already run as
+// part of the release build.
+tasks.register('updateMavenVersionForNextIteration') {
+    group = 'versioning'
+    description = 'Update all Maven POM versions to the next development version'
+
+    doLast {
+        syncMavenVersion()
     }
 }
 
@@ -48,3 +71,16 @@ release {
 // Hook Maven version update into release lifecycle
 afterReleaseBuild.dependsOn updateMavenVersion
 beforeReleaseBuild.dependsOn updateMavenVersion
+
+// The release plugin bumps gradle.properties to the next development version in
+// 'updateVersion' and commits the result in 'commitNewVersion'. The hooks above
+// all run inside 'runBuildTasks', which happens before the release is even
+// tagged, so without the hook below the POMs would keep the released version.
+// That is why master carried '1.1.3' POMs after the 1.1.3 release (and likewise
+// for every release back to 1.0.4).
+tasks.named('updateMavenVersionForNextIteration').configure {
+    mustRunAfter 'updateVersion'
+}
+tasks.named('commitNewVersion').configure {
+    dependsOn 'updateMavenVersionForNextIteration'
+}
