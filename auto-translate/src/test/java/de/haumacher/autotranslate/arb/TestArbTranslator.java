@@ -395,4 +395,92 @@ public class TestArbTranslator {
 			updatedWelcome.getAttribute("x-translated"),
 			"welcome checksum should match current text");
 	}
+
+	@Test
+	public void testDescriptionUsedAsTranslationContext(@TempDir File tempDir) throws Exception {
+		File sourceFile = new File(tempDir, "app_en.arb");
+		String sourceContent = """
+			{
+			  "@@locale": "en",
+			  "openAction": "Open",
+			  "@openAction": {
+			    "description": "Label of the button that opens the selected document."
+			  },
+			  "openState": "Open",
+			  "@openState": {
+			    "description": "State of a ticket that has not been closed yet."
+			  },
+			  "welcome": "Welcome to our app"
+			}
+			""";
+		Files.writeString(sourceFile.toPath(), sourceContent);
+
+		StubTranslator stub = new StubTranslator();
+		new ArbTranslator(stub).translate(sourceFile, List.of("de"));
+
+		// The description of the resource is passed to DeepL as context. Since both
+		// resources share the same source text but have different descriptions, they
+		// must be translated separately, once per context.
+		assertEquals(
+			List.of(
+				"Label of the button that opens the selected document.",
+				"State of a ticket that has not been closed yet."),
+			stub.getContexts("Open"));
+
+		// A resource without description is translated without context.
+		assertEquals(1, stub.getContexts("Welcome to our app").size());
+		assertNull(stub.getContexts("Welcome to our app").get(0));
+
+		ArbBundle target = new ArbParser().parse(new File(tempDir, "app_de.arb"));
+		assertEquals("Open [de]", target.getResource("openAction").getValue());
+		assertEquals("Open [de]", target.getResource("openState").getValue());
+		assertEquals("Welcome to our app [de]", target.getResource("welcome").getValue());
+	}
+
+	@Test
+	public void testContextAppliedToNestedIcuTexts(@TempDir File tempDir) throws Exception {
+		File sourceFile = new File(tempDir, "app_en.arb");
+		String sourceContent = """
+			{
+			  "@@locale": "en",
+			  "messages": "You have {count, plural, =0{no messages} other{{count} messages}}",
+			  "@messages": {
+			    "description": "Number of unread messages in the inbox."
+			  }
+			}
+			""";
+		Files.writeString(sourceFile.toPath(), sourceContent);
+
+		StubTranslator stub = new StubTranslator();
+		new ArbTranslator(stub).translate(sourceFile, List.of("de"));
+
+		// Also the text fragments nested in the ICU format are translated with context.
+		String context = "Number of unread messages in the inbox.";
+		assertTrue(stub.wasTranslated("no messages"), "Nested plural case must be translated");
+		for (var request : stub.getRequests()) {
+			assertEquals(context, request.context(),
+				"Fragment '" + request.text() + "' must be translated with the resource description as context");
+		}
+	}
+
+	@Test
+	public void testBlankDescriptionIsNoContext(@TempDir File tempDir) throws Exception {
+		File sourceFile = new File(tempDir, "app_en.arb");
+		String sourceContent = """
+			{
+			  "@@locale": "en",
+			  "welcome": "Welcome to our app",
+			  "@welcome": {
+			    "description": "   "
+			  }
+			}
+			""";
+		Files.writeString(sourceFile.toPath(), sourceContent);
+
+		StubTranslator stub = new StubTranslator();
+		new ArbTranslator(stub).translate(sourceFile, List.of("de"));
+
+		assertEquals(1, stub.getContexts("Welcome to our app").size());
+		assertNull(stub.getContexts("Welcome to our app").get(0));
+	}
 }

@@ -325,12 +325,23 @@ The tool automatically extracts the source language from the filename and create
 - Only translates new or modified resources
 - Significantly reduces API costs for updates
 
-**2. Parameter Protection**
+**2. Translation Context**
+- The `description` of a resource is passed to DeepL as `context` parameter
+- Disambiguates short messages (e.g., "Open" as a button label vs. a ticket state)
+- The context is not translated and is not billed
+- Since DeepL applies the context per request, texts are grouped by description: one request per
+  distinct description, plus one request for all resources without a description
+- The ARB `context` attribute (a hierarchical identifier like `HomePage:MainPanel`) is not used,
+  DeepL expects natural-language text
+- The `x-translated` checksum covers the message text only: changing just a description does not
+  re-trigger translation
+
+**3. Parameter Protection**
 - Protects ARB parameters from translation: `{username}` → preserved as `{username}`
 - Handles ICU MessageFormat syntax (plural, select, selectordinal)
 - Translates only the actual text, not format identifiers
 
-**3. ICU MessageFormat Support**
+**4. ICU MessageFormat Support**
 
 Supports complex ICU syntax including:
 
